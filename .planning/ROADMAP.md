@@ -87,10 +87,20 @@ Next milestone not yet scoped — run `/gsd-new-milestone` to define it.
 
 ### Phase 14: Production ownership: backend observability, alerting and recovery
 
-**Goal:** The app reports on itself and someone is told when it breaks: Prometheus app metrics on a separate management port, Alertmanager with one real receiver, structured JSON logs and OpenTelemetry tracing through Kafka, SLO recording rules and burn-rate alerts, off-VM `pg_dump` backups with an automated weekly restore drill, a capacity test, five rehearsed game-day scenarios and one runbook per scenario. Each stage ends in a measurement (time-to-notification, RTO/RPO, capacity knee) because the resume bullets are written from those numbers. Backend half only: the console work (Next.js `traceparent`, error tracking, Web Vitals, production Playwright smoke) belongs to `kanban-board-frontend`. Source plan: `/home/andre/dev/custom-ai-skills/skills/thoth/state/20261013-production-ownership-plan.md` (library specifics in it are from memory and must be checked against the versions in `build.gradle`). Out of scope: HA, PDB, HPA (needs a second node).
+**Goal:** The app reports on itself, someone is told when it breaks, and production data is backed up off the VM: Prometheus app metrics on a separate management port, Alertmanager paging Telegram with a healthchecks.io dead-man's switch, structured JSON logs and OpenTelemetry tracing through Kafka into Tempo, production post-deploy health verification, and a nightly encrypted `pg_dump` to Backblaze B2 with a missing-backup alert. Ends in a measurement: time-to-notification per alert, fired once on purpose. Backend half only: the console work (Next.js `traceparent`, error tracking, Web Vitals, production Playwright smoke) belongs to `kanban-board-frontend`. Source plan: `/home/andre/dev/custom-ai-skills/skills/thoth/state/20261013-production-ownership-plan.md` (library specifics in it are from memory and must be checked against the versions in `build.gradle`). Decisions: `14-CONTEXT.md`. Out of scope: HA, PDB, HPA (needs a second node).
 **Requirements**: TBD
 **Depends on:** Phase 13
 **Plans:** 0 plans
 
 Plans:
 - [ ] TBD (run /gsd-plan-phase 14 to break down)
+
+### Phase 14.1: Production ownership: SLOs, recovery drills and game days (INSERTED)
+
+**Goal:** Prove the system survives and write down how: SLO recording rules and multi-window burn-rate alerts replacing Phase 14's raw latency/error alerts, app dashboards (HTTP, JVM, Kafka) plus grooming the existing dashboards, an automated weekly restore drill of the Phase 14 backups recording RTO/RPO, a capacity test that finds the knee and the first resource to saturate, five game-day scenarios that each page via Phase 14's alerts, and one runbook per scenario in `docs/runbooks/` plus a postmortem. Open questions carried from Phase 14's discussion: where the capacity test and game days run on the shared node, and how the restore drill obtains the `age` private key.
+**Requirements**: TBD
+**Depends on:** Phase 14
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-discuss-phase 14.1 first)
