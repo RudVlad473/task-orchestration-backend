@@ -35,6 +35,9 @@ session auth and per-user ownership checks. Read the matching doc before changin
   lint, the instruction-file budget, `spotlessCheck` (`./gradlew spotlessApply` fixes it) and
   `fastTest`. Gitleaks refuses a credential-shaped value anywhere, `.planning/` prose included; a
   genuine false positive gets a narrow, evidence-cited entry in `.gitleaks.toml`.
+  `git commit --no-verify` is allowed here (overrides the global "never `--no-verify`") unless the
+  commit is feature-heavy (Java code, migrations, k8s manifests): docs, planning and config-only
+  commits skip the 4-minute hook.
 - Inspecting live output (the OpenAPI document, a real HTTP response): run the app on the host and
   `curl` it rather than writing a throwaway test class. Commands and their port and path gotchas:
   docs/LOCAL_DEV.md, section "Inspecting live output".
