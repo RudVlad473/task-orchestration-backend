@@ -66,6 +66,7 @@ v1.0–v1.2 velocity/per-plan detail archived at milestone close — see `.plann
 - Phase 11 added: Migrate database from Neon to self-hosted Postgres
 - Phase 12 added: Self-hosted observability stack
 - Phase 13 added: Introduce Kubernetes
+- Phase 14 added: Production ownership: backend observability, alerting and recovery
 
 ### Decisions
 

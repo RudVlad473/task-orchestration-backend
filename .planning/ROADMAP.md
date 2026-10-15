@@ -73,8 +73,6 @@ Full detail: `.planning/milestones/v1.4-ROADMAP.md`
 
 </details>
 
-
-
 ## Progress
 
 | Milestone | Phases | Plans | Status | Shipped |
@@ -86,3 +84,13 @@ Full detail: `.planning/milestones/v1.4-ROADMAP.md`
 | v1.4 Self-Hosted Infra and Kubernetes | 3 | 24/24 | Complete | 2026-09-30 |
 
 Next milestone not yet scoped — run `/gsd-new-milestone` to define it.
+
+### Phase 14: Production ownership: backend observability, alerting and recovery
+
+**Goal:** The app reports on itself and someone is told when it breaks: Prometheus app metrics on a separate management port, Alertmanager with one real receiver, structured JSON logs and OpenTelemetry tracing through Kafka, SLO recording rules and burn-rate alerts, off-VM `pg_dump` backups with an automated weekly restore drill, a capacity test, five rehearsed game-day scenarios and one runbook per scenario. Each stage ends in a measurement (time-to-notification, RTO/RPO, capacity knee) because the resume bullets are written from those numbers. Backend half only: the console work (Next.js `traceparent`, error tracking, Web Vitals, production Playwright smoke) belongs to `kanban-board-frontend`. Source plan: `/home/andre/dev/custom-ai-skills/skills/thoth/state/20261013-production-ownership-plan.md` (library specifics in it are from memory and must be checked against the versions in `build.gradle`). Out of scope: HA, PDB, HPA (needs a second node).
+**Requirements**: TBD
+**Depends on:** Phase 13
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 14 to break down)
