@@ -153,6 +153,15 @@ dependencies {
     // port. No version pin: the Spring Boot 3.5.16 BOM manages it, together with the io.prometheus client it pulls in.
     implementation 'io.micrometer:micrometer-registry-prometheus'
 
+    // Makes Observed on a service method a timer (and a span once tracing is on), through AspectJ's weaver.
+    //
+    // The property management.observations.annotations.enabled in application.properties turns the aspect on.
+    //
+    // aspectjweaver already reaches the runtime classpath through spring-data-jpa's spring-aspects, but only by
+    // accident of that dependency, so the starter states the need. No version pin: the Spring Boot 3.5.16 BOM
+    // manages it.
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
+
     // Backs the spring.session.* properties in application.properties (store-type=jdbc, initialize-schema=always).
     //
     // Those properties predate this dependency and were silently inert without it: sessions were plain in-memory

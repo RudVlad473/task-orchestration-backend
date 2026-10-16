@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.vrudenko.kanban_board.config.EventIdGenerator;
+import com.vrudenko.kanban_board.constant.MetricNames;
 import com.vrudenko.kanban_board.dto.subtask_dto.SaveSubtaskRequestDTO;
 import com.vrudenko.kanban_board.dto.subtask_dto.SubtaskResponseDTO;
 import com.vrudenko.kanban_board.dto.task_dto.MoveTaskRequestDTO;
@@ -22,6 +23,10 @@ import com.vrudenko.kanban_board.repository.TaskRepository;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.observation.annotation.Observed;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +50,24 @@ public class TaskService {
 
     @Autowired private EventIdGenerator eventIdGenerator;
 
+    @Autowired private MeterRegistry meterRegistry;
+
+    // Register each counter at startup, not on its first increment: Prometheus' increase() needs
+    // an earlier sample to subtract, so a counter first created by its first event would show that
+    // event as no change at all.
+    @PostConstruct
+    void registerCounters() {
+        Counter.builder(MetricNames.TASKS_CREATED)
+                .description("Tasks created")
+                .register(meterRegistry);
+        for (var move : List.of(MetricNames.MOVE_SAME_COLUMN, MetricNames.MOVE_CROSS_COLUMN)) {
+            Counter.builder(MetricNames.TASKS_MOVED)
+                    .tag(MetricNames.TAG_MOVE, move)
+                    .description("Tasks moved, by whether the target column is the source column")
+                    .register(meterRegistry);
+        }
+    }
+
     /**
      * Create the task at the end of its column and publish TaskCreatedEvent after commit.
      *
@@ -54,6 +77,7 @@ public class TaskService {
      * would drop the event with no error and no log line. REQUIRED propagation is a no-op
      * inside an existing transaction.
      */
+    @Observed(name = MetricNames.OBSERVATION_TASK_CREATE)
     @Transactional
     public TaskResponseDTO save(SaveTaskRequestDTO dto, ColumnEntity column) {
         var task = taskMapper.fromSaveTaskRequestDTO(dto);
@@ -74,6 +98,8 @@ public class TaskService {
                         column.getId(),
                         task.getId(),
                         Instant.now()));
+
+        meterRegistry.counter(MetricNames.TASKS_CREATED).increment();
 
         return taskMapper.toTaskResponseDTO(task);
     }
@@ -169,6 +195,7 @@ public class TaskService {
      * sibling task is not 409'd just because someone else reordered a different task in the same
      * column.
      */
+    @Observed(name = MetricNames.OBSERVATION_TASK_MOVE)
     @Transactional
     public TaskResponseDTO moveToColumn(String userId, String taskId, MoveTaskRequestDTO dto) {
         var task = findById(userId, taskId);
@@ -242,6 +269,15 @@ public class TaskService {
                         sourceColumnId,
                         targetColumn.getId(),
                         Instant.now()));
+
+        // Counted only here, after the version check and the move both succeeded, so a rejected
+        // move is a conflict and never also a move.
+        meterRegistry
+                .counter(
+                        MetricNames.TASKS_MOVED,
+                        MetricNames.TAG_MOVE,
+                        sameColumn ? MetricNames.MOVE_SAME_COLUMN : MetricNames.MOVE_CROSS_COLUMN)
+                .increment();
 
         return taskMapper.toTaskResponseDTO(task);
     }

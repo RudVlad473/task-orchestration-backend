@@ -31,6 +31,28 @@ public class EagerMetricRegistrationTest extends AbstractPostgresContainerTest {
     }
 
     @Test
+    void shouldHoldTasksCreatedAtZero_whenApplicationHasJustStarted() {
+        // arrange & act
+        var value = count(MetricNames.TASKS_CREATED);
+
+        // assert
+        Assertions.assertThat(value).isEqualTo(0.0);
+    }
+
+    @Test
+    void shouldHoldEveryTasksMovedTagValueAtZero_whenApplicationHasJustStarted() {
+        // arrange & act
+        var sameColumn =
+                count(MetricNames.TASKS_MOVED, MetricNames.TAG_MOVE, MetricNames.MOVE_SAME_COLUMN);
+        var crossColumn =
+                count(MetricNames.TASKS_MOVED, MetricNames.TAG_MOVE, MetricNames.MOVE_CROSS_COLUMN);
+
+        // assert
+        Assertions.assertThat(sameColumn).isEqualTo(0.0);
+        Assertions.assertThat(crossColumn).isEqualTo(0.0);
+    }
+
+    @Test
     void shouldHoldOptimisticLockConflictsAtZero_whenApplicationHasJustStarted() {
         // arrange & act
         var value = count(MetricNames.OPTIMISTIC_LOCK_CONFLICTS);

@@ -26,6 +26,8 @@ public final class MetricNames {
     public static final String REASON_BAD_CREDENTIALS = "bad_credentials";
     public static final String REASON_UNAUTHENTICATED = "unauthenticated";
 
+    // Used as @Observed(name = ...) on service methods; an annotation value must be a compile-time
+    // constant, so these stay plain static final strings.
     public static final String OBSERVATION_TASK_MOVE = "kanban.task.move";
     public static final String OBSERVATION_TASK_CREATE = "kanban.task.create";
     public static final String OBSERVATION_BOARD_FULL_READ = "kanban.board.full.read";

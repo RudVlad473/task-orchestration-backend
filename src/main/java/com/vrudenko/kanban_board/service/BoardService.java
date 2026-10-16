@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.vrudenko.kanban_board.config.EventIdGenerator;
+import com.vrudenko.kanban_board.constant.MetricNames;
 import com.vrudenko.kanban_board.dto.board_dto.BoardFullResponseDTO;
 import com.vrudenko.kanban_board.dto.board_dto.BoardResponseDTO;
 import com.vrudenko.kanban_board.dto.board_dto.SaveBoardRequestDTO;
@@ -24,6 +25,7 @@ import com.vrudenko.kanban_board.mapper.BoardMapper;
 import com.vrudenko.kanban_board.repository.BoardRepository;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.observation.annotation.Observed;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,6 +114,7 @@ public class BoardService {
      * method, so the DTO tree is fully materialised before the transaction ends and no unfetched
      * association is touched outside it.
      */
+    @Observed(name = MetricNames.OBSERVATION_BOARD_FULL_READ)
     @Transactional
     public BoardFullResponseDTO findFullById(String userId, String boardId) {
         var verifiedBoard = findById(userId, boardId);

@@ -1,18 +1,25 @@
 package com.vrudenko.kanban_board.e2e.observability;
 
+import java.time.Duration;
+
 import com.vrudenko.kanban_board.constant.ApiPaths;
 import com.vrudenko.kanban_board.constant.MetricNames;
+import com.vrudenko.kanban_board.dto.task_dto.MoveTaskRequestDTO;
+import com.vrudenko.kanban_board.dto.task_dto.SaveTaskRequestDTO;
 import com.vrudenko.kanban_board.dto.task_dto.UpdateTaskRequestDTO;
 import com.vrudenko.kanban_board.dto.user_dto.SigninRequestDTO;
 import com.vrudenko.kanban_board.support.fixtures.AbstractAppE2ETest;
 
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import io.restassured.http.ContentType;
 import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
 
 import static io.restassured.RestAssured.given;
@@ -34,6 +41,67 @@ public class BusinessMetricsE2ETest extends AbstractAppE2ETest {
         var counter = meterRegistry.find(name).tags(tags).counter();
 
         return counter == null ? 0.0 : counter.count();
+    }
+
+    private double movedCount(String move) {
+        return count(MetricNames.TASKS_MOVED, MetricNames.TAG_MOVE, move);
+    }
+
+    // Sums every timer of the name: Boot adds an error tag, so one observation can span series.
+    private long timerCount(String name) {
+        return meterRegistry.find(name).timers().stream().mapToLong(Timer::count).sum();
+    }
+
+    private long httpCount(String method, String uri) {
+        return meterRegistry
+                .find("http.server.requests")
+                .tag("method", method)
+                .tag("uri", uri)
+                .timers()
+                .stream()
+                .mapToLong(Timer::count)
+                .sum();
+    }
+
+    // http.server.requests is recorded after the response is written, so the client can see the
+    // response a moment before the timer moves.
+    private void awaitHttpCountAbove(String method, String uri, long before) {
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(
+                        () ->
+                                Assertions.assertThat(httpCount(method, uri))
+                                        .as("http.server.requests count for %s %s", method, uri)
+                                        .isGreaterThan(before));
+    }
+
+    private String columnPath(String columnId) {
+        return ApiPaths.BOARDS
+                + "/"
+                + mockPopulatedBoard.getId()
+                + ApiPaths.COLUMNS
+                + "/"
+                + columnId;
+    }
+
+    private int moveStatus(Pair<String, String> cookie, MoveTaskRequestDTO dto) {
+        return given().cookie(cookie.getFirst(), cookie.getSecond())
+                .contentType(ContentType.JSON)
+                .body(dto)
+                .when()
+                .patch(ApiPaths.TASKS + "/" + mockPopulatedTask.getId() + ApiPaths.MOVE)
+                .then()
+                .extract()
+                .statusCode();
+    }
+
+    private int fullBoardStatus(Pair<String, String> cookie) {
+        return given().cookie(cookie.getFirst(), cookie.getSecond())
+                .when()
+                .get(ApiPaths.BOARDS + "/" + mockPopulatedBoard.getId() + ApiPaths.FULL)
+                .then()
+                .extract()
+                .statusCode();
     }
 
     private int signinStatus(String email, String password) {
@@ -181,6 +249,203 @@ public class BusinessMetricsE2ETest extends AbstractAppE2ETest {
             Assertions.assertThat(statusCode).isEqualTo(HttpStatus.CONFLICT.value());
             Assertions.assertThat(count(MetricNames.OPTIMISTIC_LOCK_CONFLICTS))
                     .isEqualTo(before + 1);
+        }
+    }
+
+    @Nested
+    class TaskCreatedTest {
+        @Test
+        void shouldRaiseCounterAndTimerByOne_whenTaskIsCreated() {
+            // arrange
+            var cookie = signin();
+            var counterBefore = count(MetricNames.TASKS_CREATED);
+            var timerBefore = timerCount(MetricNames.OBSERVATION_TASK_CREATE);
+
+            // act
+            var statusCode =
+                    given().cookie(cookie.getFirst(), cookie.getSecond())
+                            .contentType(ContentType.JSON)
+                            .body(
+                                    SaveTaskRequestDTO.builder()
+                                            .title("Counted task")
+                                            .description("Created through the real HTTP path")
+                                            .build())
+                            .when()
+                            .post(columnPath(mockPopulatedColumn.getId()))
+                            .then()
+                            .extract()
+                            .statusCode();
+
+            // assert
+            Assertions.assertThat(statusCode).isEqualTo(HttpStatus.CREATED.value());
+            Assertions.assertThat(count(MetricNames.TASKS_CREATED)).isEqualTo(counterBefore + 1);
+            Assertions.assertThat(timerCount(MetricNames.OBSERVATION_TASK_CREATE))
+                    .isEqualTo(timerBefore + 1);
+        }
+    }
+
+    @Nested
+    class TaskMovedTest {
+        @Test
+        void shouldRaiseSameColumnCounterAndTimerByOne_whenTaskIsMovedWithinItsColumn() {
+            // arrange
+            var cookie = signin();
+            var sameBefore = movedCount(MetricNames.MOVE_SAME_COLUMN);
+            var crossBefore = movedCount(MetricNames.MOVE_CROSS_COLUMN);
+            var timerBefore = timerCount(MetricNames.OBSERVATION_TASK_MOVE);
+
+            // act
+            var statusCode =
+                    moveStatus(
+                            cookie,
+                            MoveTaskRequestDTO.builder()
+                                    .targetColumnId(mockPopulatedColumn.getId())
+                                    .version(mockPopulatedTask.getVersion())
+                                    .targetPosition(0)
+                                    .build());
+
+            // assert
+            Assertions.assertThat(statusCode).isEqualTo(HttpStatus.OK.value());
+            Assertions.assertThat(movedCount(MetricNames.MOVE_SAME_COLUMN))
+                    .isEqualTo(sameBefore + 1);
+            Assertions.assertThat(movedCount(MetricNames.MOVE_CROSS_COLUMN)).isEqualTo(crossBefore);
+            Assertions.assertThat(timerCount(MetricNames.OBSERVATION_TASK_MOVE))
+                    .isEqualTo(timerBefore + 1);
+        }
+
+        @Test
+        void shouldRaiseCrossColumnCounterAndTimerByOne_whenTaskIsMovedToAnotherColumn() {
+            // arrange
+            var cookie = signin();
+            var sameBefore = movedCount(MetricNames.MOVE_SAME_COLUMN);
+            var crossBefore = movedCount(MetricNames.MOVE_CROSS_COLUMN);
+            var timerBefore = timerCount(MetricNames.OBSERVATION_TASK_MOVE);
+
+            // act
+            var statusCode =
+                    moveStatus(
+                            cookie,
+                            MoveTaskRequestDTO.builder()
+                                    .targetColumnId(mockColumns.get(0).getId())
+                                    .version(mockPopulatedTask.getVersion())
+                                    .build());
+
+            // assert
+            Assertions.assertThat(statusCode).isEqualTo(HttpStatus.OK.value());
+            Assertions.assertThat(movedCount(MetricNames.MOVE_CROSS_COLUMN))
+                    .isEqualTo(crossBefore + 1);
+            Assertions.assertThat(movedCount(MetricNames.MOVE_SAME_COLUMN)).isEqualTo(sameBefore);
+            Assertions.assertThat(timerCount(MetricNames.OBSERVATION_TASK_MOVE))
+                    .isEqualTo(timerBefore + 1);
+        }
+
+        @Test
+        void shouldRaiseNeitherMoveCounter_whenMoveVersionIsStale() {
+            // arrange
+            var cookie = signin();
+            var sameBefore = movedCount(MetricNames.MOVE_SAME_COLUMN);
+            var crossBefore = movedCount(MetricNames.MOVE_CROSS_COLUMN);
+            var conflictsBefore = count(MetricNames.OPTIMISTIC_LOCK_CONFLICTS);
+
+            // act
+            var statusCode =
+                    moveStatus(
+                            cookie,
+                            MoveTaskRequestDTO.builder()
+                                    .targetColumnId(mockColumns.get(0).getId())
+                                    .version(mockPopulatedTask.getVersion() + 1)
+                                    .build());
+
+            // assert: a rejected move is a conflict, not a move
+            Assertions.assertThat(statusCode).isEqualTo(HttpStatus.CONFLICT.value());
+            Assertions.assertThat(movedCount(MetricNames.MOVE_SAME_COLUMN)).isEqualTo(sameBefore);
+            Assertions.assertThat(movedCount(MetricNames.MOVE_CROSS_COLUMN)).isEqualTo(crossBefore);
+            Assertions.assertThat(count(MetricNames.OPTIMISTIC_LOCK_CONFLICTS))
+                    .isEqualTo(conflictsBefore + 1);
+        }
+    }
+
+    @Nested
+    class BoardFullReadTest {
+        @Test
+        void shouldRaiseTimerByOne_whenFullBoardIsRead() {
+            // arrange
+            var cookie = signin();
+            var timerBefore = timerCount(MetricNames.OBSERVATION_BOARD_FULL_READ);
+
+            // act
+            var statusCode = fullBoardStatus(cookie);
+
+            // assert
+            Assertions.assertThat(statusCode).isEqualTo(HttpStatus.OK.value());
+            Assertions.assertThat(timerCount(MetricNames.OBSERVATION_BOARD_FULL_READ))
+                    .isEqualTo(timerBefore + 1);
+        }
+    }
+
+    @Nested
+    class PerEndpointTimerTest {
+        @Test
+        void shouldTimeFullBoardRead_underItsTemplatedUri() {
+            // arrange
+            var cookie = signin();
+            var before = httpCount("GET", "/boards/{boardId}/full");
+
+            // act
+            fullBoardStatus(cookie);
+
+            // assert
+            awaitHttpCountAbove("GET", "/boards/{boardId}/full", before);
+        }
+
+        @Test
+        void shouldTimeTaskCreate_underItsTemplatedUri() {
+            // arrange
+            var cookie = signin();
+            var before = httpCount("POST", "/boards/{boardId}/columns/{columnId}");
+
+            // act
+            given().cookie(cookie.getFirst(), cookie.getSecond())
+                    .contentType(ContentType.JSON)
+                    .body(SaveTaskRequestDTO.builder().title("Timed task").description("d").build())
+                    .when()
+                    .post(columnPath(mockPopulatedColumn.getId()))
+                    .then()
+                    .extract()
+                    .statusCode();
+
+            // assert
+            awaitHttpCountAbove("POST", "/boards/{boardId}/columns/{columnId}", before);
+        }
+
+        @Test
+        void shouldTimeTaskMove_underItsTemplatedUri() {
+            // arrange
+            var cookie = signin();
+            var before = httpCount("PATCH", "/tasks/{taskId}/move");
+
+            // act
+            moveStatus(
+                    cookie,
+                    MoveTaskRequestDTO.builder()
+                            .targetColumnId(mockColumns.get(0).getId())
+                            .version(mockPopulatedTask.getVersion())
+                            .build());
+
+            // assert
+            awaitHttpCountAbove("PATCH", "/tasks/{taskId}/move", before);
+        }
+
+        @Test
+        void shouldTimeSignin_underItsTemplatedUri() {
+            // arrange
+            var before = httpCount("POST", "/signin");
+
+            // act
+            signinStatus(getOwningUser().getEmail(), getOwningUserPassword());
+
+            // assert
+            awaitHttpCountAbove("POST", "/signin", before);
         }
     }
 

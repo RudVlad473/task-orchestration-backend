@@ -171,6 +171,52 @@ preference) stays last-write-wins by explicit decision, not oversight (see below
   mandatory `version` field imposes — a documented trade-off, not the same gap Board's asymmetry
   was.
 
+## Observability: service timers and request-path counters
+
+**The rule.** A service-level timer, and the span it becomes once tracing is on, is declared with
+`@Observed(name = MetricNames.X)` above the service method. A hand-written
+`Observation.createNotStarted(...).observe(...)` wrapper in a service is not used. Today three
+methods carry it: `TaskService.save` (`kanban.task.create`), `TaskService.moveToColumn`
+(`kanban.task.move`) and `BoardService.findFullById` (`kanban.board.full.read`). Counters stay
+explicit `meterRegistry.counter(...)` calls, because a counter increments on an outcome inside the
+method (a move counts only after the version check passed), which an annotation cannot express.
+
+**Why.** Timing and tracing are cross-cutting, not business logic. The wrapper form put a lambda
+and an extracted helper method into `moveToColumn`, `save` and `findFullById`, so each reader of a
+business method had to see through the instrumentation first.
+
+**Alternatives that lost:**
+
+| Alternative | Why it lost |
+|---|---|
+| Explicit `Observation` wrapper in the method | Noise at every site, and a helper method per service method to feed the lambda. It worked, and was replaced for readability. |
+| A decorator class around each service | Needs an interface per service to proxy; this repo injects concrete classes, so every injection site would change. |
+| No service timers, rely on `http.server.requests` | Keeps the per-endpoint timer but loses the service-level timer and span. |
+| `@Timed` on controllers | Duplicates the `http.server.requests` series that Boot already records for every templated uri. |
+
+**Limits a reader must know:**
+
+- It is proxy-based. A call to an `@Observed` method on `this` from inside its own class is not
+  observed. None of the three methods is called that way today. Pinned by
+  `ObservedAspectWiringTest.SelfInvocationTest.shouldNotObserve_whenAnnotatedMethodIsCalledOnThisFromInsideItsClass`.
+- The timer includes the transaction commit only if the aspect runs outside `@Transactional`.
+  Boot's own aspect bean has no order and ties with the transaction advisor, which put it inside:
+  measured, a move whose commit was held 300 ms was timed at 23 ms. `ObservedAspectConfig` replaces
+  the bean with one ordered just outside the transaction advisor. Pinned by `ObservedAspectWiringTest.AspectOrderTest.shouldPlaceObservationAdvisorBeforeTransactionAdvisor_onTaskService`
+  (advisor order) and
+  `ObservedAspectWiringTest.CommitCoverageTest.shouldIncludeCommitInMoveObservation_whenMoveOwnsItsTransaction`
+  (a commit made 300 ms slow shows up in the timer).
+- A method that joins its caller's transaction does not own the commit. `TaskService.save` joins
+  the one `ColumnService.addTaskByColumnId` opens, so `kanban.task.create` never covers its commit;
+  `ObservedAspectWiringTest.CommitCoverageTest.shouldNotCoverCommit_whenCallerOwnsTheTransactionOfTaskCreate`
+  documents it.
+- The `name` must be a compile-time constant, so every name is a `static final String` in
+  `MetricNames`; the compiler rejects anything else.
+- It needs `spring-boot-starter-aop` and `management.observations.annotations.enabled=true`.
+  Without the property no aspect bean exists and the annotation does nothing, silently; the
+  advisor-order test and every timer case in `BusinessMetricsE2ETest` (`TaskCreatedTest`,
+  `TaskMovedTest`, `BoardFullReadTest`) fail in that state.
+
 ## Event-driven activity feed
 
 Board/column/task/subtask mutations produce a durable, per-board activity log — built as an event
