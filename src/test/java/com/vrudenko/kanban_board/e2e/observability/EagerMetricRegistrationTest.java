@@ -1,6 +1,11 @@
 package com.vrudenko.kanban_board.e2e.observability;
 
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import com.vrudenko.kanban_board.constant.MetricNames;
+import com.vrudenko.kanban_board.event.ActivityEvent;
 import com.vrudenko.kanban_board.support.containers.AbstractPostgresContainerTest;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -68,6 +73,40 @@ public class EagerMetricRegistrationTest extends AbstractPostgresContainerTest {
 
         // assert
         Assertions.assertThat(value).isEqualTo(0.0);
+    }
+
+    @Test
+    void shouldHoldDeadLettersWrittenAtZero_whenApplicationHasJustStarted() {
+        // arrange & act
+        var value = count(MetricNames.ACTIVITY_DLT_WRITTEN);
+
+        // assert
+        Assertions.assertThat(value).isEqualTo(0.0);
+    }
+
+    @Test
+    void shouldHoldPublishFailuresAtZeroForEveryEventType_whenApplicationHasJustStarted() {
+        // arrange
+        var eventTypes = ActivityEvent.class.getPermittedSubclasses();
+
+        // act
+        var valuesByEvent =
+                Arrays.stream(eventTypes)
+                        .collect(
+                                Collectors.toMap(
+                                        Class::getSimpleName,
+                                        type ->
+                                                Optional.ofNullable(
+                                                        count(
+                                                                MetricNames.KAFKA_PUBLISH_FAILURES,
+                                                                MetricNames.TAG_EVENT,
+                                                                type.getSimpleName()))));
+
+        // assert -- every event type has its own series at 0; the size guard keeps an empty
+        // permits list from passing vacuously.
+        Assertions.assertThat(valuesByEvent).hasSizeGreaterThan(10).containsKey("TaskMovedEvent");
+        Assertions.assertThat(valuesByEvent.values())
+                .allSatisfy(value -> Assertions.assertThat(value).contains(0.0));
     }
 
     @Test

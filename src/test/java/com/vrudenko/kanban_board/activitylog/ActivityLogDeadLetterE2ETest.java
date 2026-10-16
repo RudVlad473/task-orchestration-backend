@@ -10,6 +10,7 @@ import java.util.Properties;
 import java.util.UUID;
 
 import com.vrudenko.kanban_board.constant.KafkaTopics;
+import com.vrudenko.kanban_board.constant.MetricNames;
 import com.vrudenko.kanban_board.event.TaskMovedEvent;
 import com.vrudenko.kanban_board.repository.ActivityLogRepository;
 import com.vrudenko.kanban_board.support.containers.AbstractKafkaContainerTest;
@@ -122,6 +123,31 @@ class ActivityLogDeadLetterE2ETest extends AbstractKafkaContainerTest {
             // assert
             var deadLetteredValue = awaitDeadLetterRecordMatching(poisonBytes);
             Assertions.assertThat(deadLetteredValue).isNotNull();
+        }
+    }
+
+    @Nested
+    class DeadLetterCounterTest {
+
+        @Test
+        void shouldRaiseDeadLetterCounterByExactlyOne_whenMalformedPayloadIsDeadLettered()
+                throws Exception {
+            // arrange -- the baseline is read once earlier tests' dead-lettering has finished,
+            // because their late increments would otherwise count as this one.
+            // Summed over all contexts: whichever one owns the topic's only partition writes the
+            // dead letter, and it is not necessarily this class's.
+            var deadLetters = counterReadingAcrossContexts(MetricNames.ACTIVITY_DLT_WRITTEN);
+            var baseline = awaitSettled(deadLetters);
+            var poisonBytes =
+                    "{\"type\":\"TaskMovedEvent\",\"counter\":true"
+                            .getBytes(StandardCharsets.UTF_8);
+
+            // act
+            publishRawBytes(poisonBytes, randomId());
+            awaitDeadLetterRecordMatching(poisonBytes);
+
+            // assert
+            assertRisesByExactlyOne(deadLetters, baseline);
         }
     }
 

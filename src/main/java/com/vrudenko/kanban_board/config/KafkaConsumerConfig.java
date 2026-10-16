@@ -3,7 +3,10 @@ package com.vrudenko.kanban_board.config;
 import java.util.LinkedHashMap;
 
 import com.vrudenko.kanban_board.constant.KafkaTopics;
+import com.vrudenko.kanban_board.constant.MetricNames;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
@@ -143,6 +146,10 @@ public class KafkaConsumerConfig implements DisposableBean {
      * number could not exist there. Every dead-lettering is logged at error level with source
      * topic, partition, offset and cause, so a draining feed is a log line, not silence.
      *
+     * It is also counted in kanban.activity.dlt.written, the series the dead-letter alert reads.
+     * The counter is registered when this bean is built, so the first dead letter after startup is
+     * already an increase from 0.
+     *
      * Decisions:
      *
      * The @Qualifier("deadLetterKafkaTemplate") annotation is required even though the parameter name
@@ -155,7 +162,16 @@ public class KafkaConsumerConfig implements DisposableBean {
      */
     @Bean
     public DefaultErrorHandler activityErrorHandler(
-            @Qualifier("deadLetterKafkaTemplate") KafkaTemplate<String, Object> deadLetterKafkaTemplate) {
+            @Qualifier("deadLetterKafkaTemplate") KafkaTemplate<String, Object> deadLetterKafkaTemplate,
+            MeterRegistry meterRegistry) {
+        // Backs the dead-letter alert. Registered here, when the bean is built, not on the first
+        // dead letter: Prometheus' increase() needs an earlier sample to subtract, so a counter
+        // first created by its first event would show that event as no change at all.
+        var deadLettersWritten =
+                Counter.builder(MetricNames.ACTIVITY_DLT_WRITTEN)
+                        .description("Records written to the activity dead-letter topic")
+                        .register(meterRegistry);
+
         var recoverer =
                 new DeadLetterPublishingRecoverer(
                         deadLetterKafkaTemplate,
@@ -173,6 +189,7 @@ public class KafkaConsumerConfig implements DisposableBean {
 
                     @Override
                     public void recovered(ConsumerRecord<?, ?> record, Exception ex) {
+                        deadLettersWritten.increment();
                         log.error(
                                 "Dead-lettering record to {} after exhausting retries:"
                                         + " sourceTopic={} partition={} offset={} cause={}",

@@ -1,14 +1,23 @@
 package com.vrudenko.kanban_board.support.containers;
 
+import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.DoubleSupplier;
 
 import com.vrudenko.kanban_board.config.AvroSchemaRegistrar;
 import com.vrudenko.kanban_board.constant.KafkaTopics;
 import com.vrudenko.kanban_board.event.ActivityEvent;
 import com.vrudenko.kanban_board.event.avro.ActivityEventAvroMapper;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import org.assertj.core.api.Assertions;
+import org.awaitility.Awaitility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -129,6 +138,7 @@ public abstract class AbstractKafkaContainerTest extends AbstractPostgresContain
 
     @Autowired protected KafkaTemplate<String, Object> kafkaTemplate;
     @Autowired protected ActivityEventAvroMapper activityEventAvroMapper;
+    @Autowired protected MeterRegistry meterRegistry;
 
     protected String getBootstrapServers() {
         return kafka.getBootstrapServers();
@@ -136,6 +146,94 @@ public abstract class AbstractKafkaContainerTest extends AbstractPostgresContain
 
     protected String getSchemaRegistryAddress() {
         return kafka.getSchemaRegistryAddress();
+    }
+
+    /**
+     * Freezes the shared broker container, schema registry included, until unpauseBroker().
+     *
+     * A paused container keeps its sockets open and answers nothing, which is how a producer
+     * with a cached schema and metadata is made to fail after the send has returned a future: the
+     * request times out in flight rather than failing at connect. Always pair with unpauseBroker()
+     * in an @AfterEach, because the container is shared by every later class in the JVM.
+     */
+    protected void pauseBroker() {
+        kafka.getDockerClient().pauseContainerCmd(kafka.getContainerId()).exec();
+    }
+
+    /** Thaws the broker container if it is frozen; safe to call when it is not. */
+    protected void unpauseBroker() {
+        var state = kafka.getDockerClient().inspectContainerCmd(kafka.getContainerId()).exec();
+        if (Boolean.TRUE.equals(state.getState().getPaused())) {
+            kafka.getDockerClient().unpauseContainerCmd(kafka.getContainerId()).exec();
+        }
+    }
+
+    /** Reads a counter in this test's context; 0 when it is not registered there. */
+    protected DoubleSupplier counterReading(String name, String... tags) {
+        return () -> {
+            var counter = meterRegistry.find(name).tags(tags).counter();
+
+            return counter == null ? 0.0 : counter.count();
+        };
+    }
+
+    /**
+     * Reads a counter summed over every Spring context alive in this JVM; 0 where it is not
+     * registered.
+     *
+     * Every cached Kafka context runs the same activity-log consumer group, and the topic has one
+     * partition, so which context consumes a record depends on the order the classes ran in. A
+     * counter incremented by the consumer side can therefore land in a registry other than the one
+     * the test is autowired with. Each context's registry joins Metrics.globalRegistry
+     * (management.metrics.use-global-registry defaults to true), so summing over it counts the
+     * increment wherever it happened.
+     */
+    protected DoubleSupplier counterReadingAcrossContexts(String name, String... tags) {
+        return () ->
+                Metrics.globalRegistry.getRegistries().stream()
+                        .map(registry -> registry.find(name).tags(tags).counter())
+                        .filter(Objects::nonNull)
+                        .mapToDouble(Counter::count)
+                        .sum();
+    }
+
+    /**
+     * Waits for the reading to stop moving for two seconds, then returns it.
+     *
+     * A baseline read while an earlier test's publish or dead-lettering is still in flight would
+     * let that late increment pass as the one under test.
+     */
+    protected double awaitSettled(DoubleSupplier reading) {
+        var last = new AtomicReference<>(reading.getAsDouble());
+        Awaitility.await()
+                .during(Duration.ofSeconds(2))
+                .atMost(Duration.ofSeconds(60))
+                .until(
+                        () -> {
+                            var now = reading.getAsDouble();
+                            var unchanged = now == last.get();
+                            last.set(now);
+                            return unchanged;
+                        });
+
+        return last.get();
+    }
+
+    /**
+     * Asserts the reading reaches baseline + 1 and then stays there for three seconds.
+     *
+     * Reaching the value proves the hook ran; holding it proves the hook did not run twice for
+     * one failure, which a plain "at least" check would miss.
+     */
+    protected void assertRisesByExactlyOne(DoubleSupplier reading, double baseline) {
+        Awaitility.await()
+                .atMost(Duration.ofSeconds(30))
+                .until(() -> reading.getAsDouble() >= baseline + 1);
+        Awaitility.await()
+                .during(Duration.ofSeconds(3))
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(
+                        () -> Assertions.assertThat(reading.getAsDouble()).isEqualTo(baseline + 1));
     }
 
     /**

@@ -4,11 +4,13 @@ import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.vrudenko.kanban_board.constant.MetricNames;
 import com.vrudenko.kanban_board.constant.ValidationConstants;
 import com.vrudenko.kanban_board.dto.board_dto.BoardResponseDTO;
 import com.vrudenko.kanban_board.dto.board_dto.SaveBoardRequestDTO;
 import com.vrudenko.kanban_board.dto.user_dto.SignupRequestDTO;
 import com.vrudenko.kanban_board.dto.user_dto.UserResponseDTO;
+import com.vrudenko.kanban_board.event.BoardCreatedEvent;
 import com.vrudenko.kanban_board.repository.ActivityLogRepository;
 import com.vrudenko.kanban_board.repository.BoardRepository;
 import com.vrudenko.kanban_board.service.UserService;
@@ -62,20 +64,17 @@ import org.springframework.test.context.DynamicPropertySource;
  *   TransactionalEventListener(AFTER_COMMIT) onto the kafkaPublishExecutor pool
  *   (KafkaEventPublisher), so the calling thread is released before the registry is
  *   contacted. An HTTP hop would add the servlet stack, which is not the subject.
- * - Finding this test surfaced, not patched over with production code:
- *   KafkaEventPublisher's Javadoc claims a registry failure "becomes a failed future rather
- *   than a synchronous throw" caught by its whenComplete callback. That holds only for
- *   a failure during the asynchronous network send (for example a broker that accepts the
- *   connection but never acknowledges). A registry lookup failure occurs earlier, inside Avro
- *   serialization, which KafkaProducer.doSend performs synchronously before a
- *   delivery future exists, so KafkaTemplate.send() throws
- *   SerializationException synchronously and whenComplete is never reached. Because
- *   the method is Async, Spring's default SimpleAsyncUncaughtExceptionHandler
- *   catches the throw at the async boundary and logs it at ERROR naming
- *   onActivityEvent, but without the event's eventId/boardId. The user-facing
- *   guarantee holds (the mutation persists, the caller is never blocked, the failure is
- *   logged), but "one resilience policy for the whole publish path" is in this sense two
- *   failure-propagation mechanisms, only one of which names the event.
+ * - What this test established about the publish path: a registry lookup failure occurs inside
+ *   Avro serialization, which KafkaProducer.doSend performs synchronously before a delivery future
+ *   exists, so KafkaTemplate.send() throws SerializationException and the whenComplete
+ *   callback in KafkaEventPublisher is never reached. KafkaEventPublisher therefore wraps the
+ *   mapping and the send in a catch that counts the failure in kanban.kafka.publish.failures and
+ *   rethrows (PublishFailureCounterTest here pins the count). The rethrow lets Spring's default
+ *   SimpleAsyncUncaughtExceptionHandler, which guards the Async method, log the failure at ERROR
+ *   naming onActivityEvent, without the event's eventId/boardId. The user-facing guarantee holds
+ *   (the mutation persists, the caller is never blocked, the failure is logged and counted). A
+ *   failure after the send returned a future is the other path, covered by
+ *   KafkaPublishFailureE2ETest.
  */
 @SpringBootTest
 @Tag("kafka")
@@ -146,6 +145,56 @@ class SchemaRegistryOutageE2ETest extends AbstractKafkaContainerTest {
     void detachRootLogAppender() {
         rootLogger.detachAppender(logAppender);
         logAppender.stop();
+    }
+
+    @Nested
+    class PublishFailureCounterTest {
+
+        @Test
+        void shouldRaisePublishFailureCounterByExactlyOne_whenSendThrowsSynchronously() {
+            // arrange -- a signed-up user, and a baseline read once any earlier publish in this
+            // context has finished failing.
+            UserResponseDTO owningUser =
+                    userService.save(
+                            SignupRequestDTO.builder()
+                                    .email(generateValidEmail())
+                                    .displayName(
+                                            dataFactory.getRandomWord(
+                                                    ValidationConstants
+                                                            .MIN_USER_DISPLAY_NAME_LENGTH))
+                                    .password(
+                                            dataFactory.getRandomWord(
+                                                    ValidationConstants.MIN_PASSWORD_LENGTH))
+                                    .build());
+            var eventTag = BoardCreatedEvent.class.getSimpleName();
+            var publishFailures =
+                    counterReading(
+                            MetricNames.KAFKA_PUBLISH_FAILURES, MetricNames.TAG_EVENT, eventTag);
+            var baseline = awaitSettled(publishFailures);
+
+            // act -- the mutation whose after-commit publish throws inside serialization.
+            userService.addBoardByUserId(
+                    owningUser.getId(),
+                    SaveBoardRequestDTO.builder()
+                            .name(
+                                    dataFactory.getRandomWord(
+                                            ValidationConstants.MIN_BOARD_NAME_LENGTH + 4))
+                            .build());
+
+            // assert -- one failed publish is one increment, tagged with the event's class name,
+            // and the throw is still logged at the async boundary.
+            assertRisesByExactlyOne(publishFailures, baseline);
+            Assertions.assertThat(
+                            logAppender.list.stream()
+                                    .anyMatch(
+                                            event ->
+                                                    event.getLevel()
+                                                                    == ch.qos.logback.classic.Level
+                                                                            .ERROR
+                                                            && event.getFormattedMessage()
+                                                                    .contains("onActivityEvent")))
+                    .isTrue();
+        }
     }
 
     @Nested
