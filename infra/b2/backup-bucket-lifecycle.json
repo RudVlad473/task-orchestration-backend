@@ -1,0 +1,40 @@
+{
+  "Rules": [
+    {
+      "ID": "daily-hide-after-7-days",
+      "Filter": { "Prefix": "daily/" },
+      "Status": "Enabled",
+      "Expiration": { "Days": 7 }
+    },
+    {
+      "ID": "daily-orphan-delete-markers",
+      "Filter": { "Prefix": "daily/" },
+      "Status": "Enabled",
+      "Expiration": { "ExpiredObjectDeleteMarker": true }
+    },
+    {
+      "ID": "daily-delete-hidden-after-1-day",
+      "Filter": { "Prefix": "daily/" },
+      "Status": "Enabled",
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 1 }
+    },
+    {
+      "ID": "weekly-hide-after-28-days",
+      "Filter": { "Prefix": "weekly/" },
+      "Status": "Enabled",
+      "Expiration": { "Days": 28 }
+    },
+    {
+      "ID": "weekly-orphan-delete-markers",
+      "Filter": { "Prefix": "weekly/" },
+      "Status": "Enabled",
+      "Expiration": { "ExpiredObjectDeleteMarker": true }
+    },
+    {
+      "ID": "weekly-delete-hidden-after-1-day",
+      "Filter": { "Prefix": "weekly/" },
+      "Status": "Enabled",
+      "NoncurrentVersionExpiration": { "NoncurrentDays": 1 }
+    }
+  ]
+}
