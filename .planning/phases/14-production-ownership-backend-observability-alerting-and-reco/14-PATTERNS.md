@@ -17,7 +17,7 @@ All analog paths below were confirmed with `git ls-files`. Line numbers come fro
 | `src/main/.../constant/ApiPaths.java` (+`HEALTHZ`) | utility | constant | itself (`ACTUATOR_HEALTH`, line 38) | exact |
 | `src/main/.../config/KafkaConsumerConfig.java` (template observation, DLT counter) | config | event-driven | itself (`kafkaTemplate` ~81-83, `recovered` ~175-185) | exact |
 | `src/main/.../config/AsyncConfig.java` (TaskDecorator) | config | event-driven | itself (lines 16-23) | exact |
-| `src/main/.../config/KafkaEventPublisher.java` (publish-failure counter) | service | event-driven | itself (`whenComplete`, lines 44-65) | exact |
+| `src/main/.../config/KafkaEventPublisher.java` (publish-failure counter) | service | event-driven | itself (`whenComplete`, lines 44-65; plus a rethrowing catch around the `toAvro` and `send` calls) | exact |
 | `src/main/.../handler/GlobalExceptionHandler.java` (conflict, ownership, auth counters, WARN log) | controller-advice | request-response | itself (arms at 150-156, 185-191, 89-95) | exact |
 | `src/main/.../security/ProblemDetailAuthenticationEntryPoint.java` (unauthenticated counter) | middleware | request-response | itself (`commence`) | exact |
 | `src/main/.../service/TaskService.java` (created/moved counters, optional Observation) | service | CRUD | itself (`save` 57-58, `moveToColumn` 172-173) | exact |
@@ -94,7 +94,7 @@ Increment `kanban_activity_dlt_written_total` here; `failedDelivery` stays a doc
 @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
 @Autowired private ActivityEventAvroMapper activityEventAvroMapper;
 ```
-Add `@Autowired private MeterRegistry meterRegistry;` and increment `kanban_kafka_publish_failures_total` inside `if (ex != null) { log.error(...) }` (lines ~52-61).
+Add `@Autowired private MeterRegistry meterRegistry;` and a private `countPublishFailure(ActivityEvent)` that increments `kanban_kafka_publish_failures_total`. Call it from two sites so a failed publish counts exactly once: inside `if (ex != null) { log.error(...) }` (lines ~52-61, a future that completes exceptionally), and from a `catch (RuntimeException)` around the `toAvro` and `send` calls that then rethrows (a synchronous throw, which returns no future so `whenComplete` is never attached).
 
 ### `GlobalExceptionHandler.java` (controller-advice, request-response)
 
