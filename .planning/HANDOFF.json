@@ -1,35 +1,36 @@
 {
   "version": "1.0",
-  "timestamp": "2026-10-16T19:30:14.075Z",
+  "timestamp": "2026-10-16T21:48:58.050Z",
   "phase": "14",
   "phase_name": "Production ownership: backend observability, alerting and recovery",
   "phase_dir": ".planning/phases/14-production-ownership-backend-observability-alerting-and-reco",
-  "plan": 5,
-  "task": 1,
-  "total_tasks": 13,
+  "plan": 7,
+  "task": 2,
+  "total_tasks": 2,
   "status": "paused",
   "completed_tasks": [
     {"id": "14-01", "name": "management-port metrics tracer, code merged to local main", "status": "done", "commit": "cc48cf2, a5402e3", "note": "Task 3 (live rollout) NOT executed"},
     {"id": "14-02", "name": "Postgres backup script, B2 lifecycle, Backblaze setup, VPS Secret postgres-backup", "status": "done", "commit": "c8db76b, 8d48e07, 799d30b, 2531727"},
     {"id": "14-04", "name": "auth/ownership/conflict counters, JSON security events, ECS logs, @Observed service timers", "status": "done", "commit": "f621d53, 90f3745, c740faf, 39ec2d2"},
-    {"id": "14-05", "name": "Kafka failure and dead-letter counters, latency buckets, scrape contract", "status": "done", "commit": "a82ff47, 8e853cd, 21e7391", "note": "merged to local main; merged-result gate (spotlessCheck + fastTest) was running when this was written, verify its result in /tmp/claude-1000/merged-fasttest-3.log or re-run"}
+    {"id": "14-05", "name": "Kafka failure and dead-letter counters, latency buckets, scrape contract", "status": "done", "commit": "a82ff47, 8e853cd, 21e7391", "note": "merged-main gate VERIFIED this session: spotlessCheck + fastTest BUILD SUCCESSFUL in 7m 42s"},
+    {"id": "14-07-task1", "name": "OpenTelemetry tracing deps, properties, TraceLogCorrelationE2ETest, in-memory span exporter", "status": "done", "commit": "3fb75c4"},
+    {"id": "14-07-task2", "name": "ContextPropagatingTaskDecorator on kafkaPublishExecutor, observation-enabled KafkaTemplate, ActivityTraceContinuityE2ETest", "status": "in_progress", "progress": "gsd-executor a4809c237f5e6540e was still running when paused; uncommitted edits to AsyncConfig.java, KafkaConsumerConfig.java and a new ActivityTraceContinuityE2ETest.java; no SUMMARY.md yet"}
   ],
   "remaining_tasks": [
+    {"id": "14-07-finish", "name": "finish 14-07 task 2, SUMMARY.md, STATE/ROADMAP update", "status": "in_progress"},
     {"id": "14-01-task3", "name": "14-01 live rollout: suspend Flux, push explicit SHAs, resume nonprod then prod then root, dispatch uptime-check", "status": "not_started"},
     {"id": "14-03", "name": "backup CronJob, needs the user's choice of backup container image (Task 1) and a production push (Task 3)", "status": "not_started"},
-    {"id": "14-06", "name": "Telegram bot and healthchecks.io check, human setup needed", "status": "not_started"},
-    {"id": "14-07", "name": "tracing spans", "status": "not_started"},
+    {"id": "14-06", "name": "Telegram bot and healthchecks.io check, human setup needed; depends on 14-03", "status": "not_started"},
     {"id": "14-08..14-13", "name": "alert rules, fault injection (14-10 needs scope approval), later plans", "status": "not_started"}
   ],
   "blockers": [
     {"description": "14-03 Task 1 needs the user's choice of how the backup container gets pg_dump 16, age and aws-cli", "type": "human_action", "workaround": "none, the plan marks it a blocking decision"},
-    {"description": "14-01 Task 3 and 14-03 Task 3 push to production; Flux would deploy 14-01's probe changes unsupervised", "type": "human_action", "workaround": "rollout steps are in 14-01-SUMMARY.md under Task 3 handoff; needs explicit approval"},
-    {"description": "Narrow tools: allowlists with mcp__serena__* did not expose Serena to a spawned gsd-executor (probe found nothing); inheriting all tools with disallowedTools did (14-05 used Serena). Agent definitions load at spawn, no restart needed", "type": "technical", "workaround": "none needed now; keep the inherit-all form for executor, debugger and code-fixer"}
+    {"description": "14-01 Task 3 and 14-03 Task 3 push to production; Flux would deploy 14-01's probe changes unsupervised", "type": "human_action", "workaround": "rollout steps are in 14-01-SUMMARY.md under Task 3 handoff; needs explicit approval"}
   ],
   "async_jobs": [],
   "human_actions_pending": [
-    {"action": "Answer the 14-03 Task 1 image decision", "context": "blocks the backup CronJob", "blocking": true},
-    {"action": "Approve or decline the 14-01 live rollout and the production push", "context": "main is 12 commits ahead of origin/main and 1 behind (new remote commit c1ba3fe)", "blocking": false},
+    {"action": "Answer the 14-03 Task 1 image decision", "context": "blocks the backup CronJob and, through it, 14-06", "blocking": true},
+    {"action": "Approve or decline the 14-01 live rollout and the production push", "context": "main is 18 commits ahead of origin/main and 1 behind (remote commit c1ba3fe)", "blocking": false},
     {"action": "Delete or move the untracked private key file kanban-backup.agekey in the repo root", "context": "it holds an age keypair that is NOT the one in pass; could be committed by accident", "blocking": false},
     {"action": "Decide whether to keep master-key-id and master-key in pass", "context": "the Backblaze master key can mint any key", "blocking": false},
     {"action": "Set a Backblaze billing cap or alert in the dashboard", "context": "about 11 GB per database expected, 10 GB free then $0.005 per GB-month; unconfirmed whether set", "blocking": false},
@@ -39,11 +40,11 @@
     {"decision": "Management port 9081, public health at /api/healthz, /api/actuator/health retired", "rationale": "user chose option 1 for 14-01", "phase": "14"},
     {"decision": "Backblaze bucket default retention is Governance 7 days", "rationale": "a console save first set Compliance; fixed with put-object-lock-configuration and proven by a delete-with-bypass probe", "phase": "14"},
     {"decision": "VM key is writeFiles-only on the backup bucket, admin key revoked", "rationale": "plan decision D-12; verified via b2_authorize_account v4", "phase": "14"},
-    {"decision": "Service-level timers use @Observed(name = MetricNames.X), not hand-written Observation wrappers", "rationale": "cross-cutting concern kept out of business methods; recorded in docs/ARCHITECTURE.md and 14-04-PLAN.md", "phase": "14"},
-    {"decision": "GSD code reviewer loads test-rigor-review, review-comments and the project rubric through agent_skills", "rationale": "was unwired; proven with a weak-test probe (commit 11b4aac)", "phase": "14"},
-    {"decision": "gsd-executor, gsd-debugger and gsd-code-fixer inherit all tools with a disallowedTools denylist", "rationale": "narrow allowlists failed quietly (no Serena, no web-access)", "phase": "14"}
+    {"decision": "Service-level timers use @Observed(name = MetricNames.X), not hand-written Observation wrappers", "rationale": "cross-cutting concern kept out of business methods", "phase": "14"},
+    {"decision": "gsd-executor, gsd-debugger and gsd-code-fixer inherit all tools with a disallowedTools denylist", "rationale": "narrow allowlists failed quietly (no Serena, no web-access)", "phase": "14"},
+    {"decision": "workflow.use_worktrees is false: executors run sequentially on main, guarded by a bound root-pin script", "rationale": "user chose option 2 earlier; the pin script is generated per dispatch from worktree-path-safety.md (bind only line 2, a global sed also rewrites the unbound-sentinel and the guard then rejects every root)", "phase": "14"}
   ],
-  "uncommitted_files": [" M .planning/STATE.md", "?? kanban-backup.agekey"],
-  "next_action": "Confirm the merged-main gate for 14-05 passed (re-run ./gradlew spotlessCheck fastTest if unsure), then continue with the next wave. workflow.use_worktrees is now false (user chose option 2): executors run sequentially on main, so there is no merge step; two-plan waves lose parallelism",
-  "context_notes": "Never push without explicit approval. 14-04 executor findings still queued: kanban.task.create timer misses its commit (move @Observed to ColumnService.addTaskByColumnId), counters increment before commit."
+  "uncommitted_files": [" M .planning/STATE.md", " M src/main/java/com/vrudenko/kanban_board/config/AsyncConfig.java", " M src/main/java/com/vrudenko/kanban_board/config/KafkaConsumerConfig.java", "?? kanban-backup.agekey", "?? src/test/java/com/vrudenko/kanban_board/activitylog/ActivityTraceContinuityE2ETest.java"],
+  "next_action": "FIRST check whether executor a4809c237f5e6540e finished (git log for a 14-07 task 2 commit and 14-07-SUMMARY.md). If it did, verify with ./gradlew spotlessCheck fastTest and move on. If the session died and the three uncommitted 14-07 files are still dirty, do NOT resume a new executor on top blindly: read the diff, then either finish task 2 or git stash it. Then ask the user for the 14-03 image decision.",
+  "context_notes": "Never push without explicit approval. The 14-07 executor was dispatched without a model parameter (inherits the gsd-executor default; check which model it used). 14-04 executor findings still queued: kanban.task.create timer misses its commit (move @Observed to ColumnService.addTaskByColumnId), counters increment before commit."
 }
