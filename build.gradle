@@ -8,8 +8,8 @@ plugins {
     // JaCoCo coverage tracking, enforced as a ratchet (jacocoTestCoverageVerification).
     //
     // Ships inside Gradle core: no third-party plugin coordinate is resolved, only the org.jacoco agent/ant
-    // artifacts the toolVersion below pins. See jacocoTestReport for the generated-code exclusions that keep
-    // the denominator honest.
+    // artifacts the toolVersion below pins. Generated code is excluded from the coverage denominator so the
+    // numbers stay honest.
     id 'jacoco'
 
     // Compiles src/main/avro/*.avsc into generated SpecificRecord classes at build time.
@@ -23,10 +23,9 @@ plugins {
     //
     // Decisions:
     // Version 12.2.2, not 13.0.0: a maturity judgement call, not a verified compatibility fact. 13.0.0 published
-    // 2026-08-03, ten days before this was added; 12.2.2 published 2026-05-03 and has three months of field
-    // exposure. Its release notes flag a DB schema change, which only invalidates a warm cache on first run.
-    // This file's precedent (error_prone_core, jacoco.toolVersion, the avro plugin above) is to pin a reviewed,
-    // settled version rather than the newest.
+    // 2026-08-03; 12.2.2 published 2026-05-03 and has three months of field exposure. Its release notes flag a
+    // DB schema change, which only invalidates a warm cache on first run. Pin a reviewed, settled version
+    // rather than the newest.
     // Publication gotcha: org.owasp:dependency-check-gradle stops at 10.0.3 on Maven Central (2024-07-16);
     // 11.x, 12.x and 13.x are published to the Gradle Plugin Portal m2 repository only. This resolves because
     // settings.gradle has no pluginManagement block, so the default gradlePluginPortal() applies; it breaks the
@@ -41,9 +40,8 @@ plugins {
     // intent, and "it broke and I changed nothing" is an expected outcome, not a bug to hunt.
     // Rung and ratchet: report-only today (see the dependencyCheck block below), because even after the Spring
     // Boot 3.5.0 -> 3.5.16 bump the CPE-matched finding count will exceed the OSV-measured one, the difference
-    // being false positives. The post-bump OSV re-measurement
-    // (.planning/quick/260813-q1i-add-a-dependency-vulnerability-scan-owas/260813-q1i-MEASUREMENTS.md): 5
-    // findings across 3 modules, 0 CRITICAL, 1 HIGH, 4 MODERATE, 0 LOW (down from 70 across 20 modules pre-bump).
+    // being false positives. The post-bump OSV re-measurement is recorded in
+    // .planning/quick/260813-q1i-add-a-dependency-vulnerability-scan-owas/260813-q1i-MEASUREMENTS.md.
     // TODO: .planning/todos/pending/2026-08-13-ratchet-failbuildoncvss-after-a-real-dependency-check-baseline.md - pick a failBuildOnCVSS rung once a real dependencyCheckAnalyze baseline exists and its false positives are suppressed with cited evidence.
     id 'org.owasp.dependencycheck' version '12.2.2'
 }
@@ -142,7 +140,6 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
-    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // Backs management.endpoints.web.exposure.include=health in application.properties: the production
@@ -158,13 +155,11 @@ dependencies {
     // unused to a dependency audit; it is not. Do not remove it.
     implementation 'org.springframework.session:spring-session-jdbc'
 
-    // https://mvnrepository.com/artifact/com.google.guava/guava
     implementation 'com.google.guava:guava:32.0.1-android'
 
     implementation 'org.mapstruct:mapstruct:1.5.3.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
 
-    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
     // commons-lang3 3.18.0, `implementation` scope: a floor against two separate regressions.
     //
     // Decisions:
@@ -185,22 +180,18 @@ dependencies {
     // extends into the test compile and runtime configurations.
     implementation 'org.apache.commons:commons-lang3:3.18.0'
 
-    // https://mvnrepository.com/artifact/org.fluttercode.datafactory/datafactory
     testImplementation 'org.fluttercode.datafactory:datafactory:0.8'
 
     implementation 'io.vavr:vavr:0.10.4'
 
     testImplementation 'org.springframework.security:spring-security-test'
 
-    // https://mvnrepository.com/artifact/org.apache.commons/commons-collections4
     implementation("org.apache.commons:commons-collections4:4.5.0")
 
     implementation 'com.github.f4b6a3:ulid-creator:5.2.0'
 
-    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
 
-    // https://mvnrepository.com/artifact/io.rest-assured/rest-assured
     testImplementation("io.rest-assured:rest-assured:5.5.5")
 
     implementation 'org.springframework.kafka:spring-kafka'
@@ -244,13 +235,6 @@ dependencies {
     // is the only datasource left for the whole suite.
     testImplementation 'org.testcontainers:postgresql'
 
-    // Avro codegen returns java.util.UUID and java.time.Instant natively for the "uuid" and "timestamp-millis"
-    // logical types (gradle-avro-plugin 1.9.1 + Avro 1.12.1).
-    //
-    // Observed on AvroTaskMovedEvent: getEventId() and getTimestamp() need no manual UUID.fromString()/
-    // Instant.ofEpochMilli() conversion in ActivityEventAvroMapper.
-
-    // https://mvnrepository.com/artifact/com.tngtech.archunit/archunit-junit5
     testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.2'
 
     errorprone 'com.google.errorprone:error_prone_core:2.50.0'
@@ -312,20 +296,9 @@ tasks.register('fastTest', Test) {
     useJUnitPlatform {
         excludeTags 'kafka', 'realSocket'
     }
-    // maxParallelForks = 2, measured against this codebase, not guessed.
-    //
-    // Decisions:
-    // After the BCrypt lever, `./gradlew fastTest --rerun-tasks` averaged 285.0s over 2 runs at 1 fork; at 2 forks
-    // it averaged 242.5s (233s, 252s), beating the 1-fork average by far more than the ~18s run-to-run variance.
-    // A live container census during a 2-fork run showed exactly 2 PostgreSQL containers (one per fork) and,
-    // since `fastTest` is not Redpanda-free (HistoricalActivityEventReconstructorTest extends
-    // AbstractKafkaContainerTest with no @Tag), up to 1 Redpanda container against this machine's 7.728 GiB
-    // Docker budget; no run failed on container startup or memory. 4 forks were worse (277s, 267s avg) and only
-    // one of its two runs cleared the variance bar, so 4 was not adopted. Safe because each Gradle test-worker
-    // fork is a separate JVM with its own classloader, so AbstractPostgresContainerTest's `static {
-    // postgres.start(); }` runs once per fork: N forks means N independent PostgreSQL containers and databases,
-    // so the `@AfterEach`-deletion isolation model (which only wipes its own fork's database) is untouched.
-    // Every run: `.planning/quick/260811-ixj-investigate-and-implement-test-suite-spe/260811-ixj-MEASUREMENTS.md`.
+    // `./gradlew fastTest --rerun-tasks` averaged 285.0s at 1 fork and 242.5s (233s, 252s) at 2. A 2-fork run
+    // holds 2 PostgreSQL containers and at most 1 Redpanda container (one Kafka-container test class carries no
+    // kafka tag), inside this machine's 7.728 GiB Docker budget.
     maxParallelForks = 2
     // forkEvery is deliberately left at its default of 0 (one JVM handles every class assigned to it).
     //
@@ -354,9 +327,6 @@ tasks.register('fastTest', Test) {
 // reused by both tasks below.
 def jacocoGeneratedCodeExcludes = [
         // MapStruct's generated *Impl.class mappers, compiled into the same classes dir as hand-written code.
-        //
-        // Every @Mapper interface generates a sibling <InterfaceName>Impl with no hand-written logic to lose
-        // coverage visibility on.
         '**/mapper/*MapperImpl.class',
         // gradle-avro-plugin's codegen output (build/generated-main-avro-java), as a class-file pattern.
         //
@@ -370,9 +340,8 @@ jacoco {
     // Pinned to an exact release, not left floating: an unreviewed upstream release must not change
     // coverage-report behaviour, or which classes participate in the denominator, under a future build.
     //
-    // Mirrors the pinning of errorprone and the avro plugin. 0.8.12 is Gradle 8.11.1's own bundled default for
-    // this wrapper (verified with a throwaway `println jacoco.toolVersion` task before pinning) and a known-good
-    // combination for the Java 21 toolchain.
+    // 0.8.12 is Gradle 8.11.1's own bundled default for this wrapper (verified with a throwaway
+    // `println jacoco.toolVersion` task before pinning) and a known-good combination for the Java 21 toolchain.
     toolVersion = '0.8.12'
 }
 
@@ -431,7 +400,7 @@ jacocoTestCoverageVerification {
         }
     }
 
-    // Same generated-code exclusions as jacocoTestReport above; the ratchet and the report MUST share one denominator.
+    // The ratchet and the coverage report must share one denominator.
     afterEvaluate {
         classDirectories.setFrom(
                 files(classDirectories.files.collect {
@@ -454,9 +423,8 @@ jacocoTestCoverageVerification {
 // the reasoning recorded for `finalizedBy jacocoTestCoverageVerification`. Not wired into `fastTest`: it stays
 // lean (it already opts out of the JaCoCo agent for the same reason), and a dependency-scope regression is
 // not introduced accidentally mid-feature.
-// One entry today; the map shape makes the next floor one line. A module absent from `runtimeClasspath`
-// entirely fails loudly rather than silently matching nothing: a floor that can no longer find its target
-// has quietly stopped checking.
+// A module absent from `runtimeClasspath` entirely fails loudly rather than silently matching nothing: a floor
+// that can no longer find its target has quietly stopped checking.
 def runtimeDependencyFloors = [
         'org.apache.commons:commons-lang3': '3.18.0'
 ]
@@ -581,8 +549,8 @@ dependencyCheck {
 // AbstractKafkaContainerTest's static initializer calls the same AvroSchemaRegistrar.registerAll() this task
 // invokes, so test-time and build-time registration cannot drift apart (docs/CODE_STYLE.md rule 8).
 tasks.register('registerSchemas', JavaExec) {
-    description = 'Registers all 14 Avro schemas against the Schema Registry with BACKWARD ' +
-            'compatibility (SCHEMA-01, SCHEMA-04, D-02).'
+    description = 'Registers the Avro schemas against the Schema Registry with BACKWARD ' +
+            'compatibility.'
     group = 'kafka'
     dependsOn classes
     classpath = sourceSets.main.runtimeClasspath
@@ -597,16 +565,16 @@ tasks.register('registerSchemas', JavaExec) {
 // Rehearses the new Avro schemas against real historical activity_log rows; tagged 'rehearsal' and excluded from `test`.
 //
 // Decisions:
-// Filtered by tag, not class name, mirroring fastTest's precedent: Gradle's `test` task offers inclusion via
-// `--tests` but no declarative exclusion, so the filter lives in the build script either way.
+// Filtered by tag, not class name: Gradle's `test` task offers inclusion via `--tests` but no declarative
+// exclusion, so the filter lives in the build script either way.
 // Deliberately does NOT set spring.profiles.active=test, unlike `test` and `fastTest`: Spring then resolves
 // application.properties' default datasource, which points at a real Postgres via the
 // DB_HOST/DB_NAME/DB_USER/DB_PASS variables the running application uses (see
 // HistoricalSchemaRehearsalE2ETest's Javadoc), which is what lets this task read genuine historical rows
 // instead of an empty, freshly-created per-run Testcontainers database.
 tasks.register('rehearseHistoricalSchemas', Test) {
-    description = 'Rehearses the new Avro schemas against real historical activity_log rows ' +
-            '(SCHEMA-06). Requires DB_HOST/DB_NAME/DB_USER/DB_PASS pointed at a real Postgres ' +
+    description = 'Rehearses the new Avro schemas against real historical activity_log rows. ' +
+            'Requires DB_HOST/DB_NAME/DB_USER/DB_PASS pointed at a real Postgres ' +
             'instance holding historical activity_log data, and Docker for the Testcontainers ' +
             'Redpanda broker/registry.'
     group = 'verification'
