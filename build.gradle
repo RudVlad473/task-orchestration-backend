@@ -14,8 +14,8 @@ plugins {
 
     // Compiles src/main/avro/*.avsc into generated SpecificRecord classes at build time.
     //
-    // Pinned exactly: the project was archived by its owner on 2026-12-28 and donated to the Apache Avro
-    // project, so 1.9.1 is its final, permanent release. It remains functionally complete for plain .avsc
+    // Pinned exactly: GitHub reports davidmc24/gradle-avro-plugin as archived (last push 2023-12-28), so
+    // 1.9.1 (released 2023-10-10) is its final release. It remains functionally complete for plain .avsc
     // codegen with built-in logical types, which is all this project needs.
     id 'com.github.davidmc24.gradle.plugin.avro' version '1.9.1'
 
