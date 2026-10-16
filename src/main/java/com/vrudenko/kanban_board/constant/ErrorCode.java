@@ -19,7 +19,10 @@ public enum ErrorCode {
     DATA_INTEGRITY_VIOLATION,
     BAD_CREDENTIALS,
     VALIDATION_FAILED,
-    UNAUTHENTICATED;
+    UNAUTHENTICATED,
+    METHOD_NOT_ALLOWED,
+    UNSUPPORTED_MEDIA_TYPE,
+    NOT_FOUND;
 
     /** ProblemDetail extension property key carrying this enum's name(). */
     public static final String CODE_PROPERTY = "code";

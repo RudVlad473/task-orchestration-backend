@@ -25,6 +25,19 @@ ArchUnit rule rather than by convention (see [Testing](#testing)).
   response — from either producer — carries the same shape and a stable `code` extension property
   (`ErrorCode`). See the error-handling sequence diagram below for the full four-way split
   including 400 and 409.
+- **A request the router rejects is a 4xx in the same envelope, never a 500.** A wrong HTTP method
+  (`METHOD_NOT_ALLOWED`, 405, with the `Allow` header), an unsupported request content type
+  (`UNSUPPORTED_MEDIA_TYPE`, 415) and a path nothing serves (`NOT_FOUND`, 404) each have their own
+  `GlobalExceptionHandler` arm. Without them the `Exception.class` catch-all answered a scanner's
+  `GET /api/signin` with a 500, which a server-error-ratio alert counts as the application failing.
+  `BusinessMetricsE2ETest.ScannerProbeTest` holds all three.
+- **Authentication failures and ownership denials are counted and logged.** Each one increments a
+  Micrometer counter (`kanban_auth_failures_total{reason}`, `kanban_ownership_denied_total`, plus
+  `kanban_optimistic_lock_conflicts_total` for 409s) and writes one WARN line with the fixed fields
+  `security_event`, `reason`, `http_method` and `path` (plus an opaque `user_id` for an ownership
+  denial), as ECS JSON on the console. The submitted email, password, exception message and session
+  id are never written. Names live in `MetricNames` and `SecurityEventLog`;
+  `SecurityEventLogE2ETest` and `BusinessMetricsE2ETest` hold them.
 - **The error envelope is now a published contract, not merely a runtime one.** The generated
   OpenAPI document declares the `ProblemDetail` shape on every operation, so a downstream consumer
   generates its error type from the spec instead of hand-authoring it. The mechanism is a single
