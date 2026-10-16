@@ -1,0 +1,93 @@
+rule_files:
+  - rules.yml
+evaluation_interval: 1m
+tests:
+  # New pod (Recreate) whose first scraped sample is already 1: a dead letter written before the first scrape.
+  - interval: 1m
+    input_series:
+      - series: 'kanban_activity_dlt_written_total{namespace="kanban-prod",pod="app-old"}'
+        values: '0 0 0 0 0 0 0 0 0 0'
+      - series: 'kanban_activity_dlt_written_total{namespace="kanban-prod",pod="app-new"}'
+        values: '_ _ _ _ _ _ _ _ _ _ 1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: DltIncreaseOnly
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: DltInstantOffset
+        exp_alerts:
+          - exp_labels: {namespace: kanban-prod, pod: app-new, severity: warning}
+      - eval_time: 12m
+        alertname: ActivityDeadLetterWritten
+        exp_alerts:
+          - exp_labels: {namespace: kanban-prod, pod: app-new, severity: warning}
+
+  # Long-lived pod whose counter is already 2, with one failed scrape (stale marker) at 20m and no new dead letter.
+  - interval: 1m
+    input_series:
+      - series: 'kanban_activity_dlt_written_total{namespace="kanban-prod",pod="app-a"}'
+        values: '2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 stale 2 2 2 2 2 2 2 2 2 2 2 2 2'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: DltInstantOffset
+        exp_alerts:
+          - exp_labels: {namespace: kanban-prod, pod: app-a, severity: warning}
+      - eval_time: 30m
+        alertname: ActivityDeadLetterWritten
+        exp_alerts: []
+      - eval_time: 30m
+        alertname: DltIncreaseOnly
+        exp_alerts: []
+
+  # Long-lived pod, counter goes 0 to 1.
+  - interval: 1m
+    input_series:
+      - series: 'kanban_activity_dlt_written_total{namespace="kanban-prod",pod="app-b"}'
+        values: '0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: ActivityDeadLetterWritten
+        exp_alerts:
+          - exp_labels: {namespace: kanban-prod, pod: app-b, severity: warning}
+      - eval_time: 20m
+        alertname: DltIncreaseOnly
+        exp_alerts:
+          - exp_labels: {namespace: kanban-prod, pod: app-b, severity: warning}
+
+  # New series that starts at 0 and stays flat: no page, before or after it is 10 minutes old.
+  - interval: 1m
+    input_series:
+      - series: 'kanban_activity_dlt_written_total{namespace="kanban-prod",pod="app-c"}'
+        values: '0+0x30'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ActivityDeadLetterWritten
+        exp_alerts: []
+      - eval_time: 20m
+        alertname: ActivityDeadLetterWritten
+        exp_alerts: []
+
+  # Container restart inside the same pod (same labels): counter 3, a failed scrape, then the new process at 1.
+  - interval: 1m
+    input_series:
+      - series: 'kanban_activity_dlt_written_total{namespace="kanban-prod",pod="app-d"}'
+        values: '3 3 3 3 3 3 3 3 3 3 stale 1 1 1 1'
+    alert_rule_test:
+      - eval_time: 13m
+        alertname: ActivityDeadLetterWritten
+        exp_alerts:
+          - exp_labels: {namespace: kanban-prod, pod: app-d, severity: warning}
+
+  # Caught-up consumer: lag flat at 0.
+  - interval: 1m
+    input_series:
+      - series: 'kafka_consumer_fetch_manager_records_lag_max{namespace="kanban-nonprod",client_id="consumer-activity-log-1"}'
+        values: '0+0x30'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: ActivityConsumerLagRisingScratch
+        exp_alerts:
+          - exp_labels: {namespace: kanban-nonprod, client_id: consumer-activity-log-1, severity: warning}
+      - eval_time: 15m
+        alertname: LagScratchDerivUnchanged
+        exp_alerts: []

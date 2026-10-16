@@ -1,0 +1,30 @@
+groups:
+  - name: fixture
+    rules:
+      # The expression 14-06 planned before BUG-5: misses a new series first sampled above 0.
+      - alert: DltIncreaseOnly
+        expr: increase(kanban_activity_dlt_written_total[10m]) > 0
+        labels:
+          severity: warning
+      # The review's suggested shape: an instant offset lookup, which a single stale marker defeats.
+      - alert: DltInstantOffset
+        expr: (kanban_activity_dlt_written_total unless kanban_activity_dlt_written_total offset 10m) > 0 or increase(kanban_activity_dlt_written_total[10m]) > 0
+        labels:
+          severity: warning
+      # The adopted expression: new-series branch looks back over a range, so stale markers do not count as absence.
+      - alert: ActivityDeadLetterWritten
+        expr: (kanban_activity_dlt_written_total unless max_over_time(kanban_activity_dlt_written_total[1h] offset 10m)) > 0 or increase(kanban_activity_dlt_written_total[10m]) > 0
+        labels:
+          severity: warning
+      # 14-10's substituted lag row with both conjuncts relaxed.
+      - alert: ActivityConsumerLagRisingScratch
+        expr: kafka_consumer_fetch_manager_records_lag_max{namespace="kanban-nonprod"} >= 0 and deriv(kafka_consumer_fetch_manager_records_lag_max{namespace="kanban-nonprod"}[10m]) >= 0
+        for: 2m
+        labels:
+          severity: warning
+      # 14-10's substituted lag row as planned before BUG-6: the derivative conjunct is untouched.
+      - alert: LagScratchDerivUnchanged
+        expr: kafka_consumer_fetch_manager_records_lag_max{namespace="kanban-nonprod"} >= 0 and deriv(kafka_consumer_fetch_manager_records_lag_max{namespace="kanban-nonprod"}[10m]) > 0
+        for: 2m
+        labels:
+          severity: warning
