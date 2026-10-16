@@ -1,4 +1,4 @@
-# Redpanda PodMonitor: scrapes both environments' Redpanda StatefulSets across namespaces.
+# PodMonitors for both environments: the Redpanda StatefulSets and the app Deployments, across namespaces.
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
@@ -17,6 +17,28 @@ spec:
       path: /public_metrics
       relabelings:
         # Derive the prod/nonprod `env` label from the scraped pod's namespace, not a per-environment copy.
+        - sourceLabels: [__meta_kubernetes_namespace]
+          regex: kanban-(.+)
+          targetLabel: env
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: app
+  namespace: monitoring
+spec:
+  namespaceSelector:
+    matchNames:
+      - kanban-prod
+      - kanban-nonprod
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: app
+  podMetricsEndpoints:
+    # The named container port `management` (9081) is the unrouted management server, not the Service port.
+    - port: management
+      path: /actuator/prometheus
+      relabelings:
         - sourceLabels: [__meta_kubernetes_namespace]
           regex: kanban-(.+)
           targetLabel: env

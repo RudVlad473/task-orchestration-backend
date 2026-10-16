@@ -61,6 +61,10 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+            # Actuator and Prometheus metrics. No Service port and no IngressRoute references it, so it is
+            # reachable only from inside the cluster (kubelet probes and the PodMonitor).
+            - name: management
+              containerPort: 9081
           envFrom:
             - secretRef:
                 # Created on the VM from env files; never committed, never handled by CI.
@@ -84,21 +88,22 @@ spec:
           # Set by the overlay's patches.yaml, with a dated MEASURED comment; empty here so the base
           # carries no unmeasured guess.
           resources: {}
+          # The probes call the unrouted management port, which has no /api context path.
           startupProbe:
             httpGet:
-              path: /api/actuator/health
-              port: http
+              path: /actuator/health
+              port: management
             periodSeconds: 5
             failureThreshold: 36
           readinessProbe:
             httpGet:
-              path: /api/actuator/health
-              port: http
+              path: /actuator/health
+              port: management
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /api/actuator/health
-              port: http
+              path: /actuator/health
+              port: management
             periodSeconds: 10
             failureThreshold: 5
 ---
@@ -112,6 +117,8 @@ spec:
   type: ClusterIP
   selector:
     app.kubernetes.io/name: app
+  # Never add the management port here: the IngressRoutes route this Service, and the actuator and
+  # metrics surface must stay cluster-internal.
   ports:
     - name: http
       port: 8080

@@ -142,11 +142,16 @@ dependencies {
 
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // Backs management.endpoints.web.exposure.include=health in application.properties: the production
-    // healthcheck's real "is the app working" signal (health aggregation includes the DataSource indicator).
+    // Backs the actuator endpoints in application.properties: the probes, the public /api/healthz and the scrape.
     //
-    // Not for general monitoring/metrics. No version pin: resolved by the managed Spring Boot 3.5.16 train.
+    // Health aggregation includes the DataSource indicator, the probes' real "is the app working" signal. The
+    // scrape and the probes run on a management port that no Service or IngressRoute routes. No version pin:
+    // resolved by the managed Spring Boot 3.5.16 train.
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Renders the Micrometer meters as the Prometheus text format served at /actuator/prometheus on the management
+    // port. No version pin: the Spring Boot 3.5.16 BOM manages it, together with the io.prometheus client it pulls in.
+    implementation 'io.micrometer:micrometer-registry-prometheus'
 
     // Backs the spring.session.* properties in application.properties (store-type=jdbc, initialize-schema=always).
     //

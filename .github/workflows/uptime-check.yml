@@ -10,8 +10,9 @@
 # (b) GitHub disables scheduled workflows in a public repository after 60 days of inactivity, so this
 #     stops silently if the repo goes quiet.
 # (c) It is a probe, not an alerting system: a red run sits in the Actions tab and pages nobody.
-# (d) `management.endpoint.health.show-details=never` (application.properties) means a failure can name
-#     the endpoint and its observed status, never the failing subsystem beneath it.
+# (d) The public /api/healthz is the `public` health group (application.properties): the database indicator
+#     only, with `show-details=never`, so a failure can name the endpoint and its observed status, never the
+#     failing subsystem beneath it, and it says nothing about the other indicators.
 name: Uptime Check
 
 on:
@@ -36,8 +37,8 @@ jobs:
       # Both endpoints are public and unauthenticated; no secret. Folded scalar: one whitespace-separated
       # line, iterated by deliberate unquoted word-splitting in the script below.
       HEALTH_URLS: >-
-        https://kanban-board-rud-vlad-473.duckdns.org/api/actuator/health
-        https://kanban-board-rud-vlad-473-nonprod.duckdns.org/api/actuator/health
+        https://kanban-board-rud-vlad-473.duckdns.org/api/healthz
+        https://kanban-board-rud-vlad-473-nonprod.duckdns.org/api/healthz
       # A single-shot probe turns a transient network blip into a red run, the false alarm this file exists
       # to prevent. 3 attempts x 10s stays sub-minute on a healthy run.
       ATTEMPTS: 3

@@ -32,10 +32,9 @@ public final class ApiPaths {
 
     public static final String SWAGGER_UI = "/swagger-ui";
 
-    // Actuator's default base path; management.server.port is unset, so it shares this app's port
-    // and context-path. Unlike SWAGGER_DOCS_PATH, which comes from springdoc.api-docs.path and has
-    // no fixed default to name here.
-    public static final String ACTUATOR_HEALTH = "/actuator/health";
+    // The public health group's additional path on the main port (application.properties,
+    // management.endpoint.health.group.public.additional-path).
+    public static final String HEALTHZ = "/healthz";
 
     // The nonprod-only data-reset endpoint (@Profile("nonprod"), ResetController). The external
     // URL is /api/admin/reset because server.servlet.context-path is /api.

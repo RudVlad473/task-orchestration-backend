@@ -6,8 +6,10 @@ import com.vrudenko.kanban_board.constant.ApiPaths;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -54,6 +56,30 @@ public class SecurityConfiguration {
     @Value("${server.servlet.session.cookie.name}")
     private String sessionCookieName;
 
+    /**
+     * Permit the actuator endpoints on the management server, and nowhere else.
+     *
+     * The matcher only matches on the management server when its port differs from the main
+     * port, so this chain never opens the routed port. permitAll is safe because that port is
+     * unrouted (no Service port or IngressRoute references it) and exposure is limited to health
+     * and prometheus.
+     *
+     * STATELESS keeps a scrape every few seconds from creating Spring Session rows. Its order of 0
+     * keeps it distinct from the order of 1 on NonprodResetSecurityConfiguration's chain, and both
+     * precede the unordered catch-all chain below.
+     */
+    @Bean
+    @Order(0)
+    public SecurityFilterChain managementSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.securityMatcher(EndpointRequest.toAnyEndpoint())
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .sessionManagement(
+                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        return http.build();
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         var securityContextRepository = new HttpSessionSecurityContextRepository();
@@ -71,12 +97,12 @@ public class SecurityConfiguration {
                                     SWAGGER_DOCS_PATH,
                                     String.format("%s/*", SWAGGER_DOCS_PATH),
                                     String.format("%s/*", ApiPaths.SWAGGER_UI),
-                                    // The health check calls this path unauthenticated.
+                                    // The uptime probe calls /api/healthz unauthenticated.
                                     //
                                     // Like SIGNIN above, the matcher is context-path-relative: the
                                     // container strips /api before request matchers run, so
-                                    // /api/actuator/health matches this /actuator/health entry.
-                                    ApiPaths.ACTUATOR_HEALTH)
+                                    // /api/healthz matches this /healthz entry.
+                                    ApiPaths.HEALTHZ)
                             .permitAll();
 
                     auth.anyRequest().authenticated();
