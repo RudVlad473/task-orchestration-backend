@@ -53,31 +53,35 @@ coverage:
         ref: "python3 -m json.tool; aws s3api put-bucket-lifecycle-configuration client-side validation (offline)"
         status: pass
     human_judgment: true
-    rationale: "The service itself has not accepted the file; Task 3 applies it and compares get-bucket-lifecycle-configuration."
+    rationale: "Resolved in Task 3: the service accepted the file and b2 bucket get showed the four rules at revision 7; not re-read after the Governance change."
   - id: D3
     description: "B2 account, bucket, write-only key, age keypair and VPS Secret"
-    verification: []
+    requirement: D-12
+    verification:
+      - kind: other
+        ref: "b2_authorize_account v4 capabilities == [writeFiles]; put-object allowed, list refused; Secret postgres-backup keys B2_APP_KEY,B2_KEY_ID read back from the cluster"
+        status: pass
     human_judgment: true
-    rationale: "Human-only setup (Task 3); not started."
+    rationale: "Human setup in the Backblaze console; Governance mode shown by delete-with-bypass behaviour, the 7-day period not read back."
 
 duration: 70min
 completed: 2026-10-16
-status: halted
+status: complete
 ---
 
 # Phase 14 Plan 02: Backup script, lifecycle rules and smoke harness Summary
 
 **Tested POSIX backup script (pg_dump, archive check, age, daily plus Sunday weekly put-object) with B2 lifecycle JSON; the plan is halted at the Object Lock decision and the human B2 setup.**
 
-## Status: PARTIAL, waiting on the user
+## Status: COMPLETE (all three tasks done; see "Task 1 and Task 3 outcome" below)
 
 | Task | State |
 |------|-------|
-| 1. Object Lock decision (`checkpoint:decision`, `gate="blocking"`, no `auto_select`) | NOT DECIDED. Needs a reply of option-a, option-b or option-c. |
+| 1. Object Lock decision (`checkpoint:decision`, `gate="blocking"`, no `auto_select`) | DECIDED: option a (Governance, 7 days). |
 | 2. Script, lifecycle JSON, harness | Done under the option-a/option-c baseline (commits below). |
-| 3. B2 account, bucket, key, age keypair, VPS Secret (`checkpoint:human-action`) | NOT STARTED. Needs the user. |
+| 3. B2 account, bucket, key, age keypair, VPS Secret (`checkpoint:human-action`) | Done 2026-10-16; the outcome section records each value. |
 
-Task 2 was built before Task 1 was answered, because the orchestrator asked for all autonomous work first and the script only depends on Task 1 for option-b. If the user picks option-a or option-c, nothing in Task 2 changes. If the user picks option-b, a follow-up commit is needed:
+Task 2 was built before Task 1 was answered. The user chose option a, so nothing in Task 2 changed. Had they picked option-b, a follow-up commit would have been needed (kept for the record):
 
 - postgres-backup.sh: add `WEEKLY_LOCK_DAYS` (default 28) and `--object-lock-mode GOVERNANCE --object-lock-retain-until-date <now + N days>` to the weekly put-object only.
 - smoke-postgres-backup.fish: assert those two flags on the weekly call and their absence on the daily call.
@@ -151,16 +155,27 @@ None beyond the plan's register. T-14-10 is covered by the EXIT trap and case 3.
 
 ## User Setup Required
 
-Task 3 needs the user: see `14-02-PLAN.md` Task 3 for the eight steps. Nothing has been created in Backblaze or on the VPS. No `14-USER-SETUP.md` was generated.
+Task 3 is done (see the outcome section). The one thing worth repeating: do not press "Update Bucket" in the Backblaze console Lifecycle Settings dialog, it replaces the rules. No `14-USER-SETUP.md` was generated.
+
+## Task 1 and Task 3 outcome (2026-10-16, recorded after the human setup)
+
+Values below hold no key material. Secrets live in `pass` on the operator machine (`backblaze/vm-key`, `backblaze/age-key`) and in Secret `postgres-backup` on the VPS.
+
+- **Object Lock option chosen:** option a, Governance with a 7-day default retention.
+- **Incident:** the first save in the console set Compliance mode instead. The first probe object (`test/writeonly-probe.txt`) is therefore Compliance-locked until 2026-10-23 17:32 GMT and cannot be deleted by anyone before then; it is 6 bytes. The bucket default was then set to Governance 7 days with `aws s3api put-object-lock-configuration` (admin key, exit 0).
+- **Governance proof, by behaviour:** a second probe uploaded with the VM key could not be deleted without the bypass header (AccessDenied) and was deleted with `--bypass-governance-retention`. The 7-day period itself was not read back (the keys held no read capability); check it on the first real upload in the console file view.
+- **S3 endpoint / region / bucket:** `https://s3.eu-central-003.backblazeb2.com` / `eu-central-003` / `kanban-prod-backups-16-09-26` (bucket id `7e860fe0483e4b5aae190a11`, private, default encryption SSE-B2 AES256).
+- **age public recipient:** `age1up3xrd06vmwnhym96sqpflw0j0vhkh9nf29am6neym46x4sdaqpse8hc60`. An encrypt and decrypt round trip with the stored private key succeeded.
+- **VM key capabilities:** `b2_authorize_account` on API v4 (v2 and v3 refuse the call) returned exactly `["writeFiles"]`, restricted to the backup bucket, no name prefix. A put-object succeeded and a list-objects-v2 call was refused. This meets D-12.
+- **Lifecycle rules:** applied from `infra/b2/backup-bucket-lifecycle.json`. The service accepted the file. The last read-back with `b2 bucket get` (revision 7) showed four rules: `daily/` hidden after 7 days and deleted 1 day after hiding, `weekly/` hidden after 28 days and deleted 1 day after hiding. It was not re-read after the Governance change, because the admin key was revoked afterwards. The console Lifecycle Settings dialog overwrote the rules once (revision 4 to 5); never press "Update Bucket" there.
+- **Admin key:** revoked in the console (Backblaze answers 401) and removed from `pass`.
+- **Secret on the VPS:** `postgres-backup` in `kanban-data`, keys `B2_APP_KEY` and `B2_KEY_ID`, decoded lengths 31 and 25. It has not yet been used from inside the cluster.
+- **Cost:** about 11 GB expected per database, so 10 GB free then $0.005 per GB-month (from `14-FREE-TIER-RESEARCH.md`, not live pricing). A billing cap in the Backblaze dashboard is unconfirmed.
+- **Still open:** `master-key-id` and `master-key` remain in `pass`; delete the probe `test/writeonly-probe.txt` after 2026-10-23.
 
 ## Next Phase Readiness
 
-14-03 (the CronJob) can be written against the script's environment contract. It cannot be applied until Task 3 produces Secret `postgres-backup`, the bucket name, the endpoint and the age recipient. These values are not yet recorded; fill them in here after Task 3:
-
-- Object Lock option chosen: (pending)
-- S3 endpoint / region / bucket: (pending)
-- age public recipient: (pending)
-- get-bucket-lifecycle-configuration output and key capabilities: (pending)
+14-03 (the CronJob) can be written and applied against the script's environment contract: Secret `postgres-backup`, the bucket, endpoint and age recipient above exist. 14-03 must also depend on 14-01's merge, as planned.
 
 ## Self-Check: PASSED
 
