@@ -5,10 +5,10 @@ current_phase: 14
 current_phase_name: "Production ownership: backend observability, alerting and recovery"
 status: Awaiting next milestone
 stopped_at: Phase 14 context gathered
-last_updated: "2026-10-15T18:18:10.693Z"
+last_updated: "2026-10-16T08:48:58.201Z"
 last_activity: 2026-09-30
 last_activity_desc: Milestone v1.4 completed and archived
-state_head: bbdd78f35ad0a0e463b05617c8be5359432d8963
+state_head: 8f804bda5d605eab1b1792222a666c7f9347709d
 progress:
   total_phases: 1
   completed_phases: 2
@@ -174,6 +174,7 @@ confusion risk, `NVD_API_KEY` resolution failure) were resolved during Phases 8â
 | 261006-i3k | Add a report-only Schemathesis fuzz script and weekly/dispatch workflow with a measured baseline | 2026-10-06 | c5079e8 | [261006-i3k-add-a-report-only-schemathesis-fuzzing-s](./quick/261006-i3k-add-a-report-only-schemathesis-fuzzing-s/) |
 | 261006-jh9 | Trim .claude/CLAUDE.md from 36.8 KB to 4.6 KB and add a byte-ceiling gate on always-loaded instruction files | 2026-10-06 | 7b23313 | [261006-jh9-trim-claude-claude-md-and-add-a-size-cei](./quick/261006-jh9-trim-claude-claude-md-and-add-a-size-cei/) |
 | 261006-kpj | Split docs/CODE_STYLE.md (43,974 to 9,345 bytes) into a numbered index, docs/CODE_REVIEW_RUBRIC.md and an ARCHITECTURE test section; nine new ArchUnit rules (MainCodeStyleArchTest, TestCodeStyleArchTest) | 2026-10-06 | fc86152 | [261006-kpj-split-docs-code-style-md-enforce-rules-w](./quick/261006-kpj-split-docs-code-style-md-enforce-rules-w/) |
+| 261016-ekm | Investigate WSL memory crash; cap Gradle daemon heap | 2026-10-16 | 8f804bd | [261016-ekm-investigate-wsl-memory-crash-are-tests-t](./quick/261016-ekm-investigate-wsl-memory-crash-are-tests-t/) |
 
 ## Deferred Items
 

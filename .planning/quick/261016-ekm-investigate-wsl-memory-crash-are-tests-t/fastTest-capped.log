@@ -1,0 +1,151 @@
+Starting a Gradle Daemon, 4 stopped Daemons could not be reused, use --status for details
+> Task :cleanFastTest
+> Task :generateAvroProtocol NO-SOURCE
+> Task :generateAvroJava UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :generateTestAvroProtocol NO-SOURCE
+> Task :generateTestAvroJava NO-SOURCE
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :fastTest
+
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-10-16T10:47:37.743+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.743+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.743+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.i.ClassicKafkaConsumer         : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Unsubscribed all topics or patterns and assigned partitions
+2026-10-16T10:47:37.745+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.745+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.751+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:47:37.751+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:47:37.751+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:47:37.751+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:47:37.769+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-activity-log-1 unregistered
+2026-10-16T10:47:37.770+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : activity-log: Consumer stopped
+2026-10-16T10:47:37.774+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=kanban-board-producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+2026-10-16T10:47:37.787+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:47:37.787+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:47:37.791+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:47:37.791+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:47:37.794+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for kanban-board-producer-1 unregistered
+2026-10-16T10:47:37.821+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-16T10:47:37.835+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-16T10:47:37.837+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-10-16T10:47:37.842+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.843+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.843+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.i.ClassicKafkaConsumer         : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Unsubscribed all topics or patterns and assigned partitions
+2026-10-16T10:47:37.843+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.843+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.844+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:47:37.844+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:47:37.844+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:47:37.844+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:47:37.847+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-activity-log-2 unregistered
+2026-10-16T10:47:37.848+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : activity-log: Consumer stopped
+2026-10-16T10:47:37.850+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=kanban-board-producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+2026-10-16T10:47:37.875+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:47:37.875+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:47:37.875+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:47:37.875+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:47:37.875+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for kanban-board-producer-1 unregistered
+2026-10-16T10:47:37.880+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-16T10:47:37.881+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-10-16T10:47:37.885+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.i.ClassicKafkaConsumer         : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Unsubscribed all topics or patterns and assigned partitions
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:47:37.891+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:47:37.893+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-activity-log-3 unregistered
+2026-10-16T10:47:37.894+02:00  INFO 36593 --- [kanban-board] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : activity-log: Consumer stopped
+2026-10-16T10:47:37.896+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2026-10-16T10:47:37.901+02:00  INFO 36593 --- [kanban-board] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2026-10-16T10:47:37.904+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=kanban-board-producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+2026-10-16T10:47:37.908+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:47:37.908+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:47:37.908+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:47:37.908+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:47:37.908+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for kanban-board-producer-1 unregistered
+2026-10-16T10:47:37.912+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-16T10:47:37.913+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+2026-10-16T10:47:37.916+02:00  INFO 36593 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
+2026-10-16T10:48:10.991+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:48:10.991+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:48:10.991+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.i.ClassicKafkaConsumer         : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Unsubscribed all topics or patterns and assigned partitions
+2026-10-16T10:48:10.992+02:00  INFO 36592 --- [kanban-board] [oard-producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=kanban-board-producer-1] Node -1 disconnected.
+2026-10-16T10:48:10.992+02:00  WARN 36592 --- [kanban-board] [oard-producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=kanban-board-producer-1] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-10-16T10:48:10.992+02:00  WARN 36592 --- [kanban-board] [oard-producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=kanban-board-producer-1] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-10-16T10:48:10.992+02:00  INFO 36592 --- [kanban-board] [oard-producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=kanban-board-producer-1] Node -1 disconnected.
+2026-10-16T10:48:10.992+02:00  WARN 36592 --- [kanban-board] [oard-producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=kanban-board-producer-1] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-10-16T10:48:10.992+02:00  WARN 36592 --- [kanban-board] [oard-producer-1] org.apache.kafka.clients.NetworkClient   : [Producer clientId=kanban-board-producer-1] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-10-16T10:48:10.994+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:48:10.994+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-1, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.019+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:48:11.020+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:48:11.020+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:48:11.020+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:48:11.025+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-activity-log-1 unregistered
+2026-10-16T10:48:11.025+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : activity-log: Consumer stopped
+2026-10-16T10:48:11.027+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Node -1 disconnected.
+2026-10-16T10:48:11.027+02:00  WARN 36592 --- [kanban-board] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Connection to node -1 (localhost/127.0.0.1:9092) could not be established. Node may not be available.
+2026-10-16T10:48:11.027+02:00  WARN 36592 --- [kanban-board] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Bootstrap broker localhost:9092 (id: -1 rack: null) disconnected
+2026-10-16T10:48:11.028+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=kanban-board-producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+2026-10-16T10:48:11.099+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:48:11.099+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:48:11.099+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:48:11.099+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:48:11.103+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for kanban-board-producer-1 unregistered
+2026-10-16T10:48:11.133+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-16T10:48:11.136+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-16T10:48:11.139+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-10-16T10:48:11.142+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.142+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.142+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.i.ClassicKafkaConsumer         : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Unsubscribed all topics or patterns and assigned partitions
+2026-10-16T10:48:11.143+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.143+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-2, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.144+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:48:11.144+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:48:11.144+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:48:11.144+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:48:11.149+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-activity-log-2 unregistered
+2026-10-16T10:48:11.149+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : activity-log: Consumer stopped
+2026-10-16T10:48:11.150+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=kanban-board-producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+2026-10-16T10:48:11.154+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:48:11.154+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:48:11.154+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:48:11.154+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:48:11.154+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for kanban-board-producer-1 unregistered
+2026-10-16T10:48:11.159+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-16T10:48:11.160+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown initiated...
+2026-10-16T10:48:11.163+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Shutdown completed.
+2026-10-16T10:48:11.165+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.165+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.165+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.i.ClassicKafkaConsumer         : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Unsubscribed all topics or patterns and assigned partitions
+2026-10-16T10:48:11.166+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Resetting generation and member id due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.166+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.k.c.c.internals.ConsumerCoordinator  : [Consumer clientId=consumer-activity-log-3, groupId=activity-log] Request joining group due to: consumer pro-actively leaving the group
+2026-10-16T10:48:11.167+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:48:11.168+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:48:11.168+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:48:11.168+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:48:11.171+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.a.kafka.common.utils.AppInfoParser     : App info kafka.consumer for consumer-activity-log-3 unregistered
+2026-10-16T10:48:11.172+02:00  INFO 36592 --- [kanban-board] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : activity-log: Consumer stopped
+2026-10-16T10:48:11.175+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.a.k.clients.producer.KafkaProducer     : [Producer clientId=kanban-board-producer-1] Closing the Kafka producer with timeoutMillis = 30000 ms.
+2026-10-16T10:48:11.178+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics scheduler closed
+2026-10-16T10:48:11.178+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.metrics.JmxReporter
+2026-10-16T10:48:11.179+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Closing reporter org.apache.kafka.common.telemetry.internals.ClientTelemetryReporter
+2026-10-16T10:48:11.179+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.apache.kafka.common.metrics.Metrics    : Metrics reporters closed
+2026-10-16T10:48:11.179+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] o.a.kafka.common.utils.AppInfoParser     : App info kafka.producer for kanban-board-producer-1 unregistered
+2026-10-16T10:48:11.181+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-16T10:48:11.182+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown initiated...
+2026-10-16T10:48:11.188+02:00  INFO 36592 --- [kanban-board] [ionShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Shutdown completed.
+
+BUILD SUCCESSFUL in 4m 44s
+6 actionable tasks: 2 executed, 4 up-to-date
+gradle_exit=0
