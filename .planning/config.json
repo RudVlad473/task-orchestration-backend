@@ -56,7 +56,8 @@
     "security_enforcement": true,
     "security_asvs_level": 1,
     "security_block_on": "high",
-    "_auto_chain_active": false
+    "_auto_chain_active": false,
+    "plan_review_convergence": true
   },
   "ship": {
     "pr_body_sections": [
@@ -97,5 +98,11 @@
     "source_grounding_authority": "lsp"
   },
   "mode": "yolo",
-  "granularity": "coarse"
+  "granularity": "coarse",
+  "review": {
+    "models": {
+      "claude": "claude-sonnet-5-5",
+      "agy": "gemini-4-argon-high"
+    }
+  }
 }
