@@ -417,6 +417,11 @@ def test_docstring_blocks_are_linted_in_python():
 # ------------------------------------------------------------ wiring
 
 
+def test_serena_tool_config_is_out_of_scope():
+    assert _gate.classify(".serena/project.yml") is None
+    assert _gate.classify("src/main/java/A.java") is not None
+
+
 def test_zero_in_scope_files_is_a_failure_not_a_pass():
     assert _gate.cmd_check(["README.md"]) == 1
 

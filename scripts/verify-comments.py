@@ -61,8 +61,8 @@ MIN_PROSE_FOR_SUMMARY_RULE = 4
 MAX_SUMMARY_LINES = 2
 MAX_NARRATION_LINES = 8
 
-# GSD and vendored-skill trees; their content is not this repo's own comments.
-EXCLUDED_PREFIXES = (".planning/", ".claude/", ".agents/", "docs/raw/", "docs/wiki/", ".dev/")
+# GSD, vendored-skill and tool-generated trees; their content is not this repo's own comments.
+EXCLUDED_PREFIXES = (".planning/", ".claude/", ".agents/", "docs/raw/", "docs/wiki/", ".dev/", ".serena/")
 # Third-party files that carry their own comments.
 VENDORED_FILES = ("gradlew", "gradlew.bat", "gradle/verification-metadata.xml")
 VENDORED_PREFIXES = ("gradle/wrapper/",)
