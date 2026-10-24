@@ -28,15 +28,16 @@ env:
   # byte-identical image content.
   DOCKERHUB_REPOSITORY_NONPROD: kanban-board-backend-nonprod
 
-# Risk acceptance: actions/checkout, actions/setup-java, docker/setup-buildx-action,
-# docker/build-push-action, actions/cache and actions/upload-artifact stay trusted by tag, not digest.
+# Risk acceptance: these actions stay trusted by tag, not digest: actions/checkout, actions/setup-java,
+# actions/cache, actions/upload-artifact, docker/*, gradle/actions/wrapper-validation.
 #
 # Decisions:
 # Digest-pinning was scoped narrowly to actions holding real production SSH credentials (formerly the
 # appleboy/* actions). None remain: deploys are pull-based GitOps, schema registration is an in-cluster
 # initContainer, and the flyway-verify jobs open their own raw `ssh` forward with a host-key
 # fingerprint pin. Re-evaluate if a future job reintroduces an action holding production SSH
-# credentials.
+# credentials. A non-GitHub action in a job whose token can write is SHA-pinned too:
+# dependency-submission.yml's gradle/actions.
 
 jobs:
   setup:
@@ -60,7 +61,8 @@ jobs:
         uses: actions/checkout@v5
 
       # Validate the wrapper scripts and jar against Gradle's published checksums BEFORE any of them runs:
-      # validating an already-run wrapper defeats the control. First-party, so tag-pinned, not digest-pinned.
+      # validating an already-run wrapper defeats the control. Tag-pinned, not digest-pinned, because this job
+      # has a read-only token and no secret.
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v6
 
