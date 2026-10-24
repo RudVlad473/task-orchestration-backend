@@ -50,6 +50,34 @@ cause, not a new problem.
   server does not have any personal key installed.
 - Docker access is root-only; no separate non-root deploy user or `docker` group member exists.
 
+## Uptime alert triage
+
+`.github/workflows/uptime-check.yml` probes both `/api/healthz` endpoints and both README dashboards
+(through Grafana's `/api/public/dashboards/<id>`). When any probe fails, the run goes red and its
+`alert` job opens one GitHub issue titled `Uptime check failing` with the label `uptime-alert`; GitHub
+emails the owner. Each further failing run adds a comment to that issue, and the next passing run
+closes it with a recovery comment. A dispatch with the `drill` input adds one known-wrong dashboard URL
+(answering 404), so it opens or comments the same way; the next passing run, or any dispatch without
+`drill`, closes that issue. Scheduled runs on this repository arrive hours apart (2.6 to 8.2 hours
+measured on 2026-09-29/30), so the email trails an outage by up to that gap.
+
+**Health endpoint failure.** Run `curl -i` against the failing `/api/healthz` URL, then
+`ssh netcup-prod` and `k3s kubectl get pods -A`. For dating what the Netcup SCP "Screen" console shows,
+see [`docs/history/2026-09-02-triage-netcup-scp-screen-console.md`](history/2026-09-02-triage-netcup-scp-screen-console.md);
+its `docker` commands predate the k3s cutover.
+
+**Dashboard failure.** Match the status in the issue's list:
+
+| Observed | Meaning | Next step |
+|---|---|---|
+| `status 503` | Traefik has no ready backend for the route; its body is `no available server`. On 2026-10-24 two Flux Kustomizations owned IngressRoute `grafana`. | Check route ownership with the live command in "7. Route ownership (2026-10-24)" below, and invariant I11 in `scripts/verify-k8s-invariants.py`. |
+| `status 404` | `publicdashboards.notFound`: no share answers at that address. A recreated share gets a new address. | Update README.md's links and `DASHBOARD_URLS` in uptime-check.yml together (see "5. Public shares"). |
+| `200 without the expected marker` | Something other than an enabled public share answered. | Open the URL with `curl -i` and compare with a healthy one. |
+| `status 000` | DNS, TLS or connect failure. | See "DNS — DuckDNS". |
+| `status 302` | A redirect, for example to a login page. The probe never follows redirects. | Check the IngressRoute and Grafana's public-dashboard setting. |
+
+The dashboard check proves an enabled share resolves, not that its panels return data.
+
 ## Firewall — three layers
 
 **UPDATED 2026-09-06 (quick task 260906-feq)** — `DOCKER-USER` no longer carries "nothing at all";
