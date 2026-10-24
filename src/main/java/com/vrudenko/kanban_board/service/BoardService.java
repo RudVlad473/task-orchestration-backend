@@ -67,11 +67,10 @@ public class BoardService {
      * Delete the board and cascade to its columns, tasks and subtasks, publishing one
      * BoardDeletedEvent.
      *
-     * The id is captured into a local BEFORE the cascade and the delete run (see
-     * TaskService.deleteById): afterwards nothing is left to derive boardId from. The
-     * event fires once per directly-requested delete; cascaded children publish nothing of their
-     * own, so deleteAllByUserId emits one event per board, not one combined
-     * account-deletion event.
+     * The id is captured into a local BEFORE the cascade and the delete run: afterwards nothing is
+     * left to derive boardId from. The event fires once per directly-requested delete; cascaded
+     * children publish nothing of their own, so deleteAllByUserId emits one event per board, not
+     * one combined account-deletion event.
      */
     @Transactional
     public void deleteById(String userId, String boardId) {
@@ -189,8 +188,8 @@ public class BoardService {
     /**
      * Create the board for user and publish BoardCreatedEvent after commit.
      *
-     * The @Transactional annotation is declared here so the after-commit publish does not depend on the
-     * caller; see TaskService.save.
+     * The @Transactional annotation is declared here so the after-commit publish does not depend on
+     * the caller.
      */
     @Transactional
     public BoardResponseDTO save(SaveBoardRequestDTO dto, UserEntity user) {

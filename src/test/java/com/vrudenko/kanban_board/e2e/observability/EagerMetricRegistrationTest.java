@@ -102,8 +102,8 @@ public class EagerMetricRegistrationTest extends AbstractPostgresContainerTest {
                                                                 MetricNames.TAG_EVENT,
                                                                 type.getSimpleName()))));
 
-        // assert -- every event type has its own series at 0; the size guard keeps an empty
-        // permits list from passing vacuously.
+        // assert
+        // The size guard keeps an empty permits list from passing vacuously.
         Assertions.assertThat(valuesByEvent).hasSizeGreaterThan(10).containsKey("TaskMovedEvent");
         Assertions.assertThat(valuesByEvent.values())
                 .allSatisfy(value -> Assertions.assertThat(value).contains(0.0));

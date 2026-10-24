@@ -51,7 +51,7 @@ public class ColumnLockingTest extends AbstractAppMockMvcTest {
                         .version(startingVersion)
                         .build();
 
-        // Act: first PUT with the starting version succeeds and bumps the version
+        // Act
         var firstResponse =
                 mockMvc.perform(
                                 put(url).cookie(cookie)
@@ -67,7 +67,7 @@ public class ColumnLockingTest extends AbstractAppMockMvcTest {
                         firstResponse.getResponse().getContentAsString(), ColumnResponseDTO.class);
         Assertions.assertThat(firstResponseBody.getVersion()).isNotEqualTo(startingVersion);
 
-        // Act: second PUT still holding the stale starting version is rejected
+        // Act
         var secondResponse =
                 mockMvc.perform(
                                 put(url).cookie(cookie)
@@ -79,8 +79,7 @@ public class ColumnLockingTest extends AbstractAppMockMvcTest {
         Assertions.assertThat(secondResponse.getResponse().getStatus())
                 .isEqualTo(HttpStatus.CONFLICT.value());
 
-        // Act: re-submitting the same stale PUT again (without refetching) must still be
-        // rejected, never silently succeed
+        // Act
         var retryResponse =
                 mockMvc.perform(
                                 put(url).cookie(cookie)

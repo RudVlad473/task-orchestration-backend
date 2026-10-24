@@ -38,10 +38,6 @@ public abstract class AbstractAppMockMvcTest extends AbstractAppTest {
     @Value("${server.servlet.session.cookie.name}")
     private String cookieName;
 
-    /**
-     * Signs in as this fixture's owning user (getOwningUser()) through a real POST
-     * /signin and returns the session cookie.
-     */
     protected Cookie signinCookie() throws Exception {
         return signinCookie(getOwningUser().getEmail(), getOwningUserPassword());
     }

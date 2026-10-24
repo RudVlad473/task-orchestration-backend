@@ -27,17 +27,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
  * Regression guard: the generated OpenAPI document declares every path-template variable and never
  * publishes the session-derived user id as a client parameter.
  *
- * Why this is the way it is: spike 003 pointed Schemathesis at the live document and it could
- * not generate a single request for 11 of the 24 operations (the nested task, subtask and reorder
- * routes), because springdoc only declares a path parameter for a handler argument
- * carrying @PathVariable, so an ancestor id that appears only in the class-level route template was
- * never declared. The same run showed 22 operations advertising a required userId query
- * parameter that the server never reads. This test sweeps every operation in the document instead
- * of listing operations, so a future nested controller is covered without anyone remembering to add
- * it. It extends AbstractPostgresContainerTest, not a fixture base, because it needs no
- * fixtures (docs/CODE_STYLE.md rule 4), and the document is read as in
- * ProblemDetailOpenApiCustomizerTest: the OpenAPI bean is never autowired, because
- * springdoc caches it and a live instance would share mutable state with later assertions.
+ * Why this is the way it is: pointing Schemathesis at the live document, it could not generate a
+ * request for 11 of the 24 operations (the nested task, subtask and reorder routes), because
+ * springdoc only declares a path parameter for a handler argument carrying PathVariable, so an
+ * ancestor id that appears only in the class-level route template was never declared. The same
+ * run showed 22 operations advertising a required userId query parameter the server never reads.
+ * The test sweeps every operation instead of listing operations, so a future nested controller is
+ * covered. It extends AbstractPostgresContainerTest because it needs no fixtures
+ * (docs/CODE_STYLE.md rule 4). The OpenAPI bean is never autowired, because springdoc caches it
+ * and a live instance would share mutable state with later assertions.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -66,7 +64,6 @@ class OpenApiParameterCompletenessTest extends AbstractPostgresContainerTest {
         return objectMapper.readTree(body);
     }
 
-    /** Parameters declared on the path item plus those declared on the operation itself. */
     private static List<JsonNode> declaredParameters(JsonNode pathItem, JsonNode operation) {
         var parameters = new ArrayList<JsonNode>();
         pathItem.path("parameters").forEach(parameters::add);

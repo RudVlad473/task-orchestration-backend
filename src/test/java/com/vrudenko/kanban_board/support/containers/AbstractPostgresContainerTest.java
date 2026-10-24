@@ -55,8 +55,8 @@ public abstract class AbstractPostgresContainerTest {
     static final PostgreSQLContainer<?> postgres =
             new PostgreSQLContainer<>(DockerImageName.parse("postgres:16"));
 
-    // Imperative, exactly-once start (see the class Javadoc). postgres:16 matches
-    // docker-compose.yml's image tag, so local dev and tests do not diverge on major version.
+    // postgres:16 matches docker-compose.yml's image tag, so local dev and tests share a major
+    // version.
     static {
         postgres.start();
     }

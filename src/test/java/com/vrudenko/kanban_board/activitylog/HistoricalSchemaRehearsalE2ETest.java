@@ -132,8 +132,8 @@ class HistoricalSchemaRehearsalE2ETest extends AbstractKafkaContainerTest {
     }
 
     /**
-     * Same tolerance rationale as HistoricalActivityEventReconstructorTest: Avro's
-     * timestamp-millis truncates to milliseconds by design; every other field is compared exactly.
+     * Compare all fields exactly except the timestamp, which Avro timestamp-millis truncates to
+     * milliseconds by design and so is compared within 1 ms.
      */
     private void assertFieldEqual(ActivityEvent expected, ActivityEvent actual) {
         Assertions.assertThat(actual)
@@ -191,7 +191,6 @@ class HistoricalSchemaRehearsalE2ETest extends AbstractKafkaContainerTest {
                         actionsPresent);
             }
 
-            // Cap each action's group at MAX_SAMPLE_ROWS_PER_ACTION, not an unbounded scan.
             rowsByAction.replaceAll(
                     (action, rows) ->
                             rows.size() > MAX_SAMPLE_ROWS_PER_ACTION

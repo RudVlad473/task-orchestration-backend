@@ -198,7 +198,7 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
                 .extracting(TaskResponseDTO::getId)
                 .doesNotContain(taskId);
 
-        // assert — exactly one TaskMovedEvent, server-derived fields, non-null id/timestamp
+        // assert
         var movedEvents = recordedMovedEvents();
 
         Assertions.assertThat(movedEvents).hasSize(1);
@@ -214,9 +214,6 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
 
     @Nested
     class MoveToColumn {
-
-        // These tests assert exact position values via TaskRepository, which no sibling nested
-        // group in this class asserts.
 
         @Test
         void shouldMoveThirdTaskToFront_andShiftOthersDown_whenTargetPositionIsZeroInSameColumn()
@@ -551,8 +548,7 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
                 Assertions.assertThat(retryResult.getResponse().getStatus())
                         .isEqualTo(HttpStatus.CONFLICT.value());
 
-                // assert: the task's column is still the first move's target — rejected attempts
-                // changed nothing
+                // assert
                 var firstTargetTasks = getColumnTasks(cookie, boardId, firstTargetColumnId);
                 var secondTargetTasks = getColumnTasks(cookie, boardId, secondTargetColumnId);
 
@@ -563,7 +559,7 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
                         .extracting(TaskResponseDTO::getId)
                         .doesNotContain(taskId);
 
-                // assert: no TaskMovedEvent for either rejected attempt
+                // assert
                 Assertions.assertThat(recordedMovedEvents()).isEmpty();
             }
         }
@@ -628,8 +624,7 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
                         .extracting(TaskResponseDTO::getId)
                         .doesNotContain(taskId);
 
-                // assert: exactly one TaskMovedEvent — the accepted first writer's, none from the
-                // rejected second
+                // assert
                 Assertions.assertThat(recordedMovedEvents()).hasSize(1);
                 Assertions.assertThat(recordedMovedEvents().getFirst().targetColumnId())
                         .isEqualTo(firstTargetColumnId);

@@ -99,6 +99,6 @@ public class RandFlakeGenerator implements IdentifierGenerator {
                                                 << SEQUENCE_BITS,
                                         previous + 1));
 
-        return Long.toString(payload, 36); // Base36 for shorter string representation
+        return Long.toString(payload, 36);
     }
 }

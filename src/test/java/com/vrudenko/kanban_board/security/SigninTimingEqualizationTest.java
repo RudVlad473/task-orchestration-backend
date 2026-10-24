@@ -54,9 +54,7 @@ public class SigninTimingEqualizationTest extends AbstractAppMockMvcTest {
     @Autowired private CountingPasswordEncoder countingPasswordEncoder;
 
     /**
-     * Forwards every call to the application's own PasswordEncoder bean and returns its
-     * real answer, counting only matches(CharSequence, String) calls. Not a mock, so every
-     * comparison is a genuine BCrypt comparison.
+     * Count matches(CharSequence, String) calls while delegating to the real encoder. Not a mock.
      */
     private static final class CountingPasswordEncoder implements PasswordEncoder {
         private final PasswordEncoder delegate;

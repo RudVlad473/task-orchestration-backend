@@ -181,7 +181,7 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
                             .then()
                             .extract();
 
-            // assert: create response echoes the supplied id
+            // assert
             Assertions.assertThat(response.statusCode()).isEqualTo(HttpStatus.CREATED.value());
             var body = response.as(BoardResponseDTO.class);
             Assertions.assertThat(body.getId()).isEqualTo(explicitId);
@@ -264,7 +264,7 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
     class DuplicateId {
         @Test
         void shouldReturnConflictAndLeaveBoardsUnchanged_whenIdAlreadyUsedByAnotherBoard() {
-            // arrange: first board created under an explicit id
+            // arrange
             Pair<String, String> cookie = signin();
             var explicitId = new RandFlakeGenerator().generateRandflake();
             var firstBoardName = randomBoardName();
@@ -284,7 +284,7 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
                             .extract()
                             .as(BoardResponseDTO[].class);
 
-            // act: a second create names the same id, under a different name
+            // act
             var secondBoardName = randomBoardName();
             var response =
                     given().cookie(cookie.getFirst(), cookie.getSecond())
@@ -299,7 +299,7 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
                             .then()
                             .extract();
 
-            // assert: rejected three ways -- status, code, and the caller's board list unchanged
+            // assert
             Assertions.assertThat(response.statusCode()).isEqualTo(HttpStatus.CONFLICT.value());
             Assertions.assertThat(response.body().jsonPath().getString("code"))
                     .isEqualTo("DUPLICATE_RESOURCE");
@@ -320,7 +320,7 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
                                     .map(BoardResponseDTO::getId)
                                     .toList());
 
-            // assert: the pre-existing board holding that id keeps its own name
+            // assert
             var originalBoard =
                     Arrays.stream(boardsAfterRejectedCreate)
                             .filter(b -> b.getId().equals(explicitId))
@@ -359,7 +359,7 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
                             .extract()
                             .as(BoardResponseDTO.class);
 
-            // act: rename B to A's name
+            // act
             var response =
                     given().cookie(cookie.getFirst(), cookie.getSecond())
                             .contentType(ContentType.JSON)

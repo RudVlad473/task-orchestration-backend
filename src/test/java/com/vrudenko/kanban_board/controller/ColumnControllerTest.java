@@ -232,7 +232,7 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
             var createdTaskId = responseBody.getId();
 
             // Assert
-            // this is an assertion since if no entity was found, it'll throw an error
+            // The lookup throws when no entity is found, so it doubles as the assertion.
             taskService.findById(userId, createdTaskId);
             Assertions.assertThat(responseBody.getTitle()).isEqualTo(saveDTO.getTitle());
             Assertions.assertThat(responseBody.getDescription())
@@ -464,9 +464,9 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
                             .color("#AbCdEf")
                             .build();
 
-            // act & assert: response echo via jsonPath, not a typed getter, so removing the field
-            // from ColumnResponseDTO fails at runtime ("no results for $.color"), not at compile
-            // time
+            // act & assert
+            // jsonPath rather than a typed getter, so removing the field fails at runtime, not at
+            // compile time.
             var result =
                     mockMvc.perform(
                                     post(getColumnsPrefix(boardId))
@@ -477,8 +477,8 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
                             .andExpect(jsonPath("$.color").value("#AbCdEf"))
                             .andReturn();
 
-            // assert: a response echo is not evidence of persistence; re-read the row via raw SQL,
-            // not the ColumnEntity getter, for the same compile-vs-runtime reason as above
+            // assert
+            // Re-read the row via raw SQL: a response echo is not evidence of persistence.
             var createdId =
                     objectMapper
                             .readTree(result.getResponse().getContentAsString())
@@ -492,8 +492,7 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
 
         @Test
         void shouldCreateWithoutColor_andPersistNull() throws Exception {
-            // arrange: backward-compatibility guard for every existing client; it catches a future
-            // change that makes color mandatory, not a bug fix
+            // arrange
             var cookie = signinCookie();
             var boardId = mockEmptyBoards.get(0).getId();
             var saveDto =
@@ -513,8 +512,8 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
                             .andExpect(status().isCreated())
                             .andReturn();
 
-            // assert: the "color" key is present (no @JsonInclude(NON_NULL)) with a JSON null
-            // value, checked via JsonNode for the same reason as the create-with-color case
+            // assert
+            // The "color" key is present with a JSON null value, so check via JsonNode.
             var responseNode = objectMapper.readTree(result.getResponse().getContentAsString());
             Assertions.assertThat(responseNode.has("color")).isTrue();
             Assertions.assertThat(responseNode.get("color").isNull()).isTrue();
@@ -528,15 +527,17 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
 
         @Test
         void shouldReturnBadRequest_whenColorIsMalformed() throws Exception {
-            // arrange: hand-written JSON, not the builder: Bean Validation fires only at request
-            // validation, and a raw body is the shape a malformed client request takes
+            // arrange
+            // Hand-written JSON, not the builder: a raw body is the shape a malformed client
+            // request takes.
             var cookie = signinCookie();
             var boardId = mockEmptyBoards.get(0).getId();
             var name = dataFactory.getRandomWord(ValidationConstants.MIN_COLUMN_NAME_LENGTH);
             var invalidBody = "{\"name\":\"" + name + "\",\"color\":\"not-a-color\"}";
 
-            // act & assert: one controller-tier representative; the full boundary matrix lives in
-            // ColumnColorTest (rule 4)
+            // act & assert
+            // One controller-tier representative; the full boundary matrix lives in
+            // ColumnColorTest.
             mockMvc.perform(
                             post(getColumnsPrefix(boardId))
                                     .cookie(cookie)
@@ -692,8 +693,7 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
                             .targetPosition(0)
                             .build();
 
-            // act: attempt the reorder as the ORIGINAL signed-in user against another user's
-            // column
+            // act
             var response =
                     mockMvc.perform(
                                     patch(
@@ -763,14 +763,11 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
     @Nested
     class DeleteById {
 
-        // Two properties of the same DELETE route: cascade-delete correctness (via direct
-        // repository queries) and position contiguity after a mid-list delete.
-
         @Test
         void
                 shouldReturnOkAndCascadeDeleteTasksAndSubtasks_andLeaveSiblingColumnUntouched_whenColumnIsNonEmpty()
                         throws Exception {
-            // arrange: a sibling column, with its own task and subtask, must survive
+            // arrange
             var siblingColumn =
                     boardService.addColumnByBoardId(
                             getOwningUser().getId(),
@@ -805,8 +802,6 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
                                                             + 1))
                                     .build());
 
-            // mockPopulatedColumn already carries mockTasks + mockPopulatedTask, and
-            // mockPopulatedTask carries mockSubtasks — a genuinely non-empty column to delete.
             var targetColumnId = mockPopulatedColumn.getId();
             var targetTaskIds = mockTasks.stream().map(t -> t.getId()).toList();
             var targetTaskWithSubtasksId = mockPopulatedTask.getId();
@@ -829,7 +824,7 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
             Assertions.assertThat(subtaskRepository.findAllByTaskId(targetTaskWithSubtasksId))
                     .isEmpty();
 
-            // assert: sibling column, its task and its subtask are untouched
+            // assert
             Assertions.assertThat(columnRepository.findById(siblingColumn.getId())).isPresent();
             Assertions.assertThat(taskRepository.findAllByColumnId(siblingColumn.getId()))
                     .hasSize(1);
@@ -884,7 +879,7 @@ public class ColumnControllerTest extends AbstractAppMockMvcTest {
             Cookie cookie = signinCookie();
             var url = getColumnsPrefix(mockPopulatedBoard.getId()) + "/" + otherUsersColumn.getId();
 
-            // act: signed in as the original owning user, targeting another user's column
+            // act
             var response = mockMvc.perform(delete(url).cookie(cookie)).andReturn();
 
             // assert

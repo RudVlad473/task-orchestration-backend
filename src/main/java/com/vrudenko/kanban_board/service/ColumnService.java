@@ -79,11 +79,10 @@ public class ColumnService {
     }
 
     /**
-     * Create the column at the end of its board and publish ColumnCreatedEvent after
-     * commit.
+     * Create the column at the end of its board and publish ColumnCreatedEvent after commit.
      *
-     * The @Transactional annotation is declared here so the after-commit publish does not depend on the
-     * caller; see TaskService.save.
+     * The @Transactional annotation is declared here so the after-commit publish does not depend on
+     * the caller.
      */
     @Transactional
     public ColumnResponseDTO save(SaveColumnRequestDTO columnDTO, BoardEntity board) {
@@ -204,8 +203,8 @@ public class ColumnService {
         column.setPosition(effectivePosition);
         columnRepository.save(column);
 
-        // Same reason as updateById: force the UPDATE (and version increment) to happen now, so
-        // the response DTO carries the new version instead of the stale pre-reorder one.
+        // Flush so the UPDATE and version increment happen now and the response DTO carries the
+        // new version, not the stale pre-reorder one.
         entityManager.flush();
 
         // targetPosition is the clamped effectivePosition, never the raw requested value.

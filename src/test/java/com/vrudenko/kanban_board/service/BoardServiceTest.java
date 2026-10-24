@@ -323,8 +323,7 @@ public class BoardServiceTest extends AbstractAppTest {
         }
     }
 
-    // createdAt population, reload stability and rename-immutability, at the service tier
-    // independently of BoardControllerTest's HTTP-boundary equivalent.
+    // Cover createdAt population, reload stability and rename-immutability at the service tier.
     @Nested
     class CreatedAtTest {
         @Test

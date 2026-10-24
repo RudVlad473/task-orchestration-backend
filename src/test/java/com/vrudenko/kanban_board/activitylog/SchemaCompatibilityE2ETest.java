@@ -104,9 +104,9 @@ class SchemaCompatibilityE2ETest extends AbstractKafkaContainerTest {
                     Assertions.catchException(
                             () -> client.getCompatibility(throwawaySubject, false));
 
-            // assert -- the contrast with ConfiguredCompatibilityTest's first test is the point:
-            // identical call, opposite outcome, because only one subject was ever explicitly
-            // configured.
+            // assert
+            // The contrast with the production-subject check is the point: identical call,
+            // opposite outcome, because only one subject was ever explicitly configured.
             Assertions.assertThat(exception).isInstanceOf(RestClientException.class);
 
             // act + assert -- the same subject succeeds once fallback to the global default is
@@ -183,7 +183,7 @@ class SchemaCompatibilityE2ETest extends AbstractKafkaContainerTest {
             client.updateCompatibility(throwawaySubject, BACKWARD);
             client.register(throwawaySubject, baselineSchema());
 
-            // act -- the incompatible evolution
+            // act
             var rejection =
                     Assertions.catchException(
                             () -> client.register(throwawaySubject, incompatibleEvolution()));

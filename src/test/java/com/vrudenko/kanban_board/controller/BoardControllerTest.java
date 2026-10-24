@@ -251,9 +251,8 @@ public class BoardControllerTest extends AbstractAppTest {
                     .andReturn();
         }
 
-        // Single-endpoint HTTP contract coverage (docs/CODE_STYLE.md rule 4): a version-less PUT
-        // body is a request-shape concern belonging here, distinct from BoardLockingTest's e2e
-        // proof of the 409 stale-write conflict itself.
+        // A version-less PUT body is a request-shape concern, so it is covered here rather than in
+        // the e2e stale-write test.
         @Test
         void testWithAuthenticatedUser_shouldReturnBadRequest_whenVersionIsMissing()
                 throws Exception {
@@ -441,7 +440,8 @@ public class BoardControllerTest extends AbstractAppTest {
             var createdColumnId = responseBody.getId();
 
             // Assert
-            // this is an assertion since if no entity was found, it'll throw an error
+            // findById throws when the entity does not exist, so the call doubles as the
+            // persistence assertion.
             columnService.findById(userId, createdColumnId);
             Assertions.assertThat(responseBody.getName()).isEqualTo(saveDTO.getName());
             Assertions.assertThat(response.getResponse().getHeader("Location")).isNotBlank();

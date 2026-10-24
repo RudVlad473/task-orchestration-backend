@@ -25,7 +25,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Setter
 @Builder
 @NoArgsConstructor
-// @EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @Table(name = "users")
 public class UserEntity extends BaseEntity implements BaseUser, UserDetails {

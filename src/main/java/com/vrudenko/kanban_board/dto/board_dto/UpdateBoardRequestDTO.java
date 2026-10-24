@@ -8,14 +8,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-/** DTO for com.vrudenko.kanban_board.entity.BoardEntity */
 @Getter
 @Setter
 @Builder
 @EqualsAndHashCode
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UpdateBoardRequestDTO implements BaseBoard {
-    /** If more fields are added, validate that at least one is present, as UpdateTaskRequestDTO. */
     @BoardName @OptionalNotBlank private String name;
 
     // Required so BoardService.updateById can reject a stale write.

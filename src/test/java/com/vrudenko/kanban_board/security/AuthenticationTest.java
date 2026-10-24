@@ -431,8 +431,7 @@ public class AuthenticationTest extends AbstractAppMockMvcTest {
             }
 
             /**
-             * Mirrors Signin.Authenticated's identity-payload test, with the same exact-set
-             * guard against leaking the hash.
+             * The response carries only identity fields; an exact-set check catches a leaked hash.
              */
             @Test
             void testWithValidCredential_shouldReturnCreatedIdentity_whenUserExists()
@@ -834,12 +833,12 @@ public class AuthenticationTest extends AbstractAppMockMvcTest {
                                             .content(objectMapper.writeValueAsString(thirdBody)))
                             .andReturn();
 
-            // assert: the first two signins succeed with two distinct session cookies
+            // assert
             Assertions.assertThat(firstCookie).isNotNull();
             Assertions.assertThat(secondCookie).isNotNull();
             Assertions.assertThat(firstCookie.getValue()).isNotEqualTo(secondCookie.getValue());
 
-            // assert: the third is rejected over HTTP and yields no session cookie
+            // assert
             Assertions.assertThat(thirdResult.getResponse().getStatus())
                     .isEqualTo(HttpStatus.UNAUTHORIZED.value());
             Assertions.assertThat(thirdResult.getResponse().getCookie(COOKIE_NAME)).isNull();

@@ -99,9 +99,9 @@ public class SecurityConfiguration {
                                     String.format("%s/*", ApiPaths.SWAGGER_UI),
                                     // The uptime probe calls /api/healthz unauthenticated.
                                     //
-                                    // Like SIGNIN above, the matcher is context-path-relative: the
-                                    // container strips /api before request matchers run, so
-                                    // /api/healthz matches this /healthz entry.
+                                    // Matchers are context-path-relative: the container strips
+                                    // /api before request matchers run, so /api/healthz matches
+                                    // this /healthz entry.
                                     ApiPaths.HEALTHZ)
                             .permitAll();
 

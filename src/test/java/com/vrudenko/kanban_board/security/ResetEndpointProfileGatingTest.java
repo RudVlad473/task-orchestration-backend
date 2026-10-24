@@ -49,7 +49,7 @@ class ResetEndpointProfileGatingTest extends AbstractPostgresContainerTest {
             var securityFilterChainBeans =
                     applicationContext.getBeanNamesForType(SecurityFilterChain.class);
 
-            // assert: the main chain and the management chain, never the reset chain
+            // assert
             Assertions.assertThat(resetSecurityConfigBeans).isEmpty();
             Assertions.assertThat(securityFilterChainBeans)
                     .containsExactlyInAnyOrder(

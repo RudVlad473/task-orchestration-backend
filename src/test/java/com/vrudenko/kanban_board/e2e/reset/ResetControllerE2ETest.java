@@ -297,7 +297,7 @@ class ResetControllerE2ETest extends AbstractKafkaContainerTest {
                             .then()
                             .extract();
 
-            // assert: same shape as the full-reset path's own wrong-token 403.
+            // assert
             Assertions.assertThat(response.statusCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
             Assertions.assertThat(response.body().jsonPath().getString("code"))
                     .isEqualTo(ErrorCode.ACCESS_DENIED.name());
@@ -317,7 +317,8 @@ class ResetControllerE2ETest extends AbstractKafkaContainerTest {
                             .then()
                             .extract();
 
-            // assert: no oracle on header absence, identical to the full-reset path's guarantee.
+            // assert
+            // A missing header gives no oracle, same 403 as a wrong token.
             Assertions.assertThat(response.statusCode()).isEqualTo(HttpStatus.FORBIDDEN.value());
             Assertions.assertThat(response.body().jsonPath().getString("code"))
                     .isEqualTo(ErrorCode.ACCESS_DENIED.name());

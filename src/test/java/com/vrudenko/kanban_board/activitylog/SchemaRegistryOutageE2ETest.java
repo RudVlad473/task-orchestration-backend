@@ -152,8 +152,9 @@ class SchemaRegistryOutageE2ETest extends AbstractKafkaContainerTest {
 
         @Test
         void shouldRaisePublishFailureCounterByExactlyOne_whenSendThrowsSynchronously() {
-            // arrange -- a signed-up user, and a baseline read once any earlier publish in this
-            // context has finished failing.
+            // arrange
+            // Read the baseline only after any earlier publish in this context has finished
+            // failing.
             UserResponseDTO owningUser =
                     userService.save(
                             SignupRequestDTO.builder()

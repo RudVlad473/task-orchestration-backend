@@ -20,7 +20,7 @@ public final class MetricNames {
     public static final String KAFKA_PUBLISH_FAILURES = "kanban.kafka.publish.failures";
     public static final String ACTIVITY_DLT_WRITTEN = "kanban.activity.dlt.written";
 
-    // The value is the simple class name of an ActivityEvent record, a fixed set of 14.
+    // The value is the simple class name of an ActivityEvent record, a fixed set.
     public static final String TAG_EVENT = "event";
 
     public static final String TAG_MOVE = "move";

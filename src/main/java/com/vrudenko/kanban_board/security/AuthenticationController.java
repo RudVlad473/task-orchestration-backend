@@ -82,8 +82,7 @@ public class AuthenticationController {
         try {
             user = userService.findByEmail(dto.getEmail());
         } catch (AppEntityNotFoundException e) {
-            // Closes finding F1 (2026-08-10 /claude-security scan): run a BCrypt comparison for an
-            // unknown email too.
+            // Run a BCrypt comparison for an unknown email too.
             //
             // Decisions:
             // Without it an unknown email fast-fails with zero BCrypt work while a registered one

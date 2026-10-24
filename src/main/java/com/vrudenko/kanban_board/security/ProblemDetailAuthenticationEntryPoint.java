@@ -44,8 +44,7 @@ public class ProblemDetailAuthenticationEntryPoint implements AuthenticationEntr
 
     private final MeterRegistry meterRegistry;
 
-    // Registered at startup so Prometheus' increase() sees the first event; see
-    // GlobalExceptionHandler.registerCounters for the reason.
+    // Registered at startup so Prometheus' increase() sees the first event.
     @PostConstruct
     void registerCounters() {
         Counter.builder(MetricNames.AUTH_FAILURES)

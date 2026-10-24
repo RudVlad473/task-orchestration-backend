@@ -142,7 +142,6 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
         }
     }
 
-    /** The four owning-user resource ids a PathShape may need, resolved at call time. */
     private record FixtureIds(String boardId, String columnId, String taskId, String subtaskId) {}
 
     private static final FixtureIds DUMMY_FIXTURE_IDS =
@@ -162,7 +161,7 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
 
     private static List<RouteCase> routeTable() {
         return List.of(
-                // BoardController -- 6
+                // BoardController
                 new RouteCase(
                         "GET /boards", HttpMethod.GET, BOARDS_URL, PathShape.NONE, null, false),
                 new RouteCase(
@@ -200,7 +199,7 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
                         PathShape.BOARD,
                         null,
                         true),
-                // ColumnController -- 5
+                // ColumnController
                 new RouteCase(
                         "GET /boards/{boardId}/columns",
                         HttpMethod.GET,
@@ -236,7 +235,7 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
                         PathShape.BOARD_COLUMN,
                         REORDER_COLUMN_BODY,
                         true),
-                // TaskController -- 4
+                // TaskController
                 new RouteCase(
                         "GET /boards/{boardId}/columns/{columnId}/tasks",
                         HttpMethod.GET,
@@ -265,7 +264,7 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
                         PathShape.BOARD_COLUMN_TASK,
                         SAVE_SUBTASK_BODY,
                         true),
-                // SubtaskController -- 3
+                // SubtaskController
                 new RouteCase(
                         "GET .../tasks/{taskId}/subtasks",
                         HttpMethod.GET,
@@ -287,7 +286,7 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
                         PathShape.BOARD_COLUMN_TASK_SUBTASK,
                         UPDATE_SUBTASK_BODY,
                         true),
-                // UserController -- 2 (never cross-user applicable -- see class Javadoc)
+                // UserController: never cross-user applicable
                 new RouteCase(
                         "GET /users/me/theme",
                         HttpMethod.GET,
@@ -302,7 +301,7 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
                         PathShape.NONE,
                         UPDATE_THEME_BODY,
                         false),
-                // TaskMoveController -- 1
+                // TaskMoveController
                 new RouteCase(
                         "PATCH /tasks/{taskId}/move",
                         HttpMethod.PATCH,
@@ -310,7 +309,7 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
                         PathShape.TASK_ONLY,
                         MOVE_TASK_BODY,
                         true),
-                // ActivityController -- 1
+                // ActivityController
                 new RouteCase(
                         "GET /boards/{boardId}/activity",
                         HttpMethod.GET,

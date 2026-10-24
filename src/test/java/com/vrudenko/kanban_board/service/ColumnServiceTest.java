@@ -330,10 +330,6 @@ public class ColumnServiceTest extends AbstractAppTest {
                     .isInstanceOf(ColumnEntity.class);
         }
 
-        /**
-         * Proves the cascade (TaskService#deleteAllByColumn) is a fixed number of bulk
-         * statements regardless of how many tasks the deleted column holds.
-         */
         @Test
         void shouldCostSameQueryCount_regardlessOfTaskCountInColumn() {
             // arrange

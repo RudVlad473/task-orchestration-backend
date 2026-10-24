@@ -161,11 +161,8 @@ public class InjectionAttemptTest extends AbstractAppMockMvcTest {
     }
 
     /**
-     * Round-trips a subtask title through PUT .../subtasks/{subtaskId} against a subtask
-     * created through the service layer via createSubtask().
-     *
-     * Both this route and the creation route flow through SubtaskRepository.save, so the
-     * persistence/binding guarantee under test is the same either way.
+     * Create and update both go through SubtaskRepository.save, so the binding guarantee under
+     * test is the same on either route.
      */
     private SubtaskResponseDTO updateSubtaskTitle(
             Cookie cookie,
@@ -895,9 +892,8 @@ public class InjectionAttemptTest extends AbstractAppMockMvcTest {
         // VALIDATION_FAILED envelope and persistence, never on the response body alone.
         //
         // Jackson silently drops an unrecognised JSON key, so a body-only proof would pass even if
-        // the id field were never wired (same reasoning as StoredXss's color case). Every length
-        // case derives from ValidationConstants.MAX_BOARD_ID_LENGTH and tests both sides of the
-        // boundary.
+        // the id field were never wired. Every length case derives from
+        // ValidationConstants.MAX_BOARD_ID_LENGTH and tests both sides of the boundary.
 
         private String boardIdOfLength(int length) {
             return "1".repeat(length);

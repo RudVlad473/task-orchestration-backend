@@ -178,8 +178,7 @@ public class SubtaskService {
 
     /**
      * Batch variant for callers that already verified ownership of the parent task(s), such as a
-     * column-level bulk delete. Publishes no SubtaskDeletedEvent, like
-     * deleteAllByTaskId.
+     * column-level bulk delete. Publishes no SubtaskDeletedEvent.
      */
     void deleteAllByTaskIds(List<String> taskIds) {
         if (taskIds.isEmpty()) {

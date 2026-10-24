@@ -133,7 +133,7 @@ public class ObservedAspectWiringTest extends AbstractAppTest {
             // arrange
             var advisors = ((Advised) taskService).getAdvisors();
 
-            // act: an earlier advisor is the outer one in the interceptor chain
+            // act
             var observation =
                     indexOf(
                             advisors,
@@ -172,23 +172,24 @@ public class ObservedAspectWiringTest extends AbstractAppTest {
                             .version(mockPopulatedTask.getVersion())
                             .build());
 
-            // assert: the sleep happens in the commit, after the method body has returned
+            // assert
             Assertions.assertThat(timerMillis(MetricNames.OBSERVATION_TASK_MOVE) - before)
                     .isGreaterThanOrEqualTo(COMMIT_DELAY_MILLIS);
         }
 
         @Test
         void shouldNotCoverCommit_whenCallerOwnsTheTransactionOfTaskCreate() {
-            // arrange: ColumnService.addTaskByColumnId owns the transaction, TaskService.save joins
-            // it
+            // arrange
+            // ColumnService.addTaskByColumnId owns the transaction; TaskService.save joins it.
             slowCommitListener.arm(COMMIT_DELAY_MILLIS);
             var before = timerMillis(MetricNames.OBSERVATION_TASK_CREATE);
 
             // act
             createTask();
 
-            // assert: documents a limit, not a goal. The commit runs when the outer method returns,
-            // after save's observation has already stopped.
+            // assert
+            // Documents a limit, not a goal: the commit runs when the outer method returns, after
+            // the save observation has stopped.
             Assertions.assertThat(timerMillis(MetricNames.OBSERVATION_TASK_CREATE) - before)
                     .isLessThan(COMMIT_DELAY_MILLIS);
         }
@@ -216,7 +217,7 @@ public class ObservedAspectWiringTest extends AbstractAppTest {
             // act
             selfInvokingProbe.callsObservedOnThis();
 
-            // assert: the inner call never crosses the proxy
+            // assert
             Assertions.assertThat(timerCount(PROBE_OBSERVATION)).isEqualTo(before);
         }
     }

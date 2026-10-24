@@ -64,7 +64,6 @@ public abstract class AbstractAppTest extends AbstractPostgresContainerTest {
     protected final int MOCK_TASKS_AMOUNT = 7;
     protected final int MOCK_SUBTASKS_AMOUNT = 7;
 
-    // users
     @Getter private final String owningUserPassword = generateValidPassword();
 
     @Getter private UserResponseDTO owningUser;
@@ -89,28 +88,22 @@ public abstract class AbstractAppTest extends AbstractPostgresContainerTest {
 
     @Getter private ColumnResponseDTO foreignUserColumn;
 
-    // boards
     protected ImmutableList<BoardResponseDTO> mockEmptyBoards = ImmutableList.of();
     protected BoardResponseDTO mockPopulatedBoard = BoardResponseDTO.builder().build();
 
-    // columns
     protected ImmutableList<ColumnResponseDTO> mockColumns = ImmutableList.of();
     protected ColumnResponseDTO mockPopulatedColumn = ColumnResponseDTO.builder().build();
 
-    // tasks
     protected ImmutableList<TaskResponseDTO> mockTasks = ImmutableList.of();
     protected TaskResponseDTO mockPopulatedTask = TaskResponseDTO.builder().build();
 
-    // subtasks
     protected ImmutableList<SubtaskResponseDTO> mockSubtasks = ImmutableList.of();
 
     @BeforeEach
     protected void setup() {
-        // user
         owningUser = createUser(owningUserPassword);
         noBoardsUser = createUser(noBoardsUserPassword);
 
-        // board
         mockEmptyBoards =
                 ImmutableList.copyOf(
                         Stream.of("Todo", "Done")
@@ -127,7 +120,6 @@ public abstract class AbstractAppTest extends AbstractPostgresContainerTest {
                         getOwningUser().getId(),
                         SaveBoardRequestDTO.builder().name("In progress").build());
 
-        // column
         mockColumns =
                 ImmutableList.copyOf(
                         Stream.generate(
@@ -153,7 +145,6 @@ public abstract class AbstractAppTest extends AbstractPostgresContainerTest {
                                 .build(),
                         boardService.findById(getOwningUser().getId(), mockPopulatedBoard.getId()));
 
-        // task
         mockTasks =
                 ImmutableList.copyOf(
                         Stream.generate(() -> null)
@@ -162,7 +153,6 @@ public abstract class AbstractAppTest extends AbstractPostgresContainerTest {
                                 .toList());
         mockPopulatedTask = createTask();
 
-        // subtask
         mockSubtasks =
                 ImmutableList.copyOf(
                         Stream.generate(() -> null)
@@ -282,8 +272,7 @@ public abstract class AbstractAppTest extends AbstractPostgresContainerTest {
     }
 
     /**
-     * Creates a board owned by an arbitrary user, without a column; the sibling of
-     * createColumnForUser(String, String, String) for callers that need the board itself.
+     * Creates a board owned by an arbitrary user, without a column.
      */
     protected BoardResponseDTO createBoardForUser(String userId, String boardName) {
         return userService.addBoardByUserId(

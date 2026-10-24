@@ -12,10 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-/**
- * Validator-tier coverage for OptionalNotBlank: whitespace-only is rejected with one
- * violation, null passes, real content padded by whitespace passes.
- */
 public class OptionalNotBlankTest {
     private Validator validator;
 

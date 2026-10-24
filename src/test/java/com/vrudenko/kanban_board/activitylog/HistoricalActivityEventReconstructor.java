@@ -27,18 +27,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * The exact inverse of ActivityLogConsumer.deriveActionAndDetailIds: turns a persisted
  * ActivityLogEntity row back into the ActivityEvent that produced it.
  *
- * Test-only verification tooling, so it lives in the test source set, not src/main.
- * Field recovery is total by construction: eventId, userId, boardId and
- * timestamp (from the row's createdAt) come from columns; every type-specific
- * identifier comes from the row's detail JSON, read by the key names the consumer writes.
+ * Test-only verification tooling, so it lives in the test source set, not src/main. Field
+ * recovery is total by construction: eventId, userId, boardId and timestamp (from the row's
+ * createdAt) come from columns; every type-specific identifier comes from the row's detail JSON,
+ * read by the key names the consumer writes.
  *
- * Decisions: it never substitutes a default for an absent detail key. A row whose detail
- * cannot produce a complete event is the finding the rehearsal exists to surface, and defaulting it
- * away would hide that. reconstruct throws instead, naming the row's eventId, its
- * action and the missing key. Dispatch is an exhaustive switch over
- * com.vrudenko.kanban_board.entity.ActivityAction with no default arm, mirroring
- * ActivityLogConsumer.deriveActionAndDetailIds and ActivityEventAvroMapper.toAvro, so
- * adding an action is a compile error here until the switch is updated.
+ * Decisions: it never substitutes a default for an absent detail key. A row whose detail cannot
+ * produce a complete event is the finding the rehearsal exists to surface, and defaulting it away
+ * would hide that. reconstruct throws instead, naming the row's eventId, its action and the
+ * missing key. Dispatch is an exhaustive switch over ActivityAction with no default arm, so adding
+ * an action is a compile error here until the switch is updated.
  */
 public class HistoricalActivityEventReconstructor {
 

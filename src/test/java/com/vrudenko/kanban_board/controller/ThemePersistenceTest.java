@@ -63,9 +63,9 @@ public class ThemePersistenceTest extends AbstractAppMockMvcTest {
             // act
             var response = mockMvc.perform(get(THEME_URL)).andReturn().getResponse();
 
-            // assert: an unauthenticated request gets 401 from
-            // ProblemDetailAuthenticationEntryPoint;
-            // 403 is for authenticated-but-forbidden, which this route (no ownership) never hits.
+            // assert
+            // 401 comes from ProblemDetailAuthenticationEntryPoint; 403 is for
+            // authenticated-but-forbidden, which this route never hits.
             Assertions.assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         }
     }
@@ -133,13 +133,12 @@ public class ThemePersistenceTest extends AbstractAppMockMvcTest {
                             .andReturn()
                             .getResponse();
 
-            // assert: an unknown enum value fails Jackson deserialisation as a 400, not a 500 --
-            // see GlobalExceptionHandler.handleHttpMessageNotReadable
+            // assert
+            // An unknown enum value fails Jackson deserialisation as 400, not 500.
             Assertions.assertThat(putResponse.getStatus())
                     .isEqualTo(HttpStatus.BAD_REQUEST.value());
 
-            // assert: the previously-stored value (the LIGHT default -- no write has succeeded
-            // yet in this test) is unchanged
+            // assert
             var getResponse =
                     mockMvc.perform(get(THEME_URL).cookie(cookie)).andReturn().getResponse();
             var body =
@@ -181,8 +180,7 @@ public class ThemePersistenceTest extends AbstractAppMockMvcTest {
                             .andReturn()
                             .getResponse();
 
-            // assert: see GetTheme.shouldReturnUnauthorized_whenNotAuthenticated for why 401,
-            // not 403
+            // assert
             Assertions.assertThat(response.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         }
 
@@ -200,7 +198,7 @@ public class ThemePersistenceTest extends AbstractAppMockMvcTest {
             Cookie firstCookie = signinCookie();
             var dto = UpdateThemeRequestDTO.builder().theme(ThemePreference.DARK).build();
 
-            // act: write DARK, then log out (clears the session server-side)
+            // act
             mockMvc.perform(
                     put(THEME_URL)
                             .cookie(firstCookie)
@@ -209,15 +207,14 @@ public class ThemePersistenceTest extends AbstractAppMockMvcTest {
 
             mockMvc.perform(post(ApiPaths.LOGOUT).cookie(firstCookie));
 
-            // act: sign in again as the same user, under a brand-new session
+            // act
             Cookie secondCookie = signinCookie();
             Assertions.assertThat(secondCookie.getValue()).isNotEqualTo(firstCookie.getValue());
 
             var getResponse =
                     mockMvc.perform(get(THEME_URL).cookie(secondCookie)).andReturn().getResponse();
 
-            // assert: the fresh session still sees DARK -- the value came from the users table,
-            // not from the (now-cleared) first session
+            // assert
             var body =
                     objectMapper.readValue(getResponse.getContentAsString(), UserResponseDTO.class);
             Assertions.assertThat(body.getTheme()).isEqualTo(ThemePreference.DARK);
@@ -237,15 +234,14 @@ public class ThemePersistenceTest extends AbstractAppMockMvcTest {
 
             var dto = UpdateThemeRequestDTO.builder().theme(ThemePreference.DARK).build();
 
-            // act: the first (fixture-owning) user writes DARK
+            // act
             mockMvc.perform(
                     put(THEME_URL)
                             .cookie(firstUserCookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(dto)));
 
-            // assert: the second, brand-new user still reads LIGHT -- the first user's write did
-            // not leak across the row boundary
+            // assert
             var secondUserGetResponse =
                     mockMvc.perform(get(THEME_URL).cookie(secondUserCookie))
                             .andReturn()
@@ -255,7 +251,7 @@ public class ThemePersistenceTest extends AbstractAppMockMvcTest {
                             secondUserGetResponse.getContentAsString(), UserResponseDTO.class);
             Assertions.assertThat(secondUserBody.getTheme()).isEqualTo(ThemePreference.LIGHT);
 
-            // assert: the first user's own write is unaffected by the second user's read
+            // assert
             var firstUserGetResponse =
                     mockMvc.perform(get(THEME_URL).cookie(firstUserCookie))
                             .andReturn()

@@ -253,9 +253,8 @@ class ActivityLogConsumerE2ETest extends AbstractKafkaContainerTest {
                                         .isEqualTo(ActivityAction.COLUMN_DELETED);
                                 Assertions.assertThat(row.getDetail())
                                         .isEqualTo("{\"columnId\":\"" + columnId + "\"}");
-                                // The row's timestamp comes from the event, not a consumer clock
-                                // reading; millisecond tolerance because Avro truncates (see
-                                // shouldPopulateAllColumns_whenBoardCreatedEventIsSparsest).
+                                // The row timestamp comes from the event, not a consumer clock
+                                // reading; millisecond tolerance because Avro truncates.
                                 Assertions.assertThat(row.getCreatedAt())
                                         .isCloseTo(
                                                 timestamp, Assertions.within(1, ChronoUnit.MILLIS));

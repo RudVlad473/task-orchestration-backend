@@ -99,7 +99,7 @@ public class ActuatorHealthE2ETest extends AbstractAppE2ETest {
             // arrange & act
             var statusCode = given().when().get(PROMETHEUS_PATH).then().extract().statusCode();
 
-            // assert: metrics are never reachable through the routed port
+            // assert
             Assertions.assertThat(statusCode).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         }
     }

@@ -60,9 +60,9 @@ public class SubtaskLockingTest extends AbstractAppMockMvcTest {
     }
 
     /**
-     * Creates a board/column/task/subtask owned by an arbitrary user for the cross-user rejection
-     * case. There is no REST endpoint for creating a board, so it goes through the service layer,
-     * like AbstractAppTest.createColumnForUser.
+     * Create a board/column/task/subtask owned by an arbitrary user for the cross-user rejection
+     * case. There is no REST endpoint for creating a board, so this goes through the service
+     * layer.
      */
     private SubtaskResponseDTO createSubtaskForUser(String userId) {
         var column =
@@ -157,7 +157,7 @@ public class SubtaskLockingTest extends AbstractAppMockMvcTest {
                             .version(startingVersion)
                             .build();
 
-            // act: first PUT with the starting version succeeds and bumps the version
+            // act
             var firstResponse =
                     mockMvc.perform(
                                     put(url).cookie(cookie)
@@ -169,7 +169,7 @@ public class SubtaskLockingTest extends AbstractAppMockMvcTest {
             Assertions.assertThat(firstResponse.getResponse().getStatus())
                     .isEqualTo(HttpStatus.OK.value());
 
-            // act: second PUT still holding the stale starting version is rejected
+            // act
             var staleResponse =
                     mockMvc.perform(
                                     put(url).cookie(cookie)
@@ -181,7 +181,7 @@ public class SubtaskLockingTest extends AbstractAppMockMvcTest {
             Assertions.assertThat(staleResponse.getResponse().getStatus())
                     .isEqualTo(HttpStatus.CONFLICT.value());
 
-            // assert: a subsequent GET shows the original title/isCompleted unchanged
+            // assert
             var currentSubtasksResponse =
                     mockMvc.perform(
                                     get(ApiPaths.BOARDS
@@ -267,8 +267,7 @@ public class SubtaskLockingTest extends AbstractAppMockMvcTest {
                             .version(otherSubtask.getVersion() + 99)
                             .build();
 
-            // act: attempt the update as the ORIGINAL signed-in user against another user's
-            // subtask
+            // act
             var response =
                     mockMvc.perform(
                                     put(url).cookie(cookie)

@@ -107,11 +107,6 @@ class ComposedConstraintPropertyCustomizerTest extends AbstractPostgresContainer
                                                 + annotationType.getSimpleName()));
     }
 
-    /**
-     * Reads the io.swagger.v3.oas.annotations.media.Schema meta-annotation off a composed
-     * constraint annotation, so callers read description()/example() rather than
-     * hand-copied literals.
-     */
     private io.swagger.v3.oas.annotations.media.Schema metaSchemaOf(
             Class<? extends Annotation> annotationType) {
         var schema = annotationType.getAnnotation(io.swagger.v3.oas.annotations.media.Schema.class);
