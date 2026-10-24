@@ -102,7 +102,9 @@ pre-merge migration verification — it never carries application traffic.
 kube-state-metrics + node-exporter), Loki, and Alloy monitor BOTH environments from the shared
 `monitoring` namespace — there is no separate nonprod monitoring stack, matching the Compose-era
 single-shared-instance model. Grafana is the ONLY one of these publicly reachable, through its own
-`IngressRoute` on the monitoring hostname; its own login remains the sole AUTHENTICATION gate in
+`IngressRoute` on the monitoring hostname, declared only in `k8s/monitoring/configs/ingressroute.yaml`
+and applied only by the `monitoring` Flux Kustomization (`platform/edge` holds just the hostname's
+Certificate and the ClusterIssuers, and invariant I11 enforces single ownership); its own login remains the sole AUTHENTICATION gate in
 front of every metric this stack collects, backed by a login-path-scoped `rateLimit` Middleware
 (`grafana-login-rate-limit`, re-derived from Traefik's own token-bucket semantics in Plan 13-08).
 Alloy replaces Promtail — it tails pod logs through the Kubernetes API (`loki.source.kubernetes`),

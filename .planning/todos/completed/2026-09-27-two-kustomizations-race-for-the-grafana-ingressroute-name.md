@@ -57,3 +57,21 @@ not just currently favoring the right winner. Consider adding a check to
 `scripts/verify-k8s-invariants.py` (a new invariant) that fails when two rendered roots define an
 object with the same GVK+namespace+name, closing this class of defect structurally rather than
 relying on someone noticing the next flap.
+
+## Resolution
+
+Closed by **quick task 261024-nvj (2026-10-24)** on branch `fix/grafana-route-ownership`, in two
+commits: `d5373d1` adds the invariant, `cb53636` removes the placeholder. The race recurred on
+2026-10-24 (both README dashboard links answered 503, `edge` the last writer), which is why this was
+fixed rather than left filed.
+
+The fix followed this todo's own Solution: `k8s/platform/edge/ingressroute-monitoring.yaml` and its
+resource line are gone, so `k8s/monitoring/configs/ingressroute.yaml` is the sole owner of the
+`grafana` and `grafana-http` IngressRoute names. The invariant the todo suggested is I11 in
+`scripts/verify-k8s-invariants.py`: it fails when any object identity (API group, kind, namespace,
+name) is rendered by two Flux Kustomizations. It is red on the unfixed `ba8b5cf` naming both routes and
+green on the fix.
+
+Not closed by these commits: the live race-closure proof this todo asks for (forcing `edge` then
+`monitoring`, and the reverse, and re-reading the owner label after each). That is the post-merge
+procedure the operator runs at the merge gate, so no live result is claimed here.

@@ -572,6 +572,16 @@ drift from `.env.prod`. `2026-09-07-rotate-grafana-viewer-password-leaked-in-ses
 completed: the new Grafana starts from a fresh `grafana.db` with only `admin` provisioned — no
 `viewer` account exists for the leaked credential to still authenticate against.
 
+### 7. Route ownership (2026-10-24)
+
+The `monitoring` Flux Kustomization is the sole owner of both Grafana IngressRoutes (`grafana`,
+`grafana-http`) and both Middlewares (`grafana-login-rate-limit`, `redirect-https`), all declared in
+`k8s/monitoring/configs/ingressroute.yaml`. Check it live with
+`k3s kubectl get ingressroute -n monitoring grafana -o jsonpath='{.metadata.labels}'`, expecting
+`kustomize.toolkit.fluxcd.io/name` `monitoring`. Invariant I11 in `scripts/verify-k8s-invariants.py`
+rejects a second Kustomization rendering any of them; the history is under "A pre-existing, unrelated
+bug surfaced by this session" below.
+
 ## k3s resource measurement — Plan 13-09 (2026-09-27)
 
 Every provisional memory value shipped since Phase 13 started (Traefik, Flux's 6 controllers,
@@ -738,6 +748,19 @@ from winning again on its own 10-minute schedule. Filed as a todo rather than fi
 resolving it requires removing the now-redundant placeholder from `platform/edge` — outside this
 plan's `files_modified` scope and a real, if small, architectural decision (which Kustomization
 should own this object).
+
+**Resolved 2026-10-24 (quick task 261024-nvj, branch fix/grafana-route-ownership).** The race
+recurred: both README dashboard links answered 503 because `edge` was the last writer (15:03:00Z)
+against `monitoring` (15:01:03Z), both at `ba8b5cf`. The placeholder file
+`k8s/platform/edge/ingressroute-monitoring.yaml` and its resource line were removed, so
+`k8s/monitoring/configs/ingressroute.yaml` is the only definition of `IngressRoute` `grafana` and
+`grafana-http`; `platform/edge` keeps the `grafana` Certificate and the ClusterIssuers. Invariant I11
+in `scripts/verify-k8s-invariants.py` now fails any object that two Flux Kustomizations render: red on
+`ba8b5cf` naming both routes, green on the fix. Accepted consequence: on a cold bootstrap the hostname
+serves Traefik's default certificate until `monitoring` applies its routes, while HTTP-01 issuance
+uses cert-manager's own solver Ingress and needs neither route. Live ownership check:
+`k3s kubectl get ingressroute -n monitoring grafana -o jsonpath='{.metadata.labels}'` must show
+`kustomize.toolkit.fluxcd.io/name` `monitoring`.
 
 ## D-08 gate — Plan 13-10 (2026-09-29)
 
