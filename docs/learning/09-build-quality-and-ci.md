@@ -954,7 +954,7 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
 |----------|---------|---------|
 | [`security-scan.yml`](../../.github/workflows/security-scan.yml) | Mondays 06:00 UTC, manual | OWASP `dependencyCheckAnalyze` against `runtimeClasspath`, and a guard that fails when the report scanned too few jars |
 | [`dependency-submission.yml`](../../.github/workflows/dependency-submission.yml) | Push to `main`, manual | Submit the resolved `runtimeClasspath` graph to GitHub's dependency graph for Dependabot alerts |
-| [`uptime-check.yml`](../../.github/workflows/uptime-check.yml) | Every 15 minutes, manual | `curl` both public health URLs, require HTTP 200 and `"status":"UP"` |
+| [`uptime-check.yml`](../../.github/workflows/uptime-check.yml) | Every 15 minutes, manual (`drill` input) | `curl` both public health URLs and both README dashboards (Grafana's public-dashboard API), require HTTP 200 and the UP or enabled-share marker; a failure opens one GitHub issue |
 | [`verify-rate-limit.yml`](../../.github/workflows/verify-rate-limit.yml) | Manual only | Prove production rate-limits `/api/signin` and nonprod does not |
 | [`api-fuzz.yml`](../../.github/workflows/api-fuzz.yml) | Mondays 07:00 UTC, manual | Schemathesis 4.29.3 against a throwaway loopback stack, report-only |
 
@@ -979,8 +979,12 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
   dependency graph held no Maven package. The workflow submits `runtimeClasspath` only. A branch run
   is accepted but does not update the default branch's graph, so Dependabot alerts for Gradle
   dependencies appear only after the workflow has run on `main`.
-- **uptime-check.yml.** 3 attempts per URL, 10 s apart, 20 s `curl` timeout. One environment down
-  never hides the other. `permissions: {}`, because the job does not check out the repository.
+- **uptime-check.yml.** 3 attempts per URL, 10 s apart, 20 s `curl` timeout, two health URLs and two
+  dashboard URLs. One URL down never hides the others. Two jobs: `uptime-check` holds no token scope
+  (workflow-level `permissions: {}`, no checkout) and passes its verdict as job outputs; `alert` alone
+  holds `issues: write` and uses `gh` to open, comment on or close the one `Uptime check failing` issue.
+  Tested by an offline replay against a fixture server and by the `drill` input, which adds a
+  known-wrong dashboard URL. Triage steps: [`INFRA_RUNBOOK.md`](../INFRA_RUNBOOK.md#uptime-alert-triage).
 - **verify-rate-limit.yml.** Runs `scripts/loadtest/run-rate-limit-verification.sh`, which calls
   `pnpm dlx artillery@2.0.24`, with invalid credentials so that a request that passes the limiter
   gets 401 and writes nothing.
@@ -1002,7 +1006,10 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
   ([`build.gradle`](../../build.gradle#L25-L28)).
 - **CI-29 (uptime).** A frozen Netcup console screenshot caused a false outage alarm. A standing
   probe gives dated evidence. `*/5` gives three times the runs for little real gain, because
-  GitHub's scheduled runs can start late ([`uptime-check.yml`](../../.github/workflows/uptime-check.yml#L21-L28)).
+  GitHub's scheduled runs can start late ([`uptime-check.yml`](../../.github/workflows/uptime-check.yml#L39-L41)).
+  On 2026-10-24 both dashboards answered 503 while the probe, which then called only `/api/healthz`,
+  stayed green, and a red run alerted no one. The probe now covers the dashboards, and a failure opens
+  an issue.
 - **CI-29 (rate limit).** The limiter keys on the TCP peer address. A run spends 20 signin attempts
   from the runner's address and rate-limits it for 5 minutes. From a laptop that would lock the
   developer out. Each run also costs about 20 bcrypt hashes on the VPS, so it does not run on every
@@ -1025,8 +1032,10 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
 ### Trade-offs and limits
 
 - GitHub disables scheduled workflows in a public repository after 60 days of inactivity. The uptime
-  probe then stops without notice.
-- The uptime probe pages nobody. A red run sits in the Actions tab.
+  probe, and with it the alert, then stops without notice.
+- The uptime alert is a GitHub issue. GitHub sends the email under the owner's notification settings,
+  nothing alerts while GitHub, Actions or its mail is down, a run that never starts sends nothing,
+  and scheduled runs here arrive hours apart. Each failing run adds a comment while the issue is open.
 - `management.endpoint.health.show-details=never` means the probe can name the endpoint but never
   the failed subsystem.
 - The scan covers `runtimeClasspath` only. A future second production configuration would not be

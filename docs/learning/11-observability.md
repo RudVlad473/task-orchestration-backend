@@ -861,23 +861,41 @@ holds an arithmetic rule for Postgres only (see chapter 10).
 ### What it is
 
 [`uptime-check.yml`](../../.github/workflows/uptime-check.yml) is a scheduled workflow that calls
-the public health endpoint of production and nonprod.
+the public health endpoint of production and nonprod, and the two public Grafana dashboards linked
+from the README. When a probe fails, a second job opens one GitHub issue.
 
 ### How it works
 
-- Schedule: `*/15 * * * *`, plus manual `workflow_dispatch`.
-- `permissions: {}` — the job does not check out the repository.
-- For each URL in `HEALTH_URLS`: up to 3 attempts, 10 seconds apart, `curl --max-time 20`.
-- An attempt passes only on HTTP 200 and a body that contains `"status":"UP"`.
-- Every URL is always checked. One failed environment does not hide the other.
-- On failure, the job prints a `::error::` line per URL and exits 1.
+- Schedule: `*/15 * * * *`, plus manual `workflow_dispatch` with a boolean `drill` input.
+- `permissions: {}` at the workflow level. Job `uptime-check` holds no scope and does not check out
+  the repository. Job `alert` alone holds `issues: write`. No action is used.
+- For each URL in `HEALTH_URLS` and `DASHBOARD_URLS`: up to 3 attempts, 10 seconds apart,
+  `curl --max-time 20`, no redirect followed.
+- A health attempt passes only on HTTP 200 and a body that contains `"status":"UP"`. A dashboard
+  attempt passes only on HTTP 200 and a body that contains `"publicDashboardEnabled":true`, from
+  Grafana's `/api/public/dashboards/<id>`. The page form `/public-dashboards/<id>` answers 200 with
+  the same HTML shell for a real and an unknown id, so it cannot tell them apart (measured
+  2026-10-24).
+- Every URL is always checked. One failed URL does not hide the others.
+- The probe step writes `result`, `report` (URL and status per failing URL, never a body) and `drill`
+  to its outputs and exits 0. A last step turns a bad or missing verdict into a red job.
+- The `alert` job reads those outputs through `env:` and lists open issues labelled `uptime-alert`.
+  A failed probe opens `Uptime check failing` or, if one is open, adds a comment. A passing probe
+  closes it with a recovery comment. A cancelled run touches nothing.
+- The `drill` input adds one fixed, known-wrong dashboard URL, so the alert path can be exercised on
+  demand. It accepts no text.
 
 ### Why we chose it
 
 **OBS-22.** Quick task 260902-vjo added it after a false alarm. A frozen screenshot of the Netcup
 "Screen" console looked like an outage but showed week-old output. The workflow gives dated
-evidence of "was the service answering". This evidence does not depend on the VPS (header comment
-and [INFRA_RUNBOOK.md, "Triage — dating what the Netcup SCP 'Screen' console shows"](../history/2026-09-02-triage-netcup-scp-screen-console.md)).
+evidence of "was the service answering". This evidence does not depend on the VPS (header comment,
+[INFRA_RUNBOOK.md, "Uptime alert triage"](../INFRA_RUNBOOK.md#uptime-alert-triage), and for dating the console
+[the 2026-09-02 triage record](../history/2026-09-02-triage-netcup-scp-screen-console.md), whose Docker
+commands predate k3s).
+
+The dashboard and alert additions came from an incident on 2026-10-24: both README dashboards answered
+503 while the probe stayed green, because it only called `/api/healthz`, and a red run alerted no one.
 The interval is 15 minutes, not 5: GitHub queues scheduled runs late, so `*/5` gives little real
 gain for three times the runs.
 
@@ -887,20 +905,34 @@ The retries exist to prevent false alarms from a single network error on a share
 
 - `*/5` — see above.
 - A single-shot probe — creates the false alarms the file exists to prevent.
+- The page form of the dashboard URL — a wrong id answers 200 with the same shell.
+- Alertmanager — disabled in-cluster, and it would die with the cluster it watches.
+- A third-party issue action — adds supply-chain trust for what `gh` already does.
 
 ### Trade-offs and limits
 
-The header comment lists four limits:
+The header comment lists five limits:
 
-1. GitHub cron is a floor, not a guarantee; a red run dates an outage only roughly.
-2. GitHub disables scheduled workflows in a public repository after 60 days without activity.
-3. It is a probe, not alerting. A red run pages nobody.
-4. `show-details=never` means a failure cannot name the failed subsystem.
+1. GitHub cron is a floor, not a guarantee; scheduled runs arrive hours apart on this repository, so
+   the email trails an outage by up to that gap.
+2. GitHub disables scheduled workflows in a public repository after 60 days without activity, which
+   stops the probe and the alert together.
+3. The alert is a GitHub issue. GitHub sends the email under the owner's notification settings.
+   Nothing alerts while GitHub, Actions or its mail is down, and a run that never starts sends
+   nothing.
+4. `show-details=never` means a failure cannot name the failed subsystem, and the dashboard check
+   proves an enabled share resolves, not that its panels return data.
+5. While an issue is open, every failing run adds a comment, so the owner gets one notification per
+   failing run.
 
 ### How we test it
 
-Quick task 260902-vjo ran the same script locally. The script takes all values through `env:` and
-has no `${{ }}` interpolation, so it runs unchanged outside Actions.
+Quick task 260902-vjo ran the probe script locally. The script takes all values through `env:` and
+has no `${{ }}` interpolation, so it runs unchanged outside Actions. The dashboard and alert
+change was replayed offline against a local fixture server (503, 404, an HTML shell, a 302 and a
+closed port each fail; the real API body passes; the previous probe stayed green under the 503). The
+alert path runs for real through the `drill` input: a drill opens one issue, a second drill adds a
+comment and no second issue, and the next passing run closes it.
 
 ### Where this is recorded
 
@@ -938,8 +970,8 @@ video in addition to the links: not recorded. Commit `72f5d35` added it.
 - **No application metrics.** Epic 6 (Micrometer, `/actuator/prometheus`, request rate, p95
   latency, Hibernate statistics, Kafka publish counter, consumer lag) is not built. Prometheus does
   not scrape `app` or `app-nonprod`.
-- **No alerting.** Out of scope for Phase 12 (12-CONTEXT.md `<domain>`). No Alertmanager, no
-  notification channel. The uptime check pages nobody.
+- **No in-cluster alerting.** Out of scope for Phase 12 (12-CONTEXT.md `<domain>`). No Alertmanager,
+  no notification channel. The only alert is the GitHub issue the uptime check opens, with the limits above.
 - **No structured or UTC application logging.** The other open half of
   `2026-08-20-no-remote-log-shipping-structured-logging-or-alerting.md`.
 - **No security-event logging** on auth and access control (`2026-08-20-no-security-event-logging-on-auth-and-access-control.md`).
@@ -1056,8 +1088,10 @@ video in addition to the links: not recorded. Commit `72f5d35` added it.
 
 14. What are the limits of the uptime check?
     <details><summary>Answer</summary>
-    GitHub cron can run late. GitHub disables schedules after 60 days without repository
-    activity. A red run pages nobody. The health body cannot name the failed subsystem.
+    GitHub cron can run late, hours apart here. GitHub disables schedules after 60 days without
+    repository activity. The alert is a GitHub issue, so it depends on GitHub, Actions and GitHub's
+    mail, and a failing run adds a comment each time. The health body cannot name the failed
+    subsystem, and the dashboard check proves a share resolves, not that its panels return data.
     </details>
 
 15. What is not monitored at all?
