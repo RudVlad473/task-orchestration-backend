@@ -221,13 +221,12 @@ jobs:
           # Flyway aborts on the first failed migration (recorded in flyway_schema_history), so no
           # abort-on-first-failure logic is needed here.
 
-      # Always closes the forward, win or lose, so the job's resource lifecycle is self-contained.
       - name: Close the SSH forward
         if: always()
         run: pkill -f "ssh .*-L 15432:10.43.54.32:5432" || true
 
-  # Nonprod twin of flyway-verify: a literal copy that declares the staging environment, so the same
-  # vars/secrets names resolve to the nonprod database, never production's.
+  # Nonprod copy: declares the staging environment, so the same vars/secrets names resolve to the
+  # nonprod database, never production's.
   flyway-verify-nonprod:
     needs: [ setup, run-tests ]
     runs-on: ubuntu-latest
@@ -254,8 +253,8 @@ jobs:
             exit 1
           fi
 
-      # Same pinned ClusterIP as flyway-verify: one shared Postgres serves both databases, so only the
-      # resolved DB_NAME/DB_USER/DB_PASS (via `staging`) differ. The sshd Match block covers both CI users.
+      # One shared Postgres at the pinned ClusterIP serves both databases, so only the resolved
+      # DB_NAME/DB_USER/DB_PASS (via `staging`) differ. The sshd Match block covers both CI users.
       - name: Open SSH forward to in-cluster Postgres
         env:
           NETCUP_HOST: ${{ secrets.NETCUP_HOST }}
@@ -367,8 +366,7 @@ jobs:
           fi
 
 
-  # Nonprod twin of cleanup-old-images: prunes by AGE (keep the 5 newest sortable tags), not "every tag
-  # except this run's".
+  # Prune by AGE (keep the 5 newest sortable tags), not "every tag except this run's".
   #
   # Nonprod deploys via Flux, so CI cannot know which tag is running in the cluster, and Flux's
   # ImagePolicy needs several recent tags to exist for a revert-driven rollback.

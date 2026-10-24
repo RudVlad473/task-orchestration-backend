@@ -30,7 +30,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      # Same control, placement and action majors as deploy.yml's run-tests job and security-scan.yml.
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v6
 

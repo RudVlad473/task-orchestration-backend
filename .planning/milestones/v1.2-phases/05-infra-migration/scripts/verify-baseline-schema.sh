@@ -96,9 +96,6 @@ if [ "$MIGRATION_COUNT" -lt 7 ]; then
   exit 1
 fi
 
-# Carried over from the original (pre-Flyway) Task 3 acceptance criteria -- the two specific
-# schema-shape facts those checks named still matter, they are just proven against Flyway's own
-# migration output (V2, V4) rather than against a hand-run bridge script.
 echo "--- Asserting tasks.version exists (V2 migration) ---"
 VERSION_COL="$(docker exec "${PROJECT_NAME}-postgres-1" psql -U "$DB_USER_V" -d "$DB_NAME_V" -tAc \
   "SELECT column_name FROM information_schema.columns WHERE table_name='tasks' AND column_name='version'")"

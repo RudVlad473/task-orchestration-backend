@@ -205,7 +205,6 @@ def check_i3(doc, label):
 
 
 def check_i5_rendered(doc, label):
-    """Untagged/`:latest` image check against rendered objects."""
     violations = []
     for kind, name, pod_spec in iter_pod_templates(doc):
         for c in (pod_spec.get("containers", []) or []) + (pod_spec.get("initContainers", []) or []):

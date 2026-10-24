@@ -101,7 +101,6 @@ def run_cases():
         if violations:
             fails.append(f"{label}: expected no violations, got {violations!r}")
 
-    # Clean fixture: every rendered-object check reports nothing.
     for label, doc in (
         ("clean app Deployment", clean_app_deployment()),
         ("clean Service", clean_service()),
@@ -109,32 +108,26 @@ def run_cases():
     ):
         expect_clean(f"clean/{label}", _gate.check_rendered_doc(doc, "fixture"))
 
-    # I1 -- a NodePort Service.
     doc = clean_service()
     doc["spec"]["type"] = "NodePort"
     expect_violation("I1", _gate.check_rendered_doc(doc, "fixture"), "I1:")
 
-    # I2 -- hostNetwork.
     doc = clean_app_deployment()
     doc["spec"]["template"]["spec"]["hostNetwork"] = True
     expect_violation("I2 (hostNetwork)", _gate.check_rendered_doc(doc, "fixture"), "I2:")
 
-    # I2 -- hostPort.
     doc = clean_app_deployment()
     doc["spec"]["template"]["spec"]["containers"][0]["ports"] = [{"hostPort": 8080}]
     expect_violation("I2 (hostPort)", _gate.check_rendered_doc(doc, "fixture"), "I2:")
 
-    # I2 -- hostPath volume.
     doc = clean_app_deployment()
     doc["spec"]["template"]["spec"]["volumes"] = [{"name": "x", "hostPath": {"path": "/etc"}}]
     expect_violation("I2 (hostPath)", _gate.check_rendered_doc(doc, "fixture"), "I2:")
 
-    # I3 -- missing memory requests/limits.
     doc = clean_app_deployment()
     del doc["spec"]["template"]["spec"]["containers"][0]["resources"]
     expect_violation("I3 (missing)", _gate.check_rendered_doc(doc, "fixture"), "I3:")
 
-    # I3 -- requests exceed limits.
     doc = clean_app_deployment()
     doc["spec"]["template"]["spec"]["containers"][0]["resources"] = {
         "requests": {"memory": "2Gi"},
@@ -168,17 +161,14 @@ def run_cases():
         _gate.check_i4_source_file("fixture.yaml", measured_text, no_provisional=True),
     )
 
-    # I5 -- untagged image.
     doc = clean_app_deployment()
     doc["spec"]["template"]["spec"]["containers"][0]["image"] = "rudenkovladimir/kanban-board-backend"
     expect_violation("I5 (untagged)", _gate.check_rendered_doc(doc, "fixture"), "I5:")
 
-    # I5 -- :latest image.
     doc = clean_app_deployment()
     doc["spec"]["template"]["spec"]["containers"][0]["image"] = "rudenkovladimir/kanban-board-backend:latest"
     expect_violation("I5 (:latest)", _gate.check_rendered_doc(doc, "fixture"), "I5:")
 
-    # I5 -- overlay kustomization.yaml with a bad newTag.
     bad_overlay = (
         "apiVersion: kustomize.config.k8s.io/v1beta1\n"
         "kind: Kustomization\n"
@@ -232,7 +222,6 @@ def run_cases():
     ]
     expect_violation("I6 (worst-case)", _gate.check_rendered_doc(doc, "fixture"), "I6:")
 
-    # I7 -- a discovered root neither rendered nor excluded.
     expect_violation(
         "I7",
         _gate.find_uncovered_roots(["k8s/base/orphan"], set(), set()),
@@ -243,7 +232,6 @@ def run_cases():
         _gate.find_uncovered_roots(["k8s/base/app"], {"k8s/base/app"}, set()),
     )
 
-    # I8 -- a rendered Secret.
     doc = {"kind": "Secret", "metadata": {"name": "app-env"}}
     expect_violation("I8", _gate.check_rendered_doc(doc, "fixture"), "I8:")
 

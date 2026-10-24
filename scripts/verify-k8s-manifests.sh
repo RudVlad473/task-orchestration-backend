@@ -146,8 +146,8 @@ ensure_kubeconform() {
   echo "${bin}"
 }
 
-# Downloaded ONLY when explicitly requested via `--tool helm` -- never by the default validation
-# path (D-9: no helm binary in CI's k8s-manifests-valid job).
+# Downloaded ONLY when explicitly requested via --tool helm, never by the default validation path:
+# CI's k8s-manifests-valid job carries no helm binary.
 ensure_helm() {
   local dir="${CACHE_ROOT}/helm-${HELM_VERSION}"
   local bin="${dir}/linux-amd64/helm"
@@ -162,9 +162,9 @@ ensure_helm() {
   echo "${bin}"
 }
 
-# --tool <kubectl|kubeconform|helm>: prints the pinned binary's path and exits. Used by other
-# scripts/CI steps (Task 3's verify-k8s-invariants.py) that need the same pinned kubectl without
-# re-implementing this download/verify logic.
+# --tool <kubectl|kubeconform|helm>: prints the pinned binary's path and exits. Used by
+# verify-k8s-invariants.py, which needs the same pinned kubectl without re-implementing this
+# download/verify logic.
 if [ "${1:-}" = "--tool" ]; then
   case "${2:-}" in
     kubectl) ensure_kubectl ;;
@@ -178,8 +178,6 @@ fi
 KUBECTL_BIN="$(ensure_kubectl)"
 KUBECONFORM_BIN="$(ensure_kubeconform)"
 
-# Every directory under k8s/ that holds its own kustomization.yaml, sorted for deterministic
-# output. Discovered by find, not hardcoded, so a new base/overlay is covered automatically.
 mapfile -t ROOTS < <(find "${REPO_ROOT}/k8s" -type f -name kustomization.yaml -exec dirname {} \; 2>/dev/null | sort)
 
 if [ "${#ROOTS[@]}" -eq 0 ]; then

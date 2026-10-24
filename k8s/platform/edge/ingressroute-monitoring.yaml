@@ -54,8 +54,7 @@ spec:
   entryPoints:
     - web
   routes:
-    # Same ACME-safe shape as the app-http routes (I10): the negation keeps cert-manager's HTTP-01 solver
-    # path out of the redirect by construction.
+    # The negation keeps cert-manager's HTTP-01 solver path out of the redirect by construction (I10).
     - match: Host(`kanban-board-rud-vlad-473-monitoring.duckdns.org`) && !PathPrefix(`/.well-known/acme-challenge/`)
       kind: Rule
       middlewares:

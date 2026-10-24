@@ -52,14 +52,11 @@ usage() {
 # Single definition of the ruleset, in enforcement order; `apply` and `check` both build off it so
 # they cannot drift.
 expected_rules() {
-  # `-m tcp` is written explicitly so this matches `iptables -S`'s own kernel-normalized output.
+  # `-m tcp` is written explicitly so this matches `iptables -S`'s kernel-normalized output.
   #
-  # `iptables -A ... -p tcp ... --dport N` accepts the bare form at apply time, but `-S` always
-  # echoes it back with an explicit `-m tcp` match extension inserted before `--dport` -- found
-  # live (Task 3) when `check` reported drift against every port rule despite `apply` having just
-  # installed them moments before. Writing `-m tcp` here up front keeps expected_rules() matching
-  # `iptables -S`'s own output byte-for-byte, the same guarantee docker-user-firewall.sh's
-  # single-source-of-truth comment promises for its own five rules.
+  # `iptables -A ... -p tcp ... --dport N` accepts the bare form at apply time, but `-S` echoes it
+  # back with an explicit `-m tcp` inserted before `--dport`. Without it, `check` reports drift
+  # against every port rule right after `apply`.
   cat <<RULES
 -A ${CHAIN} -m conntrack --ctstate RELATED,ESTABLISHED -j RETURN
 $(for p in ${ALLOWED_TCP_PORTS}; do echo "-A ${CHAIN} -p tcp -m conntrack --ctstate NEW -m tcp --dport ${p} -j RETURN"; done)

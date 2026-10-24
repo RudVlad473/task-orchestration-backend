@@ -49,9 +49,6 @@ def free_port():
     return fuzz.pick_free_port()
 
 
-# ---------------------------------------------------------------- loopback guard
-
-
 def test_guard_refuses_every_non_loopback_target():
     for url in REFUSED_URLS:
         try:
@@ -68,9 +65,6 @@ def test_guard_accepts_loopback_targets():
             fuzz.assert_local_base_url(url)
         except fuzz.RefusedTarget as err:
             raise AssertionError("guard refused %r: %s" % (url, err))
-
-
-# ---------------------------------------------------------------- process level
 
 
 class FakeTools:
@@ -125,9 +119,6 @@ def test_process_lets_a_loopback_target_through_the_guard():
         assert tools.called() == [], "tools were started: %s" % tools.called()
         meta = json.loads((Path(tmp) / "report" / "run.json").read_text())
         assert meta["boot_mode"] is False and meta["exit_code"] == 1, meta
-
-
-# ---------------------------------------------------------------- teardown paths
 
 
 class FakeSteps:
@@ -235,9 +226,6 @@ def test_a_refused_target_during_the_run_exits_3():
     assert_torn_down_once(calls)
 
 
-# ---------------------------------------------------------------- environment and arguments
-
-
 def test_child_env_strips_hostile_variables_and_sets_loopback_values():
     hostile = {
         "PATH": "/usr/bin",
@@ -289,9 +277,6 @@ def test_report_dir_must_be_ignored_or_outside_the_work_tree():
         fuzz.assert_report_dir_safe(Path(tmp) / "report", fuzz.ROOT)
 
 
-# ---------------------------------------------------------------- parsing
-
-
 def test_ss_parser_returns_every_pid():
     line = 'LISTEN 0 100 127.0.0.1:1234 0.0.0.0:* users:(("java",pid=111,fd=5),("java",pid=222,fd=6))'
     assert fuzz.parse_ss_pids(line) == [111, 222], fuzz.parse_ss_pids(line)
@@ -317,9 +302,6 @@ def test_summarize_groups_failures_by_class():
     assert text.index("Response violates schema") < text.index("Server error"), text
     assert "| Schema error | 4 |" in text, text
     assert "operations tested: 23 of 24" in text and "unique failures: 3" in text, text
-
-
-# ---------------------------------------------------------------- live kill-by-port
 
 
 def wait_listening(port, timeout=15):

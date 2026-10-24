@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
-"""Extract per-page text from the Kanban mock-up PDF.
-
-Reads the PDF with pypdf.PdfReader, extracts text per page (applying the
-document's embedded /ToUnicode CMaps so glyph indices resolve to real
-characters rather than octal garbage), collapses whitespace runs to single
-spaces, and writes one delimited block per page to an output text file so
-every later claim in the gap document can be traced back to a page number.
+"""Extract per-page text from the Kanban mock-up PDF so every claim in the gap document traces to a
+page number.
 
 Usage:
     python extract-mockup-text.py [pdf_path] [output_path]

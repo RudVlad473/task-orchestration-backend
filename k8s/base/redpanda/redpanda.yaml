@@ -93,7 +93,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/redpanda/data
-          # Healthy-cluster check via rpk.
           readinessProbe:
             exec:
               command:

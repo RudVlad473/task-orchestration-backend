@@ -126,7 +126,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Remove any leftover container from a prior crashed run before starting a fresh one.
 docker rm -f -v "$CONTAINER_NAME" >/dev/null 2>&1 || true
 
 docker run -d \

@@ -69,7 +69,7 @@ INIT_LINE = (
     '%%{init: {"flowchart": {"subGraphTitleMargin": {"top": 15, "bottom": 15}, "curve": "linear"}}}%%'
 )
 
-# GSD and vendored-skill trees, plus the wiki copies; same set verify-comments.py excludes.
+# GSD and vendored-skill trees, plus the wiki copies.
 EXCLUDED_PREFIXES = (".planning/", ".claude/", ".agents/", "docs/raw/", "docs/wiki/", ".dev/")
 
 KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")

@@ -44,9 +44,6 @@ def has_markup(text):
     return bool(vc.JAVADOC_HTML_RE.search(text) or vc.JAVADOC_INLINE_RE.search(text))
 
 
-# ------------------------------------------------------------------ line anatomy
-
-
 def split_lines(raw_lines):
     """Return rows (indent, opener, content, closer) for the raw source lines of one block comment."""
     rows = []
@@ -77,9 +74,6 @@ def join_row(indent, opener, content, closer):
     if closer:
         out += (" " if content or opener else "") + closer
     return out
-
-
-# ------------------------------------------------------------------ inline tags
 
 
 def find_close(text, pos):
@@ -140,9 +134,6 @@ def replace_inline_tags(text, residue):
             continue
         text = text[: m.start()] + new + text[close + 1 :]
         pos = m.start()
-
-
-# ------------------------------------------------------------------ block rewrite
 
 
 def rewrite_block(rows, residue):
@@ -295,9 +286,6 @@ def cmd_apply(args):
     for path, ln, why, shown in sorted(residue_all):
         print("RESIDUE %s:%d: %s | %s" % (path, ln, why, shown.strip()))
     return 0
-
-
-# ------------------------------------------------------------------ verify
 
 
 def normalise(line):

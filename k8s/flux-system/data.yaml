@@ -1,5 +1,3 @@
-# Flux Kustomization for the in-cluster Postgres StatefulSet in k8s/data/postgres. Depends on
-# platform for the kanban-data namespace.
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

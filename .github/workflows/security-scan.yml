@@ -14,8 +14,7 @@ name: Dependency Vulnerability Scan
 on:
   workflow_dispatch: {}
   # Weekly matches dependency-check's recommended cadence for keeping incremental NVD updates cheap
-  # (dependency-check.github.io/DependencyCheck/data/index.html). Active from the start: NVD_API_KEY and
-  # Dependabot vulnerability alerts were both confirmed enabled with read-only `gh` checks.
+  # (dependency-check.github.io/DependencyCheck/data/index.html).
   schedule:
     - cron: '0 6 * * 1' # Mondays 06:00 UTC
 
@@ -25,9 +24,7 @@ permissions:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
-    # Runaway guard, not a runtime prediction: no dependencyCheckAnalyze runtime has been measured (no
-    # NVD_API_KEY was available locally), and the ~1min-warm/~11min-cold figures in the research notes are a
-    # third-party 2026 benchmark against a larger repository.
+    # Runaway guard, not a runtime prediction: no dependencyCheckAnalyze runtime has been measured.
     timeout-minutes: 45
     steps:
       # Fail in seconds, naming what is missing: "loudly not configured" beats "silently reporting nothing".

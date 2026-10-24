@@ -20,8 +20,8 @@ ROOT = Path(__file__).resolve().parents[3]
 TSV_PATH = Path(__file__).resolve().parent / "migration-map.tsv"
 TODAY = date.today().isoformat()
 
-# Same fence detection as check_evidence.py, so link rebasing skips exactly
-# the spans the skill's own lint treats as non-prose.
+# Fence detection must match the wiki lint's notion of non-prose, so link rebasing skips exactly
+# those spans.
 FENCE_OPEN_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 FENCE_CLOSE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})[ \t]*$")
 BACKTICK_SPAN_RE = re.compile(r"`[^`\n]*`")
@@ -144,7 +144,6 @@ def resolve_and_rebase(target: str, src_dir: Path, dest_dir: Path, lookup, dir_l
     if not path_part:
         return None
 
-    # Resolve against the src file's directory, project-root-relative.
     resolved = (src_dir / path_part).resolve()
     try:
         rel_to_root = resolved.relative_to(ROOT).as_posix()

@@ -36,9 +36,6 @@ def suspects(path, text):
     return _gate.lint(path, text, VIEW).suspects
 
 
-# ---------------------------------------------------------------- extractors
-
-
 def test_java_real_comments_found():
     src = 'int a; // trailing\n/* block */\n/**\n * doc line\n */\nclass A {}\n'
     assert comment_texts("java", src) == ["trailing", "block", "", "doc line", ""], comment_texts("java", src)
@@ -145,8 +142,6 @@ def test_line_family_full_line_hash():
     assert comment_texts("line", "# a\nKEY=v\n  # b\n") == ["a", "b"]
 
 
-# ------------------------------------------------------------------ equiv
-
 JAVA_OLD = 'class A {\n  // old note\n  int x = 1; // trailing\n  String s = "// keep";\n}\n'
 
 
@@ -220,9 +215,6 @@ def test_equiv_frozen_migration_refused_even_with_allow():
 
 def test_equiv_allow_skips_comparison_for_non_frozen():
     assert equiv("a.yaml", "a: 1\n", "a: 2\n", allow=True) == []
-
-
-# ------------------------------------------------------------------ rules
 
 
 def test_r1_planning_id_fires_on_each_gated_shape_and_not_on_clean_text():
@@ -305,7 +297,6 @@ def test_r4_todo_can_continue_on_following_comment_lines():
 
 
 def javadoc(*body):
-    """A short Javadoc block: one-line summary, blank line, then the given body lines."""
     return "/**\n * Summary.\n *\n" + "".join(" * %s\n" % line for line in body) + " */\nclass A {}\n"
 
 
@@ -412,9 +403,6 @@ def test_generated_flux_body_is_exempt_but_header_is_linted():
 def test_docstring_blocks_are_linted_in_python():
     bad = '"""Summary one.\nline two\nline three\nline four\n"""\n'
     assert rules("m.py", bad) == ["summary-first"]
-
-
-# ------------------------------------------------------------ wiring
 
 
 def test_serena_tool_config_is_out_of_scope():

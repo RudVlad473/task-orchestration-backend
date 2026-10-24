@@ -33,7 +33,7 @@ spec:
   entryPoints:
     - web
   routes:
-    # The negation excludes cert-manager's HTTP-01 solver path from the redirect (I10), as in prod.
+    # The negation excludes cert-manager's HTTP-01 solver path from the redirect (I10).
     - match: Host(`kanban-board-rud-vlad-473-nonprod.duckdns.org`) && !PathPrefix(`/.well-known/acme-challenge/`)
       kind: Rule
       middlewares:

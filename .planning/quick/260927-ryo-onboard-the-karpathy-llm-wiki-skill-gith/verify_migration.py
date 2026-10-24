@@ -320,7 +320,7 @@ def parse_wiki_header(dest_path: Path, row: dict, updated: str):
         fail(dest_path, "header", f"expected '## Overview', got {lines[6]!r}")
     if lines[7] != "":
         fail(dest_path, "header", "expected blank line after Overview heading")
-    return 8  # index of first body line
+    return 8
 
 
 def parse_raw_md_header(dest_path: Path, row: dict, collected_date: str):
@@ -469,7 +469,6 @@ def check_links(row, body_start_idx, lookup, dir_lookup, only):
                     f"unmoved target changed: {orig_target!r} -> {new_target!r}",
                 )
             continue
-        # mapped: compute the expected relative path from dest_dir
         target_path, frag = split_fragment(mapped)
         target_abs = ROOT / target_path
         if only is not None and not target_abs.is_file():

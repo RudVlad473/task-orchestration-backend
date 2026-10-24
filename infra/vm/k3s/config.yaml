@@ -1,6 +1,5 @@
 # k3s server config, installed to /etc/rancher/k3s/config.yaml by infra/vm/k3s/install.sh.
 
-# Encrypt Secrets at rest in the embedded sqlite datastore.
 secrets-encryption: true
 
 # Kubeconfig readable only by root (0600), not k3s's default 0644: CI's deploy/deploy-nonprod SSH

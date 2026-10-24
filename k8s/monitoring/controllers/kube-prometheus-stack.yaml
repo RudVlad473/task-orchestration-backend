@@ -34,7 +34,6 @@ spec:
   values:
     fullnameOverride: kps
 
-    # Alerting is out of scope; Alertmanager ships in the chart but is not configured.
     alertmanager:
       enabled: false
     defaultRules:
