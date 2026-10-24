@@ -3,7 +3,7 @@
 
 Reads the report written by dependencyCheckAnalyze and the module tree printed by
 `./gradlew dependencies --configuration runtimeClasspath`, and passes only when the report lists
-at least 95 percent as many non-virtual dependencies as the tree has unique modules. It always
+at least 95 percent as many top-level jar entries as the tree has unique modules. It always
 prints a markdown table (expected modules, dependencies scanned, vulnerabilities by severity) and
 appends it to --summary when given, so the job summary carries the counts.
 Exit codes: 0 pass, 1 guard failure, 2 usage error. Stdlib only, so CI needs no pip step.
@@ -21,6 +21,11 @@ Decisions:
     guard exists for: diagnose the scan instead.
   * Virtual entries do not count toward the floor. A virtual dependency is one the engine
     synthesised from evidence, not a jar it opened, so a report padded with them scanned nothing.
+  * Entries for a file embedded in a jar do not count either. The engine writes those with a
+    fileName holding ": " ("swagger-ui-5.21.0.jar: swagger-ui.js") or a "(shaded: ...)" suffix.
+    Measured on run 40103131374: 171 entries, 14 of them embedded, 157 top-level jars against a
+    tree of 160 modules. Counting every entry would let a report padded with embedded files
+    clear the floor with real jars missing. An entry also needs a non-empty fileName to count.
   * A tree with no parsable module line, or with a FAILED resolution line, fails: a guard without
     a denominator has stopped checking.
   * Severity names are upper-cased and otherwise reported as the engine wrote them, so a new
@@ -43,6 +48,7 @@ import sys
 
 DEFAULT_TOLERANCE = 0.05
 SEVERITY_ORDER = ("CRITICAL", "HIGH", "MEDIUM", "MODERATE", "LOW")
+EMBEDDED_MARKER = ": "
 
 _MODULE_LINE = re.compile(r"^[| ]*[+\\]--- (?P<body>.+?)\s*$")
 _MARKER_SUFFIX = re.compile(r"\s+\((?P<mark>\*|c|n)\)$")
@@ -105,10 +111,18 @@ def load_report(path):
     return report
 
 
+def is_top_level_jar(dep):
+    """True for a real, non-virtual entry whose fileName is a jar rather than a file inside one."""
+    file_name = dep.get("fileName")
+    if dep.get("isVirtual") is True or not isinstance(file_name, str) or not file_name:
+        return False
+    return EMBEDDED_MARKER not in file_name
+
+
 def summarize_report(report):
-    """Return (all_entries, non_virtual, vulnerable_dependencies, severity_counts)."""
+    """Return (all_entries, top_level_jars, vulnerable_dependencies, severity_counts)."""
     entries = [dep for dep in report["dependencies"] if isinstance(dep, dict)]
-    non_virtual = [dep for dep in entries if dep.get("isVirtual") is not True]
+    non_virtual = [dep for dep in entries if is_top_level_jar(dep)]
     severities = {}
     vulnerable = 0
     for dep in entries:
@@ -125,7 +139,7 @@ def summarize_report(report):
 
 
 def floor_for(expected, tolerance):
-    """Return the smallest non-virtual count that passes. The round() absorbs float noise."""
+    """Return the smallest top-level jar count that passes. The round() absorbs float noise."""
     return int(math.ceil(round(expected * (1 - tolerance), 6)))
 
 
@@ -180,14 +194,14 @@ def evaluate(report, tree_text, tolerance):
         )
     elif expected > 0 and non_virtual < floor:
         failures.append(
-            "%d non-virtual dependencies scanned against a floor of %d (%.0f%% of %d runtime modules)"
+            "%d top-level jar entries scanned against a floor of %d (%.0f%% of %d runtime modules)"
             % (non_virtual, floor, (1 - tolerance) * 100, expected)
         )
     ok = not failures
     rows = [
         ("Expected runtime modules (runtimeClasspath tree)", str(expected)),
         ("Dependencies scanned (all entries)", str(entries)),
-        ("Dependencies scanned (non-virtual)", str(non_virtual)),
+        ("Dependencies scanned (top-level jars)", str(non_virtual)),
         ("Floor (%.0f%% of expected)" % ((1 - tolerance) * 100), str(floor)),
         ("Vulnerable dependencies", str(vulnerable)),
     ]
