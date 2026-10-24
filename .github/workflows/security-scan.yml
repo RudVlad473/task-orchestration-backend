@@ -41,9 +41,13 @@ permissions:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
-    # Runaway guard for the measurement run: the first cold run on the branch replaces this and the two step
-    # limits below with measured values in the same change set.
-    timeout-minutes: 150
+    # Runaway guard sized from a cold run: the update took 6m22s, the analysis 19s and the job 7m29s.
+    #
+    # The job limit is the two step limits below plus 10 minutes of setup. Each step limit is a guard for a
+    # stall, not a forecast: NVD throttling varies from day to day, and eight earlier weekly runs were
+    # cancelled at 45 minutes with no log line to say where they stood. The update step logs its progress,
+    # so a stall now shows where it stopped.
+    timeout-minutes: 40
     steps:
       # Fail in seconds, naming what is missing: "loudly not configured" beats "silently reporting nothing".
       #
@@ -124,7 +128,8 @@ jobs:
           fi
         # No continue-on-error: an update that could not finish must stay visible, and the save step below is
         # gated on this step's outcome.
-        timeout-minutes: 120
+        # About 3 times the cold update (6m22s), so a slow NVD day passes and a hang still ends in bounded time.
+        timeout-minutes: 20
 
       # Saved before the analysis starts, so a slow or cancelled analysis cannot lose a finished update. Gated
       # on success: dependency-check records the NVD last-modified marker only when an update completes, so a
@@ -153,7 +158,8 @@ jobs:
           fi
         # No continue-on-error: the scan is report-only at the Gradle level (failBuildOnCVSS = 11), so a job
         # failure means the scan could not run (network, NVD outage, plugin error), which must stay visible.
-        timeout-minutes: 30
+        # The measured analysis (19s) is far below the 10-minute floor this guard keeps for a slow runner.
+        timeout-minutes: 10
 
       # Fails when the report lists fewer dependencies than the runtime tree has modules, and writes the counts
       # and the vulnerabilities by severity to the log and to the job summary.

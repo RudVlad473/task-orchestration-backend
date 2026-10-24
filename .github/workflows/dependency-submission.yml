@@ -11,22 +11,22 @@
 # The job alone holds contents: write, because the Dependency Submission API requires it; the workflow-level
 # permissions are empty. The job runs third-party Gradle plugin code with that token, so checkout does not
 # persist credentials, the wrapper is validated first, and no Gradle cache is shared with it
-# (cache-disabled). Gradle dependency verification stays strict: the graph plugin the action injects is
-# covered by checksums in gradle/verification-metadata.xml, never by relaxing the verification mode.
+# (cache-disabled). This workflow never relaxes Gradle's verification mode. The action runs its own graph
+# build with `-Dorg.gradle.dependency.verification=off` (seen in its command line on 2026-10-24), so the
+# checksums for the graph plugin in gradle/verification-metadata.xml are insurance for an action version
+# that stops doing so, not something a run was seen to need.
 # Tag-pinned like deploy.yml's actions: the risk acceptance in deploy.yml applies to this one too.
 # No schedule and no paths filter. GitHub matches new advisories against the stored graph without a re-run,
 # so a weekly run would add nothing. A snapshot belongs to a commit, and it is unverified whether a commit
 # without one keeps the previous graph, so every push to main submits.
-# TEMPORARY: the second branch under push exists because workflow_dispatch is refused for a workflow file
-# that is absent from the default branch, so a branch push is the only way to run it before merging.
-# It is removed in the final commit of this change.
+# A run on a branch is accepted by GitHub but does not update the default branch's graph, so alerts appear
+# only after this workflow has run on main.
 name: Dependency Submission
 
 on:
   push:
     branches:
       - main
-      - fix/dependency-scan-and-bumps
   workflow_dispatch: {}
 
 permissions: {}
@@ -34,9 +34,8 @@ permissions: {}
 jobs:
   dependency-submission:
     runs-on: ubuntu-latest
-    # Runaway guard for the first measurement run: replaced by a value derived from the measured duration in
-    # the final commit of this change.
-    timeout-minutes: 15
+    # Three measured runs took 55s, 62s and 67s; the limit keeps a 10-minute floor as a runaway guard.
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:

@@ -68,7 +68,7 @@ change runs on a schedule and reports only.
 The hard gates are Spotless, Error Prone, JaCoCo, ArchUnit, `verifyRuntimeDependencyFloor`, gitleaks,
 TruffleHog and the `scripts/verify-*.py` invariant gates. The only report-only gate is OWASP
 dependency-check. The comment in
-[`build.gradle` (OWASP plugin block)](../../build.gradle#L45-L50) states the difference:
+[`build.gradle` (OWASP plugin block)](../../build.gradle#L37-L40) states the difference:
 
 ```groovy
 // Its verdict is not a pure function of the source tree: every other gate here (Spotless,
@@ -81,7 +81,7 @@ dependency-check. The comment in
 
 **CI-01.** A new CVE in a transitive dependency is not something the committer wrote. If the scan
 blocked the deploy, an advisory published on Monday would block an unrelated fix on Tuesday
-([`security-scan.yml` header](../../.github/workflows/security-scan.yml#L1-L15)). The same argument
+([`security-scan.yml` header](../../.github/workflows/security-scan.yml#L1-L28)). The same argument
 gives gitleaks its hard gate. The scanner version is pinned and the config is committed. So its
 verdict is a pure function of the commit
 ([`secret-scan.yml` header](../../.github/workflows/secret-scan.yml#L8-L18)).
@@ -116,9 +116,9 @@ plugin, Spotless, Error Prone, JaCoCo, the Avro code generator and OWASP depende
    `distributionSha256Sum`. A wrong checksum stops the wrapper before it runs.
 3. In CI, the step `gradle/actions/wrapper-validation@v6` runs directly after checkout and before
    any `./gradlew` call ([`deploy.yml` run-tests](../../.github/workflows/deploy.yml#L63-L70),
-   [`security-scan.yml`](../../.github/workflows/security-scan.yml#L67-L72)). It compares
+   [`security-scan.yml`](../../.github/workflows/security-scan.yml#L76-L79)). It compares
    `gradlew`, `gradlew.bat` and `gradle-wrapper.jar` to Gradle's published checksums.
-4. [`gradle/verification-metadata.xml`](../../gradle/verification-metadata.xml) holds 619
+4. [`gradle/verification-metadata.xml`](../../gradle/verification-metadata.xml) holds 709
    `<component>` entries, each with SHA-256 values. It sets `verify-metadata=true` and
    `verify-signatures=false`. Gradle refuses an artifact whose content does not match.
 
@@ -952,7 +952,8 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| [`security-scan.yml`](../../.github/workflows/security-scan.yml) | Mondays 06:00 UTC, manual | OWASP `dependencyCheckAnalyze` against `runtimeClasspath` |
+| [`security-scan.yml`](../../.github/workflows/security-scan.yml) | Mondays 06:00 UTC, manual | OWASP `dependencyCheckAnalyze` against `runtimeClasspath`, and a guard that fails when the report scanned too few jars |
+| [`dependency-submission.yml`](../../.github/workflows/dependency-submission.yml) | Push to `main`, manual | Submit the resolved `runtimeClasspath` graph to GitHub's dependency graph for Dependabot alerts |
 | [`uptime-check.yml`](../../.github/workflows/uptime-check.yml) | Every 15 minutes, manual | `curl` both public health URLs, require HTTP 200 and `"status":"UP"` |
 | [`verify-rate-limit.yml`](../../.github/workflows/verify-rate-limit.yml) | Manual only | Prove production rate-limits `/api/signin` and nonprod does not |
 | [`api-fuzz.yml`](../../.github/workflows/api-fuzz.yml) | Mondays 07:00 UTC, manual | Schemathesis 4.29.3 against a throwaway loopback stack, report-only |
@@ -960,12 +961,24 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
 ### How it works
 
 - **security-scan.yml.** A preflight fails in seconds if `NVD_API_KEY` is empty
-  ([`security-scan.yml`](../../.github/workflows/security-scan.yml#L51-L62)). The secret reaches the
+  ([`security-scan.yml`](../../.github/workflows/security-scan.yml#L52-L71)). The secret reaches the
   shell through `env:`, never through `${{ }}` text in the script, because textual interpolation is
-  a script-injection surface. The NVD database cache is keyed on the plugin version `12.2.2`. The
-  plugin sets `failBuildOnCVSS = 11`, so findings never fail the job; a failed job means the scan
-  could not run ([`build.gradle`](../../build.gradle#L589-L629)). The HTML and JSON reports upload as
-  an artifact.
+  a script-injection surface. The NVD update is its own step, and its cache is saved before the
+  analysis starts, under a key unique to each run and restored by the prefix `12.2.2`. The plugin
+  sets `failBuildOnCVSS = 11`, so findings never fail the job; a failed job means the scan could not
+  run ([`build.gradle`](../../build.gradle#L598-L601)). A guard step then compares the report's
+  dependency count with the module count of the same commit's `runtimeClasspath` tree and fails
+  below 95 percent, and an `OutOfMemoryError` in either scan step's output fails the job. The scan
+  went green on 2026-08-19 with 0 dependencies scanned, because Spring Boot makes `runtimeClasspath`
+  extend `testAndDevelopmentOnly` and the plugin skipped it as a test configuration;
+  `skipTestGroups = false` fixed that. The first complete scan, on 2026-10-24, is recorded with the
+  OSV comparison in
+  [261024-m86-MEASUREMENTS.md](../../.planning/quick/261024-m86-fix-vulnerable-runtime-dependencies-and-/261024-m86-MEASUREMENTS.md).
+  The HTML and JSON reports upload as an artifact.
+- **dependency-submission.yml.** GitHub does not resolve Gradle builds, so before this workflow its
+  dependency graph held no Maven package. The workflow submits `runtimeClasspath` only. A branch run
+  is accepted but does not update the default branch's graph, so Dependabot alerts for Gradle
+  dependencies appear only after the workflow has run on `main`.
 - **uptime-check.yml.** 3 attempts per URL, 10 s apart, 20 s `curl` timeout. One environment down
   never hides the other. `permissions: {}`, because the job does not check out the repository.
 - **verify-rate-limit.yml.** Runs `scripts/loadtest/run-rate-limit-verification.sh`, which calls
@@ -982,11 +995,11 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
 
 - **CI-28.** The scan is network-bound, holds an H2 database of vulnerabilities, and is the heaviest
   task in the build. It stays off `test`, `fastTest`, `check` and the hook. Weekly matches
-  dependency-check's own recommended cadence. It is report-only until a real baseline exists and
-  its false positives are suppressed with evidence. Then the team picks a `failBuildOnCVSS` level
-  from that number, the same measure-then-gate order that Error Prone and JaCoCo followed.
-  Version 12.2.2, not 13.0.0, is a maturity choice: 13.0.0 was ten days old
-  ([`build.gradle`](../../build.gradle#L26-L31)).
+  dependency-check's own recommended cadence. It is report-only until its false positives are
+  suppressed with evidence; a real baseline now exists but is untriaged. Then the team picks a
+  `failBuildOnCVSS` level from that number, the same measure-then-gate order that Error Prone and
+  JaCoCo followed. Version 12.2.2, not 13.0.0, is a maturity choice: 13.0.0 was ten days old
+  ([`build.gradle`](../../build.gradle#L25-L28)).
 - **CI-29 (uptime).** A frozen Netcup console screenshot caused a false outage alarm. A standing
   probe gives dated evidence. `*/5` gives three times the runs for little real gain, because
   GitHub's scheduled runs can start late ([`uptime-check.yml`](../../.github/workflows/uptime-check.yml#L21-L28)).
@@ -1030,7 +1043,9 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
 ### What it is
 
 [`.github/dependabot.yml`](../../.github/dependabot.yml) configures weekly version updates for three
-ecosystems. Security alerts are a separate repository setting, confirmed on.
+ecosystems. Security alerts are a separate repository setting, confirmed on. They match against the
+dependency graph, and GitHub does not resolve Gradle builds, so the Gradle part of that graph is the
+one `dependency-submission.yml` submits.
 
 ### How it works
 
@@ -1139,7 +1154,7 @@ excludes `.claude` and `.planning` because a live Gradle lock file there once br
    So the gap is an unguarded invariant, not a current violation. Confirmed by running on 2026-09-23.
 3. **`verify-caddy-image-tag.py` has no self-test**, unlike the three newer gates.
 4. **OWASP dependency-check is still report-only** (`failBuildOnCVSS = 11`). The ratchet waits for a
-   triaged baseline.
+   triaged baseline: the first complete scan is untriaged and mostly CPE false positives.
 5. **App base images are not digest-pinned or Dependabot-tracked** (dated, deliberate exclusion).
 6. **SpotBugs with `find-sec-bugs`** is noted as a possible complement to Error Prone, not scoped.
 7. **One-directional SCP.** A file deleted from the repository stays on the VM.
