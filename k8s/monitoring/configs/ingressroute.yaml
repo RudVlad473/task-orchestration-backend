@@ -1,4 +1,8 @@
 # Grafana edge routes: HTTPS on websecure, plus a separate web-only redirect route.
+#
+# These are the only definitions of the IngressRoutes grafana and grafana-http. A second Flux
+# Kustomization rendering either name makes the last applier win on every reconcile, which
+# invariant I11 in scripts/verify-k8s-invariants.py rejects.
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
