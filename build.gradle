@@ -556,6 +556,17 @@ dependencyCheck {
     // commons-lang3 bug (a testImplementation pin that never touched runtimeClasspath).
     scanConfigurations = ['runtimeClasspath']
 
+    // Without this the scan sees 0 dependencies.
+    //
+    // Spring Boot makes runtimeClasspath extend testAndDevelopmentOnly, and the plugin's
+    // test-configuration heuristic matches "test" in the name of any configuration in the
+    // hierarchy, so it skipped the one configuration named above (the plugin's --info output says
+    // so: "runtimeClasspath --> ... --> testAndDevelopmentOnly is considered a test configuration:
+    // true"). scanConfigurations already leaves test configurations out by name, so the heuristic
+    // adds only this false negative. If scanConfigurations is ever emptied, test configurations
+    // get scanned too: a noisier scan, not a blinder one.
+    skipTestGroups = false
+
     nvd {
         // From the environment only, never a literal; .github/workflows/security-scan.yml supplies it from
         // secrets.NVD_API_KEY.

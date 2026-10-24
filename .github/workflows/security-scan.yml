@@ -9,6 +9,23 @@
 # The verdict is not a pure function of the commit: an NVD outage or a fresh advisory can turn a job
 # red days after the triggering commit, with no code change. That is the intent (see the preflight step
 # and build.gradle's dependencyCheck comment).
+# The job proves what it scanned. The scan went green on 2026-08-19 with 0 dependencies scanned, so a
+# green job alone says nothing: the guard step compares the report's dependency count with the module
+# count of the same commit's runtimeClasspath tree and fails below 95 percent. Its selftest runs first,
+# the way invariant-checks.yml runs every gate's selftest, so a guard that cannot fire fails loudly.
+# The NVD update is its own step, split from the analysis, and its cache is saved right after the update
+# succeeds. The analysis is the slow, uncertain part (8 weekly runs were cancelled at the old 45-minute
+# limit), and a cancelled job saves no cache, so one combined step could lose a finished update every week.
+# The cache key is unique per run and restored by prefix. A fixed key is immutable once saved, so it would
+# restore the same database forever. GitHub evicts a cache unused for 7 days and the cron is weekly, so
+# most Monday runs start cold; the timeouts below are sized from a cold run for that reason.
+# The scan steps raise the Gradle daemon heap to 3g from the command line. gradle.properties sets 768m
+# for local builds, and the 2026-08-19 update thread died of java.lang.OutOfMemoryError 15 seconds in
+# while the build still reported success. The raise is CI-only, and the OutOfMemoryError check after each
+# scan step turns a swallowed error of that kind into a failed job.
+# Known holes: the OSS Index analyzer stays disabled without credentials, and the logs of the scan steps
+# are kept out of the uploaded artifact on purpose: --info output can echo the NVD key, which GitHub masks
+# in the step log but not inside an artifact file.
 name: Dependency Vulnerability Scan
 
 on:
@@ -24,8 +41,9 @@ permissions:
 jobs:
   dependency-check:
     runs-on: ubuntu-latest
-    # Runaway guard, not a runtime prediction: no dependencyCheckAnalyze runtime has been measured.
-    timeout-minutes: 45
+    # Runaway guard for the measurement run: the first cold run on the branch replaces this and the two step
+    # limits below with measured values in the same change set.
+    timeout-minutes: 150
     steps:
       # Fail in seconds, naming what is missing: "loudly not configured" beats "silently reporting nothing".
       #
@@ -67,29 +85,93 @@ jobs:
       - name: Grant permission to gradlew
         run: chmod +x gradlew
 
-      # Keyed on the plugin version (12.2.2) so a plugin bump invalidates a stale cache.
+      # Ahead of the gate it protects, like every selftest in invariant-checks.yml.
+      - name: Verify the report guard can fire
+        run: python3 -I scripts/verify-dependency-check-report-selftest.py
+
+      # Restores the newest NVD database saved under the plugin version (12.2.2), so a plugin bump starts cold.
+      #
+      # The trailing dash of the prefix keeps the old fixed key `dependency-check-data-12.2.2`, frozen since
+      # August, from ever being restored.
       #
       # Path observed live via `./gradlew dependencyCheckPurge --info`: ~/.gradle/dependency-check-data, which
       # resolves to /home/runner/.gradle/dependency-check-data on this runner. Cached at the parent, not the
       # schema-versioned subdirectory (11.0/ locally): that name is the H2 database's own schema version, not
       # the plugin version, and could change independently of the 12.2.2 pin.
-      - name: Cache dependency-check data directory
-        uses: actions/cache@v4
+      - name: Restore the NVD database cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.gradle/dependency-check-data
-          key: dependency-check-data-12.2.2
+          key: dependency-check-data-12.2.2-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            dependency-check-data-12.2.2-
 
-      - name: Run dependencyCheckAnalyze
+      # Updates the NVD database alone, with the log kept in RUNNER_TEMP and never uploaded.
+      #
+      # `shell: bash` runs with pipefail, so a failing Gradle build is not hidden behind tee. The
+      # OutOfMemoryError check pins the 2026-08-19 failure: an update thread died of it and the build still
+      # ended BUILD SUCCESSFUL with "Found 0 vulnerabilities".
+      - name: Update the NVD database
+        id: nvd-update
+        shell: bash
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-        run: ./gradlew dependencyCheckAnalyze
+        run: |
+          ./gradlew -Dorg.gradle.jvmargs=-Xmx3g dependencyCheckUpdate --info 2>&1 | tee "$RUNNER_TEMP/dependency-check-update.log"
+          if grep -q 'OutOfMemoryError' "$RUNNER_TEMP/dependency-check-update.log"; then
+            echo "::error::The NVD update logged an OutOfMemoryError, so the database may be incomplete."
+            exit 1
+          fi
+        # No continue-on-error: an update that could not finish must stay visible, and the save step below is
+        # gated on this step's outcome.
+        timeout-minutes: 120
+
+      # Saved before the analysis starts, so a slow or cancelled analysis cannot lose a finished update. Gated
+      # on success: dependency-check records the NVD last-modified marker only when an update completes, so a
+      # partial database gives the next run nothing to resume from and could hold a half-written H2 file.
+      - name: Save the NVD database cache
+        if: always() && steps.nvd-update.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.gradle/dependency-check-data
+          key: dependency-check-data-12.2.2-${{ github.run_id }}-${{ github.run_attempt }}
+
+      # The denominator for the guard: the unique modules bootJar packages. -q keeps Gradle's own banner out.
+      - name: Resolve the runtime classpath tree
+        run: ./gradlew -q dependencies --configuration runtimeClasspath > "$RUNNER_TEMP/runtime-classpath-tree.txt"
+
+      - name: Run dependencyCheckAnalyze
+        id: analyze
+        shell: bash
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: |
+          ./gradlew -Dorg.gradle.jvmargs=-Xmx3g dependencyCheckAnalyze 2>&1 | tee "$RUNNER_TEMP/dependency-check-analyze.log"
+          if grep -q 'OutOfMemoryError' "$RUNNER_TEMP/dependency-check-analyze.log"; then
+            echo "::error::The analysis logged an OutOfMemoryError, so the report may be incomplete."
+            exit 1
+          fi
         # No continue-on-error: the scan is report-only at the Gradle level (failBuildOnCVSS = 11), so a job
         # failure means the scan could not run (network, NVD outage, plugin error), which must stay visible.
+        timeout-minutes: 30
 
+      # Fails when the report lists fewer dependencies than the runtime tree has modules, and writes the counts
+      # and the vulnerabilities by severity to the log and to the job summary.
+      - name: Verify the report scanned the runtime classpath
+        if: always() && steps.analyze.outcome != 'skipped'
+        run: >-
+          python3 -I scripts/verify-dependency-check-report.py
+          --report build/reports/dependency-check-report.json
+          --tree "$RUNNER_TEMP/runtime-classpath-tree.txt"
+          --summary "$GITHUB_STEP_SUMMARY"
+
+      # Never the tee'd logs: see the Known holes line in the header. The tree is only module coordinates.
       - name: Upload dependency-check report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check-report
-          path: build/reports/dependency-check-report.*
+          path: |
+            build/reports/dependency-check-report.*
+            ${{ runner.temp }}/runtime-classpath-tree.txt
           if-no-files-found: warn
