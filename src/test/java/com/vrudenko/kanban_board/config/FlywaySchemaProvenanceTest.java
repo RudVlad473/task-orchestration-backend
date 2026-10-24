@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Executable form of the schema-provenance criterion: Testcontainers, Flyway V1-V4, Hibernate
+ * Executable form of the schema-provenance criterion: Testcontainers, Flyway migrations, Hibernate
  * ddl-auto=validate and Spring Session JDBC's initializer coexist in one context.
  *
  * Queries the live catalog directly, so a regression in any one mechanism fails a named

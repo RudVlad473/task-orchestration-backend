@@ -1,5 +1,3 @@
-# Unsuspend only after the restore and parity diff are both clean and `docker ps` confirms every
-# Compose container is stopped.
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization

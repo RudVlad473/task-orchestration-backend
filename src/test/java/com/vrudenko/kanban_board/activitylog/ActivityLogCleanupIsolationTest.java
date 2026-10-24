@@ -23,7 +23,7 @@ import org.springframework.data.domain.Pageable;
  * from AbstractAppTest.cleanup() turn this red: whichever runs second sees the row the
  * first left behind. Assertions are scoped by a constant probe board id, PROBE_BOARD_ID,
  * not an absolute count, because the AbstractKafkaContainerTest subclasses write real
- * activity-log rows into the same database, have no @AfterEach cleanup, and use real ULID
+ * activity-log rows into the same database, have no @AfterEach cleanup, and use real RandFlake
  * board ids.
  */
 @SpringBootTest

@@ -32,5 +32,6 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    # Same cap as the gradle entry above.
+    # Cap on open PRs from an automated actor. These updates are not grouped, so each action bump opens its
+    # own PR.
     open-pull-requests-limit: 5

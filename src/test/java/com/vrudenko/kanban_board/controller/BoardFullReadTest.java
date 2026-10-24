@@ -344,8 +344,7 @@ public class BoardFullReadTest extends AbstractAppMockMvcTest {
                             flatBoardsResponse.getResponse().getContentAsString(),
                             BoardResponseDTO[].class);
 
-            // assert -- the board's own fields (name, version, createdAt) are present and equal
-            // on the nested document, not only its columns/tasks/subtasks
+            // assert
             var flatBoard =
                     Arrays.stream(flatBoards)
                             .filter(b -> b.getId().equals(mockPopulatedBoard.getId()))
@@ -355,8 +354,7 @@ public class BoardFullReadTest extends AbstractAppMockMvcTest {
             Assertions.assertThat(nestedBody.getVersion()).isEqualTo(flatBoard.getVersion());
             Assertions.assertThat(nestedBody.getCreatedAt()).isEqualTo(flatBoard.getCreatedAt());
 
-            // assert -- every column field the flat DTO carries (id, name, version) is present
-            // and equal on the corresponding nested object
+            // assert
             for (var flatColumn : flatColumns) {
                 var nestedColumn =
                         nestedBody.getColumns().stream()
@@ -459,17 +457,11 @@ public class BoardFullReadTest extends AbstractAppMockMvcTest {
                             flatTasksResponse.getResponse().getContentAsString(),
                             TaskResponseDTO[].class);
 
-            // assert -- same elements as the flat endpoints, order-agnostic.
+            // assert
             //
-            // Why this is the way it is: a strict element-for-element order match was found flaky.
-            //
-            // Neither ColumnRepository.findAllByBoardId nor TaskRepository.findAllByColumnId has an
-            // explicit ORDER BY, so their row order is whatever PostgreSQL's planner produces,
-            // observed to vary run to run for the same data. The nested query's multi-level JOIN
-            // has a different shape, so its order cannot be made to coincide without an ORDER BY on
-            // the flat repositories. Asserted instead: the nested response has exactly the same
-            // elements (nothing dropped or duplicated by the fetch-join/Set conversion) in a
-            // deterministic id-ascending order (@OrderBy("id") on the entity collections).
+            // The flat endpoints return rows in (position, id) order, while the nested document
+            // orders each collection by id. So the ids are compared as sets and the nested order
+            // is checked separately.
             var nestedColumnIds = nestedBody.getColumns().stream().map(c -> c.getId()).toList();
             var flatColumnIds = Arrays.stream(flatColumns).map(ColumnResponseDTO::getId).toList();
             Assertions.assertThat(nestedColumnIds)
