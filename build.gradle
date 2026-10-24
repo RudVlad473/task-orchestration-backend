@@ -119,6 +119,53 @@ repositories {
 // dependency on a scratch branch failed `./gradlew spotlessCheck test --refresh-dependencies` with Gradle's
 // own error naming the missing checksum, so no separate CI staleness check exists; Gradle's resolution-time
 // enforcement already covers it.
+
+// Runtime module versions newer than the Spring Boot 3.5.16 BOM, each fixing a published advisory.
+//
+// Decisions:
+// Spring Boot 3.5.16 is the newest 3.5.x on Maven Central (checked 2026-10-24), so no patch bump of the plugin
+// carries these fixes. The five ext properties are the BOM's own version properties, so each override moves
+// the whole library family together (all jackson modules, tomcat core, el and websocket, every
+// io.opentelemetry artifact the BOM lists) instead of one named module. verifyRuntimeDependencyFloor holds
+// every line below against a misspelt property name.
+// Not overridden: spring-webmvc 6.2.19 (GHSA-j9f9-w8pj-32f8, GHSA-pc63-qcmh-9cmg), fixed only in Spring
+// Framework 7.0.9, which needs Spring Boot 4.
+// TODO: #16 - drop this block when the Spring Boot bump in pull request 16 lands, because a Boot 4 BOM manages its
+// own Tomcat and Jackson lines and these Boot 3 era numbers would pin the older ones onto it.
+
+// Apache Tomcat 10.1.55 -> 10.1.61: GHSA-9xv2-5v5q-p794 (DIGEST authentication bypass), GHSA-gcx9-497g-6cp6 and
+// GHSA-h3x4-894j-xpx5 (access control in authentication), all critical, fixed in 10.1.58.
+ext['tomcat.version'] = '10.1.61'
+
+// Jackson 2.21.4 -> 2.21.7, for jackson-core GHSA-7hhh-6rmp-j9qf and GHSA-p6pp-m3f8-5c89 (both high) and nine
+// jackson-databind advisories, among them GHSA-cxp5-3px4-pw24, GHSA-q4xh-88c3-wmh7 and GHSA-wv8q-qhhj-9h54
+// (high), all fixed by 2.21.7.
+ext['jackson-bom.version'] = '2.21.7'
+
+// PostgreSQL JDBC 42.7.11 -> 42.7.12: GHSA-j92g-9f8w-j867 (silent channel-binding authentication downgrade).
+ext['postgresql.version'] = '42.7.12'
+
+// Log4j 2.24.3 -> 2.25.5: GHSA-qv9r-c865-cp47 (MapMessage encoding of non-finite floats), fixed in 2.25.5.
+ext['log4j2.version'] = '2.25.5'
+
+// OpenTelemetry 1.49.0 -> 1.62.0: GHSA-rcgg-9c38-7xpx (unbounded memory allocation in W3C baggage propagation,
+// opentelemetry-api and opentelemetry-extension-trace-propagators), fixed in 1.62.0.
+ext['opentelemetry.version'] = '1.62.0'
+
+// lz4-java 1.10.1 -> 1.11.4, reached through spring-kafka's kafka-clients: GHSA-mcr4-qmvw-px4g (high, native
+// library extraction race), fixed in 1.11.4.
+//
+// Five more advisories on this module are fixed by 1.11.4 or earlier: GHSA-343h-94h5-c4wr, GHSA-gm45-99xc-r7wv,
+// GHSA-4v53-57pg-c464, GHSA-6cx8-rjf8-pr8g and GHSA-xx22-p4ch-683r (low and moderate).
+//
+// The BOM manages no lz4 module, so this goes through the dependency-management plugin, the same mechanism the
+// ext properties above feed, instead of a Gradle constraint the plugin could override.
+dependencyManagement {
+    dependencies {
+        dependency 'at.yawk.lz4:lz4-java:1.11.4'
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -170,7 +217,8 @@ dependencies {
 
     // Sends the spans over OTLP/HTTP, only when TRACING_EXPORT_ENABLED=true (application.properties).
     //
-    // No version pin: the Spring Boot 3.5.16 BOM manages it (OpenTelemetry 1.49.0).
+    // No version pin: the Spring Boot 3.5.16 BOM manages it, at the OpenTelemetry 1.62.0 the ext override above sets
+    // (the BOM itself says 1.49.0).
     implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
 
     // Provides ContextPropagatingTaskDecorator's backing library, which carries the request's observation
@@ -445,9 +493,13 @@ jacocoTestCoverageVerification {
 }
 
 // --- Runtime dependency floor check ----------------------------------------------------------
-// Guards the commons-lang3 `implementation` scope against silent regression to test-only scope.
+// Guards commons-lang3's scope and every advisory fix in the version-override block above.
 //
 // Decisions:
+// The override floors fail the build when a property name is misspelt, an override is dropped or a BOM bump
+// stops honouring it: Gradle accepts an ext property it never reads without any message, so only a check
+// of the resolved version notices. Each floor sits at the fixed version of the advisories named in the
+// override block.
 // A JUnit test cannot prove this: the test JVM runs on `testRuntimeClasspath`, which was already correct for
 // the entire period `runtimeClasspath` (the configuration `bootJar` packages into the production Docker
 // image) resolved a vulnerable version. A test asserting the version via the test classpath would have been
@@ -460,7 +512,15 @@ jacocoTestCoverageVerification {
 // A module absent from `runtimeClasspath` entirely fails loudly rather than silently matching nothing: a floor
 // that can no longer find its target has quietly stopped checking.
 def runtimeDependencyFloors = [
-        'org.apache.commons:commons-lang3': '3.18.0'
+        'org.apache.commons:commons-lang3': '3.18.0',
+        'org.apache.tomcat.embed:tomcat-embed-core': '10.1.61',
+        'com.fasterxml.jackson.core:jackson-core': '2.21.7',
+        'com.fasterxml.jackson.core:jackson-databind': '2.21.7',
+        'org.postgresql:postgresql': '42.7.12',
+        'org.apache.logging.log4j:log4j-api': '2.25.5',
+        'io.opentelemetry:opentelemetry-api': '1.62.0',
+        'io.opentelemetry:opentelemetry-extension-trace-propagators': '1.62.0',
+        'at.yawk.lz4:lz4-java': '1.11.4'
 ]
 
 tasks.register('verifyRuntimeDependencyFloor') {
