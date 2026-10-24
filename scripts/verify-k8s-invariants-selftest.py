@@ -298,7 +298,151 @@ def run_cases():
         "I10:",
     )
 
+    run_i11_cases(expect_violation, expect_clean)
+
     return fails
+
+
+def flux_kustomization(name, path, **spec_extra):
+    spec = {
+        "path": path,
+        "sourceRef": {"kind": "GitRepository", "name": "flux-system"},
+    }
+    spec.update(spec_extra)
+    return {
+        "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+        "kind": "Kustomization",
+        "metadata": {"name": name, "namespace": "flux-system"},
+        "spec": spec,
+    }
+
+
+def rendered_object(api_version, kind, name, namespace="monitoring"):
+    metadata = {"name": name}
+    if namespace is not None:
+        metadata["namespace"] = namespace
+    return {"apiVersion": api_version, "kind": kind, "metadata": metadata}
+
+
+def run_i11_cases(expect_violation, expect_clean):
+    edge = flux_kustomization("edge", "./k8s/platform/edge")
+    monitoring = flux_kustomization("monitoring", "./k8s/monitoring/configs")
+    edge_root = "k8s/platform/edge"
+    monitoring_root = "k8s/monitoring/configs"
+    route = rendered_object("traefik.io/v1alpha1", "IngressRoute", "grafana")
+
+    # The same object rendered by two Kustomizations: the last applier silently wins.
+    expect_violation(
+        "I11 (duplicate route)",
+        _gate.check_i11_single_flux_owner(
+            [edge, monitoring], {edge_root: [route], monitoring_root: [dict(route)]}
+        ),
+        "I11: IngressRoute/grafana (traefik.io, namespace monitoring) is rendered by 2 Flux "
+        "Kustomizations: edge (k8s/platform/edge), monitoring (k8s/monitoring/configs)",
+    )
+
+    # Kubernetes stores one object per group, kind, namespace and name, so a version difference
+    # does not make two objects.
+    expect_violation(
+        "I11 (version-only difference)",
+        _gate.check_i11_single_flux_owner(
+            [edge, monitoring],
+            {
+                edge_root: [route],
+                monitoring_root: [rendered_object("traefik.io/v1", "IngressRoute", "grafana")],
+            },
+        ),
+        "I11: IngressRoute/grafana (traefik.io, namespace monitoring) is rendered by 2",
+    )
+
+    expect_clean(
+        "I11 (other namespace)",
+        _gate.check_i11_single_flux_owner(
+            [edge, monitoring],
+            {
+                edge_root: [route],
+                monitoring_root: [
+                    rendered_object("traefik.io/v1alpha1", "IngressRoute", "grafana", "other")
+                ],
+            },
+        ),
+    )
+
+    expect_clean(
+        "I11 (other API group)",
+        _gate.check_i11_single_flux_owner(
+            [edge, monitoring],
+            {
+                edge_root: [route],
+                monitoring_root: [
+                    rendered_object("traefik.containo.us/v1alpha1", "IngressRoute", "grafana")
+                ],
+            },
+        ),
+    )
+
+    issuer = rendered_object("cert-manager.io/v1", "ClusterIssuer", "letsencrypt", None)
+    expect_violation(
+        "I11 (cluster-scoped duplicate)",
+        _gate.check_i11_single_flux_owner(
+            [edge, monitoring], {edge_root: [issuer], monitoring_root: [dict(issuer)]}
+        ),
+        "no namespace",
+    )
+
+    expect_violation(
+        "I11 (path with no rendered root)",
+        _gate.check_i11_single_flux_owner(
+            [flux_kustomization("ghost", "./k8s/does/not/exist")], {edge_root: [route]}
+        ),
+        "k8s/does/not/exist",
+    )
+    expect_violation(
+        "I11 (absent spec.path)",
+        _gate.check_i11_single_flux_owner(
+            [
+                {
+                    "apiVersion": "kustomize.toolkit.fluxcd.io/v1",
+                    "kind": "Kustomization",
+                    "metadata": {"name": "nopath", "namespace": "flux-system"},
+                    "spec": {"sourceRef": {"kind": "GitRepository", "name": "flux-system"}},
+                }
+            ],
+            {edge_root: [route]},
+        ),
+        "nopath",
+    )
+
+    expect_violation(
+        "I11 (targetNamespace)",
+        _gate.check_i11_single_flux_owner(
+            [flux_kustomization("edge", "./k8s/platform/edge", targetNamespace="x")],
+            {edge_root: [route]},
+        ),
+        "targetNamespace",
+    )
+
+    other_source = flux_kustomization("edge", "./k8s/platform/edge")
+    other_source["spec"]["sourceRef"] = {"kind": "Bucket", "name": "flux-system"}
+    expect_violation(
+        "I11 (foreign sourceRef)",
+        _gate.check_i11_single_flux_owner([other_source], {edge_root: [route]}),
+        "sourceRef",
+    )
+
+    expect_clean(
+        "I11 (disjoint objects)",
+        _gate.check_i11_single_flux_owner(
+            [edge, monitoring],
+            {
+                edge_root: [
+                    rendered_object("cert-manager.io/v1", "Certificate", "grafana"),
+                    issuer,
+                ],
+                monitoring_root: [route],
+            },
+        ),
+    )
 
 
 def main():
@@ -308,7 +452,7 @@ def main():
             print(f"SELFTEST FAIL: {line}")
         return 1
     print(
-        "selftest OK -- I1-I10 each fire on an engineered violation; clean fixtures report nothing"
+        "selftest OK -- I1-I11 each fire on an engineered violation; clean fixtures report nothing"
     )
     return 0
 

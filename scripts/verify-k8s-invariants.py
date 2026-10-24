@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 r"""Gate: only the edge is public, memory caps are measured and dated, images are pinned, no Secret is
-committed, and no redirect route matches the ACME HTTP-01 challenge path.
+committed, no redirect matches the ACME challenge path, and no object has two Flux owners.
 
 Successor of the deleted scripts/verify-compose-ports.py's "only the edge is public" invariant; I6
 supersedes the deleted scripts/verify-postgres-memory-invariant.py and ports its two inequalities.
@@ -8,7 +8,7 @@ supersedes the deleted scripts/verify-postgres-memory-invariant.py and ports its
 Scope: every kustomization root under k8s/ (discovered as scripts/verify-k8s-manifests.sh does),
 rendered with that script's pinned kubectl and checked against I1-I3/I5/I8. I4 and I7 read the committed
 tree (I4 scans hand-written source YAML, I7 walks the directory tree); I6 applies only to a rendered
-Postgres StatefulSet.
+Postgres StatefulSet; I10 and I11 read the rendered roots, I11 across all of them at once.
 
 Known holes:
   * This sees committed manifests only: a `kubectl apply` made by hand against a live cluster, or an
@@ -63,6 +63,18 @@ I10: an IngressRoute route attaching a Middleware whose spec is `redirectScheme`
     rule-length priority happens to favour the solver today, but an explicit `priority` or a longer
     redirect rule silently inverts that. KNOWN HOLE: this is a rule-TEXT check; the live proof is an
     HTTP probe of the challenge path, run in the cutover runbook.
+I11: no object identity (API group, kind, namespace, name; the API version is ignored) is rendered by
+    two Flux Kustomizations. Each Kustomization's spec.path is mapped to the root this gate rendered
+    for it. Fails closed on a path with no rendered root, a sourceRef other than GitRepository
+    flux-system, and any spec field that can rewrite identity after rendering (targetNamespace,
+    namePrefix, nameSuffix, patches, components, postBuild), and when no Kustomization is found at all.
+    WHY: two Kustomizations applying the same object go through one field manager, so the last applier
+    silently wins on every reconcile, with no error and no not-Ready condition. Found live on
+    2026-10-24 as the edge/monitoring race for the Grafana IngressRoutes, which left the public
+    dashboards answering 503.
+    KNOWN HOLE: objects created by a HelmRelease or a controller, and objects applied by hand, are
+    invisible here; the runtime check is comparing the Kustomizations' inventories on the cluster. The
+    fail-closed field list must be revisited before any Kustomization adopts one of those fields.
 
 A missing/malformed rendered document, or a root that fails to render entirely, is its own violation
 rather than a silently skipped root: treating "I could not read this" as "nothing to report" is the
@@ -70,6 +82,7 @@ failure mode this gate exists to remove."""
 
 import glob
 import os
+import posixpath
 import re
 import subprocess
 import sys
@@ -338,6 +351,108 @@ def check_i10_redirect_acme_exclusion(docs, label):
     return violations
 
 
+FLUX_API_GROUP = "kustomize.toolkit.fluxcd.io"
+FLUX_SOURCE = ("GitRepository", "flux-system")
+# Flux-level fields that can rewrite the identity I11 compares after kustomize has rendered it. None is
+# used by any Kustomization today; a Kustomization adopting one must teach I11 to model it first.
+FLUX_IDENTITY_REWRITING_FIELDS = (
+    "targetNamespace",
+    "namePrefix",
+    "nameSuffix",
+    "patches",
+    "components",
+    "postBuild",
+)
+
+
+def object_identity(doc):
+    """(API group, kind, namespace or None, name) of a rendered object, or None when it has no kind or
+    name. The API version is left out on purpose: the API server stores one object per group, kind,
+    namespace and name, whichever version wrote it."""
+    if not isinstance(doc, dict):
+        return None
+    kind = doc.get("kind")
+    metadata = doc.get("metadata") or {}
+    name = metadata.get("name")
+    if not kind or not name:
+        return None
+    api_version = str(doc.get("apiVersion") or "")
+    group = api_version.split("/", 1)[0] if "/" in api_version else ""
+    return (group, kind, metadata.get("namespace"), name)
+
+
+def check_i11_single_flux_owner(flux_kustomizations, rendered_by_root):
+    """I11: no object identity is rendered by two Flux Kustomizations.
+
+    `flux_kustomizations` is a list of Flux Kustomization CR docs; `rendered_by_root` maps a
+    repo-relative forward-slash root to that root's parsed rendered docs. Fails closed, naming the
+    Kustomization, on a path with no rendered root, a source other than the repo's GitRepository, or a
+    spec field in FLUX_IDENTITY_REWRITING_FIELDS. Pure function (no disk or subprocess access), so the
+    selftest drives it with hand-built dicts.
+    """
+    violations = []
+    owners_by_identity = {}
+    for ks in flux_kustomizations:
+        name = (ks.get("metadata") or {}).get("name", "<unnamed>")
+        spec = ks.get("spec") or {}
+        source = spec.get("sourceRef") or {}
+        if (source.get("kind"), source.get("name")) != FLUX_SOURCE or source.get(
+            "namespace", "flux-system"
+        ) != "flux-system":
+            violations.append(
+                f"I11: Flux Kustomization {name} has a sourceRef other than GitRepository "
+                f"flux-system ({source!r}) -- cannot tell which tree it renders, failing closed"
+            )
+            continue
+        rewriting = [f for f in FLUX_IDENTITY_REWRITING_FIELDS if f in spec]
+        if rewriting:
+            violations.append(
+                f"I11: Flux Kustomization {name} sets {', '.join(rewriting)}, which can rewrite the "
+                f"object identity I11 compares -- cannot check single ownership, failing closed"
+            )
+            continue
+        path = posixpath.normpath(str(spec.get("path") or "."))
+        if path not in rendered_by_root:
+            violations.append(
+                f"I11: Flux Kustomization {name} points at path {path}, which this gate did not "
+                f"render -- cannot check single ownership, failing closed"
+            )
+            continue
+        for doc in rendered_by_root[path]:
+            identity = object_identity(doc)
+            if identity is not None:
+                owners_by_identity.setdefault(identity, set()).add((name, path))
+
+    for identity in sorted(owners_by_identity, key=lambda i: tuple(str(p) for p in i)):
+        owners = sorted(owners_by_identity[identity])
+        if len(owners) < 2:
+            continue
+        group, kind, namespace, name = identity
+        namespace_text = f"namespace {namespace}" if namespace else "no namespace"
+        owner_text = ", ".join(f"{n} ({p})" for n, p in owners)
+        violations.append(
+            f"I11: {kind}/{name} ({group or 'core'}, {namespace_text}) is rendered by "
+            f"{len(owners)} Flux Kustomizations: {owner_text} -- the last one to apply overwrites "
+            f"the others on every reconcile"
+        )
+    return violations
+
+
+def collect_flux_kustomizations(rendered_by_root):
+    """Flux Kustomization CRs found in any rendered root, de-duplicated by (namespace, name)."""
+    found = {}
+    for root in sorted(rendered_by_root):
+        for doc in rendered_by_root[root]:
+            if (
+                isinstance(doc, dict)
+                and doc.get("kind") == "Kustomization"
+                and str(doc.get("apiVersion", "")).startswith(FLUX_API_GROUP + "/")
+            ):
+                metadata = doc.get("metadata") or {}
+                found.setdefault((metadata.get("namespace"), metadata.get("name")), doc)
+    return [found[key] for key in sorted(found, key=lambda k: tuple(str(p) for p in k))]
+
+
 def check_rendered_doc(doc, label, is_base_root=False):
     """Run every rendered-object invariant (I1-I3, I5, I6, I8) against one parsed document.
 
@@ -478,6 +593,7 @@ def main():
         ["bash", MANIFESTS_SCRIPT, "--tool", "kubectl"], text=True, cwd=REPO_ROOT
     ).strip()
 
+    rendered_by_root = {}
     for root in roots:
         abs_root = os.path.join(REPO_ROOT, root)
         try:
@@ -487,11 +603,22 @@ def main():
             continue
         is_base_root = root.replace(os.sep, "/").startswith("k8s/base/")
         root_docs = [d for d in yaml.safe_load_all(rendered) if d is not None]
+        rendered_by_root[root.replace(os.sep, "/")] = root_docs
         for doc in root_docs:
             all_violations += check_rendered_doc(doc, root, is_base_root=is_base_root)
         # I10 needs cross-object lookup (Middleware <-> IngressRoute) within one rendered root,
         # so it runs once per root over that root's own doc list rather than per-document.
         all_violations += check_i10_redirect_acme_exclusion(root_docs, root)
+
+    # I11 compares what every Flux Kustomization renders, so it runs once after all roots are rendered.
+    flux_kustomizations = collect_flux_kustomizations(rendered_by_root)
+    if flux_kustomizations:
+        all_violations += check_i11_single_flux_owner(flux_kustomizations, rendered_by_root)
+    else:
+        all_violations.append(
+            "I11: no kustomize.toolkit.fluxcd.io Kustomization found in any rendered root -- "
+            "cannot check single ownership"
+        )
 
     for path in sorted(glob.glob(os.path.join(REPO_ROOT, "k8s", "**", "*.yaml"), recursive=True)):
         rel = os.path.relpath(path, REPO_ROOT)
@@ -510,7 +637,8 @@ def main():
         f"invariants OK -- {len(roots)} kustomization root(s) checked; no NodePort/LoadBalancer "
         "Service, no hostNetwork/hostPID/hostPort/hostPath, every container's memory "
         "requests+limits set and dated, no untagged/:latest image, no committed Secret, "
-        "no redirect route matches the ACME challenge path"
+        "no redirect route matches the ACME challenge path, and no object is rendered by two Flux "
+        "Kustomizations"
     )
     return 0
 
