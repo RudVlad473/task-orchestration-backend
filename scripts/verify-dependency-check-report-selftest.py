@@ -59,6 +59,20 @@ def report(count, virtual=False, vulnerabilities=None):
     }
 
 
+def report_with_embedded(jars, embedded, shaded=0):
+    """A report of `jars` top-level jars plus `embedded` files inside jars and `shaded` shaded entries."""
+    built = report(jars)
+    for index in range(embedded):
+        built["dependencies"].append({"fileName": "bundle-%d.jar: asset-%d.js" % (index, index), "isVirtual": False})
+    for index in range(shaded):
+        built["dependencies"].append({"fileName": "outer-%d.jar (shaded: org.x:inner:1.0)" % index, "isVirtual": False})
+    return built
+
+
+def report_without_file_names(count):
+    return {"scanInfo": {}, "dependencies": [{"isVirtual": False} for _ in range(count)]}
+
+
 class Harness:
     def __init__(self, guard, workdir):
         self.guard = guard
@@ -121,6 +135,16 @@ def run_cases(harness):
     )
     harness.case("every module scanned passes", report(MODULES), tree_text(MODULES), 0)
     harness.case("virtual entries do not count toward the floor", report(MODULES, virtual=True), tree_text(MODULES), 1)
+    harness.case(
+        "enough total entries only because of embedded files fails and names the jar count",
+        report_with_embedded(FLOOR - 10, 6, shaded=4),
+        tree_text(MODULES),
+        1,
+        [str(FLOOR - 10), str(FLOOR)],
+    )
+    harness.case("embedded files alone fail even when they number the modules", report_with_embedded(0, MODULES), tree_text(MODULES), 1)
+    harness.case("embedded files on top of the floor in jars still pass", report_with_embedded(FLOOR, 14, shaded=1), tree_text(MODULES), 0)
+    harness.case("entries with no fileName do not count as jars", report_without_file_names(MODULES), tree_text(MODULES), 1)
     harness.case("a tree with no module line fails", report(MODULES), "runtimeClasspath - Runtime classpath of source set 'main'.\nNo dependencies\n", 1, ["no parsable module line"])
     harness.case("an empty tree fails", report(MODULES), "", 1, ["no parsable module line"])
     harness.case("a FAILED resolution line fails", report(MODULES), tree_text(MODULES) + "+--- org.example:gone:1.0 FAILED\n", 1, ["unresolved"])
