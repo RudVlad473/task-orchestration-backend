@@ -1,66 +1,111 @@
-# Standing uptime probe of both public health endpoints: were production and nonprod answering recently.
+# Standing uptime probe of both public health endpoints and both README dashboards; a failure opens one issue.
+# A run goes red on any failure, and a separate job opens, updates or closes the one GitHub issue that emails the owner.
 #
-# It exists because a frozen Netcup SCP "Screen" console screenshot is not evidence of an outage; see
-# docs/INFRA_RUNBOOK.md's "Triage -- dating what the Netcup SCP 'Screen' console shows" section, and go
-# there once a run here goes red.
+# docs/INFRA_RUNBOOK.md section "Uptime alert triage" says what to do once the issue exists. The older console
+# triage lives in docs/history/2026-09-02-triage-netcup-scp-screen-console.md (Docker-era commands).
+#
+# Decisions:
+# - What is probed: the two /api/healthz endpoints, and the two public dashboards linked from README.md through
+#   Grafana's public-dashboard API (/api/public/dashboards/<id>), which sits behind the same Traefik route as the
+#   README page form. Measured 2026-10-24 with plain curl: the API form answers 200 with
+#   "publicDashboardEnabled":true for both README ids and 404 with publicdashboards.notFound for an unknown id. The
+#   page form answers 200 with the same Grafana HTML shell for a real and an unknown id, so only the API form can
+#   tell a missing share from a working one. A 503 (no ready backend) and a login redirect fail on status alone.
+# - Issues through gh with the job token, in a separate job: the probe job keeps no token scope, no secret and no
+#   third-party action holds issues: write, and a broken alert step cannot turn the probe red.
+# - The verdict crosses to the alert job as job outputs (a few hundred bytes), not an artifact, so there is one
+#   verdict and no download step. Values reach scripts through env only, never through expression interpolation.
+# - The drill input is a boolean that adds one fixed, known-wrong dashboard URL to the probe, so the alert path can
+#   be exercised on demand. It accepts no text and needs write access to dispatch; the worst misuse is a drill issue
+#   that the next passing run closes.
+# - A cancelled run touches no issue: a cancel says nothing about production.
 #
 # Known holes:
-# (a) GitHub's cron is a floor, not a guarantee: scheduled runs queue on shared runners and can fire
-#     late, so a red run dates an outage to within roughly the interval plus jitter, never the minute.
-# (b) GitHub disables scheduled workflows in a public repository after 60 days of inactivity, so this
-#     stops silently if the repo goes quiet.
-# (c) It is a probe, not an alerting system: a red run sits in the Actions tab and pages nobody.
+# (a) GitHub's cron is a floor, not a guarantee: scheduled runs queue on shared runners and fire late, 2.6 to 8.2
+#     hours apart on this repository (INFRA_RUNBOOK.md, 2026-09-29/30), so the email trails an outage by up to that gap.
+# (b) GitHub disables scheduled workflows in a public repository after 60 days of inactivity, which stops the
+#     probe and therefore the alert, silently.
+# (c) The alert is a GitHub issue. GitHub sends the email under the owner's notification settings, nothing alerts
+#     while GitHub, Actions or its mail is down, and a run that never starts sends nothing.
 # (d) The public /api/healthz is the `public` health group (application.properties): the database indicator
 #     only, with `show-details=never`, so a failure can name the endpoint and its observed status, never the
-#     failing subsystem beneath it, and it says nothing about the other indicators.
+#     failing subsystem beneath it. The dashboard check proves an enabled share resolves, not that its panels
+#     return data.
+# (e) While an issue is open, every failing run adds one comment, so the owner gets one notification per failing run.
 name: Uptime Check
 
 on:
   schedule:
     # GitHub's 5-minute floor is nominal: schedule events queue on shared runners and arrive late, so
     # */5's latency edge over */15 is mostly notional while its run count is 3x, not worth the Actions-tab
-    # noise for a probe that pages nobody.
+    # noise.
     - cron: '*/15 * * * *'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      drill:
+        description: Add a known-wrong dashboard URL to the probe, to exercise the alert path (opens or updates the alert issue)
+        type: boolean
+        default: false
 
-# Unlike security-scan.yml and secret-scan.yml, no `contents: read`: this job never checks out the
-# repository, so it needs no scope at all.
+# No workflow-level scope at all: the probe job never checks out the repository. Only the alert job holds a
+# token scope, issues: write.
 permissions: {}
 
 jobs:
   uptime-check:
     runs-on: ubuntu-latest
-    # Runaway guard against a hung curl: worst case is ~3 minutes (2 endpoints x 3 attempts x 20s curl
-    # timeout, plus the inter-attempt sleeps).
-    timeout-minutes: 5
+    # Runaway guard against a hung curl: worst case is 4 URLs x 3 attempts x 20s curl timeout plus 8 sleeps of
+    # 10s, which is 320s; the drill's fifth URL makes it 400s. 8 minutes leaves the rest for runner setup.
+    timeout-minutes: 8
+    outputs:
+      result: ${{ steps.probe.outputs.result }}
+      report: ${{ steps.probe.outputs.report }}
+      drill: ${{ steps.probe.outputs.drill }}
     env:
-      # Both endpoints are public and unauthenticated; no secret. Folded scalar: one whitespace-separated
-      # line, iterated by deliberate unquoted word-splitting in the script below.
+      # All URLs are public and unauthenticated; no secret. Folded scalars: one whitespace-separated line,
+      # iterated by deliberate unquoted word-splitting in the script below.
       HEALTH_URLS: >-
         https://kanban-board-rud-vlad-473.duckdns.org/api/healthz
         https://kanban-board-rud-vlad-473-nonprod.duckdns.org/api/healthz
+      # The two dashboards linked from README.md, in the API form (see the header for why).
+      DASHBOARD_URLS: >-
+        https://kanban-board-rud-vlad-473-monitoring.duckdns.org/api/public/dashboards/9b5bf7c8d3c743e1868eed84c9d3e5df
+        https://kanban-board-rud-vlad-473-monitoring.duckdns.org/api/public/dashboards/cb7a5fc49fcb43108ba637fee7639b6d
+      # A share id that does not exist, answering 404; added only when the drill input is true.
+      DRILL_URL: https://kanban-board-rud-vlad-473-monitoring.duckdns.org/api/public/dashboards/00000000000000000000000000000000
+      DRILL: ${{ inputs.drill }}
       # A single-shot probe turns a transient network blip into a red run, the false alarm this file exists
       # to prevent. 3 attempts x 10s stays sub-minute on a healthy run.
       ATTEMPTS: 3
       SLEEP_SECONDS: 10
       CURL_MAX_TIME: 20
       UP_MARKER: '"status":"UP"'
+      DASHBOARD_MARKER: '"publicDashboardEnabled":true'
     steps:
+      # The step always exits 0 and writes its verdict to the step outputs; the next step turns a bad verdict
+      # into a red job, so a crash of this script (empty result) is red too.
+      #
       # No `${{ }}` interpolation: every value arrives through `env:`, per this repo's injection-safety rule
       # (see security-scan.yml's NVD_API_KEY step), which also lets this exact script run locally unmodified.
-      - name: Check both public health endpoints
+      - name: Probe both health endpoints and both dashboards
+        id: probe
         run: |
           set -eu
 
-          FAILURES=""
-          ALL_OK=1
+          NL=$'\n'
+          FAILED=0
+          REPORT=""
 
-          for URL in $HEALTH_URLS; do
+          # Sets URL_OK and LAST_STATUS for one URL: up to ATTEMPTS curls, never following a redirect.
+          check_url() {
+            URL=$1
+            MARKER=$2
             ATTEMPT=1
             URL_OK=0
             LAST_STATUS=""
             LAST_BODY=""
 
+            # shellcheck disable=SC2153  # ATTEMPTS arrives through env, and ATTEMPT is the loop counter
             while [ "$ATTEMPT" -le "$ATTEMPTS" ]; do
               RAW=$(curl -s --max-time "$CURL_MAX_TIME" -w '\n%{http_code}' "$URL" || printf '\n000')
               LAST_STATUS=$(printf '%s' "$RAW" | tail -n1)
@@ -68,7 +113,7 @@ jobs:
 
               if [ "$LAST_STATUS" = "200" ]; then
                 case "$LAST_BODY" in
-                  *"$UP_MARKER"*) URL_OK=1 ;;
+                  *"$MARKER"*) URL_OK=1 ;;
                 esac
               fi
 
@@ -77,7 +122,7 @@ jobs:
               fi
 
               if [ "$LAST_STATUS" = "200" ]; then
-                echo "Attempt $ATTEMPT/$ATTEMPTS: $URL returned 200 but the body did not contain the UP marker"
+                echo "Attempt $ATTEMPT/$ATTEMPTS: $URL returned 200 but the body did not contain the marker"
               else
                 echo "Attempt $ATTEMPT/$ATTEMPTS: $URL returned status $LAST_STATUS"
               fi
@@ -87,25 +132,151 @@ jobs:
               fi
               ATTEMPT=$((ATTEMPT + 1))
             done
+          }
 
-            # One environment being down must never mask the other: URL_OK resets per iteration and the loop never
-            # exits early.
+          # One URL being down must never mask the others: every URL is checked and nothing exits early. The
+          # report gets the URL and the observed status only, never a response body.
+          run_check() {
+            check_url "$1" "$2"
             if [ "$URL_OK" -eq 1 ]; then
-              echo "$URL: OK (200, UP marker present)"
+              echo "$1: OK (200, marker present)"
             else
-              ALL_OK=0
+              FAILED=1
               if [ "$LAST_STATUS" = "200" ]; then
-                FAILURES="${FAILURES}::error::$URL returned status 200 but the response body did not contain the UP marker\n"
+                DETAIL="200 without the expected marker"
               else
-                FAILURES="${FAILURES}::error::$URL returned status $LAST_STATUS (expected 200)\n"
+                DETAIL="status $LAST_STATUS (expected 200)"
               fi
+              echo "::error::$1 failed: $DETAIL"
+              REPORT="${REPORT}${1}: ${DETAIL}${NL}"
             fi
+          }
+
+          for URL in $HEALTH_URLS; do
+            run_check "$URL" "$UP_MARKER"
+          done
+          for URL in $DASHBOARD_URLS; do
+            run_check "$URL" "$DASHBOARD_MARKER"
           done
 
-          if [ "$ALL_OK" -eq 1 ]; then
-            echo "Both endpoints OK: $HEALTH_URLS"
+          DRILL_ACTIVE=false
+          if [ "$DRILL" = "true" ]; then
+            DRILL_ACTIVE=true
+            echo "Drill input is true: probing the known-wrong dashboard URL as well"
+            run_check "$DRILL_URL" "$DASHBOARD_MARKER"
+          fi
+
+          RESULT=pass
+          if [ "$FAILED" -eq 1 ]; then
+            RESULT=fail
+          fi
+
+          DELIMITER="REPORT_$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
+          {
+            echo "result=$RESULT"
+            echo "drill=$DRILL_ACTIVE"
+            echo "report<<$DELIMITER"
+            printf '%s' "$REPORT"
+            echo "$DELIMITER"
+          } >> "$GITHUB_OUTPUT"
+          echo "Verdict: $RESULT"
+
+      - name: Fail the job when the probe found a problem
+        if: steps.probe.outputs.result != 'pass'
+        run: |
+          echo "::error::The uptime probe did not pass (see the step above); the alert job reports it."
+          exit 1
+
+  alert:
+    needs: uptime-check
+    # always() minus cancellation: this runs after a failed probe job, which is its whole purpose, but a run
+    # cancelled by hand must leave the issue alone.
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    # Serialises alert jobs so two runs cannot both find no open issue and each create one. GitHub cancels a
+    # superseded pending job, which shows that rare run grey.
+    concurrency:
+      group: uptime-check-alert
+      cancel-in-progress: false
+    steps:
+      # continue-on-error: a failure to reach the issues API must not turn the run red, because red means
+      # the probe failed. The ERR trap leaves a warning annotation instead. No checkout, no action, no secret.
+      - name: Open, update or close the uptime alert issue
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          PROBE_JOB_RESULT: ${{ needs.uptime-check.result }}
+          PROBE_RESULT: ${{ needs.uptime-check.outputs.result }}
+          PROBE_REPORT: ${{ needs.uptime-check.outputs.report }}
+          PROBE_DRILL: ${{ needs.uptime-check.outputs.drill }}
+          ISSUE_TITLE: Uptime check failing
+          ISSUE_LABEL: uptime-alert
+        run: |
+          set -Eeu
+          trap 'echo "::warning::The alert step failed near line $LINENO; the uptime verdict is unaffected."' ERR
+
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          TRIAGE_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/main/docs/INFRA_RUNBOOK.md#uptime-alert-triage"
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          # Open issues with the label whose title matches exactly, oldest first. The issues listing is used
+          # rather than the search API, which lags a just-created issue.
+          # shellcheck disable=SC2016  # $ENV is a jq variable, not a shell expansion
+          OPEN=$(gh issue list --state open --label "$ISSUE_LABEL" --limit 100 --json number,title \
+            --jq 'map(select(.title == $ENV.ISSUE_TITLE)) | sort_by(.number) | .[].number')
+
+          if [ "$PROBE_JOB_RESULT" = "success" ] && [ "$PROBE_RESULT" = "pass" ]; then
+            if [ -z "$OPEN" ]; then
+              echo "Probe passed and no alert issue is open: nothing to do"
+              exit 0
+            fi
+            for N in $OPEN; do
+              gh issue close "$N" --comment "Recovered: every probe passed in $RUN_URL at $NOW. Closing."
+              echo "Closed issue $N"
+            done
             exit 0
           fi
 
-          printf "%b" "$FAILURES"
-          exit 1
+          if [ "$PROBE_JOB_RESULT" != "failure" ]; then
+            echo "Probe job result is '$PROBE_JOB_RESULT' with verdict '$PROBE_RESULT': leaving the issues untouched"
+            exit 0
+          fi
+
+          if [ -n "$PROBE_REPORT" ]; then
+            REPORT_LINES=$(printf '%s\n' "$PROBE_REPORT" | sed '/^$/d; s/^/- /')
+          else
+            REPORT_LINES="- the probe job failed without reporting (script error or runner timeout)"
+          fi
+
+          DRILL_LINE=""
+          if [ "$PROBE_DRILL" = "true" ]; then
+            DRILL_LINE="This run was dispatched with the drill input, so one known-wrong dashboard URL was probed on purpose."
+          fi
+
+          FIRST=$(printf '%s\n' "$OPEN" | sed -n '1p')
+          if [ -n "$FIRST" ]; then
+            gh issue comment "$FIRST" --body "Still failing in $RUN_URL at $NOW:
+
+          $REPORT_LINES
+
+          $DRILL_LINE"
+            echo "Commented on issue $FIRST"
+            exit 0
+          fi
+
+          gh label create "$ISSUE_LABEL" --force --color D93F0B \
+            --description "Opened by uptime-check.yml when a probe fails; closed by the next passing run"
+          gh issue create --title "$ISSUE_TITLE" --label "$ISSUE_LABEL" --body "@$OWNER the uptime check failed in $RUN_URL at $NOW:
+
+          $REPORT_LINES
+
+          $DRILL_LINE
+
+          What to do: $TRIAGE_URL
+
+          The next passing run closes this issue; while it stays open, each further failing run adds a comment."
