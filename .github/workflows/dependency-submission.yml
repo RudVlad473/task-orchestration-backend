@@ -15,7 +15,10 @@
 # build with `-Dorg.gradle.dependency.verification=off` (seen in its command line on 2026-10-24), so the
 # checksums for the graph plugin in gradle/verification-metadata.xml are insurance for an action version
 # that stops doing so, not something a run was seen to need.
-# Tag-pinned like deploy.yml's actions: the risk acceptance in deploy.yml applies to this one too.
+# Both gradle/actions references are pinned by commit SHA, with the release in a trailing comment. This job
+# holds contents: write while running that action's code and Gradle plugins, so a movable tag is not
+# trusted here, unlike the tag-pinned actions in deploy.yml's read-only jobs. Dependabot's github-actions
+# entry rewrites the SHA and the comment together.
 # No schedule and no paths filter. GitHub matches new advisories against the stored graph without a re-run,
 # so a weekly run would add nothing. A snapshot belongs to a commit, and it is unverified whether a commit
 # without one keeps the previous graph, so every push to main submits.
@@ -46,7 +49,7 @@ jobs:
 
       # Same control and placement as deploy.yml's run-tests job: before any wrapper script runs.
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v6
+        uses: gradle/actions/wrapper-validation@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -55,7 +58,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Submit the runtimeClasspath dependency graph
-        uses: gradle/actions/dependency-submission@v6
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-disabled: true
           dependency-graph-include-configurations: '^runtimeClasspath$'

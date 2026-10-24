@@ -355,7 +355,7 @@ This index repeats the summary table of each chapter. Use it to find a decision 
 | CI-19 | One image build pushes two tags (production and nonprod repositories), short-SHA tag, no `latest`, amd64 only | Both environments run byte-identical content |
 | CI-20 | Flyway verification runs on the VM against the real databases, before any deploy | An empty CI database cannot detect migration drift |
 | CI-21 | GitHub Environments scope every secret; nonprod has its own VM user and key; no approval gates | A shared credential grants shell access to production's directory |
-| CI-22 | Digest-pin only the third-party `appleboy/*` actions | They hold real SSH keys; first-party actions stay tag-trusted by recorded choice |
+| CI-22 | Digest-pin only the third-party `appleboy/*` actions (history: those actions are gone; today `gradle/actions` in `dependency-submission.yml` is SHA-pinned because its job holds a write-scoped token) | They held real SSH keys; other actions stay tag-trusted by recorded choice |
 | CI-23 | Every `appleboy/ssh-action` script starts with `set -e` | The action has no fail-fast input; `script_stop` was silently ignored |
 | CI-24 | Production registers Avro schemas in a job after deploy; nonprod registers inside its deploy, before the app starts | Do not add a new production failure mode; make nonprod's guarantee literal |
 | CI-25 | Prune old Docker Hub tags after a good deploy; delete the new tag by digest after a failed deploy | Keep one active image per repository |
