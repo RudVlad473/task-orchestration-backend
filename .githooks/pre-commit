@@ -35,6 +35,18 @@
 # trade-off: the piped diff carries filenames only as diff headers, so path-scoped allowlist entries
 # cannot match. That costs nothing today, since every `.gitleaks.toml` allowlist is rule-scoped
 # (`regexTarget = "match"`); it would matter only if a path-scoped entry were ever added.
+#
+# Observed 2026-10-24: git exports GIT_INDEX_FILE to this hook on every commit. `git commit -- <paths>`
+# records next-index-<pid>.lock, and `-a` and `-i` record index.lock, not .git/index.
+# Measured in throwaway repos with the pinned image: scanning the default index read about 0 bytes on
+# those shapes and let a fake token through, while a staged commit was refused at about 47 bytes. Bytes
+# scanned is the discriminator, because "0 commits scanned" prints on every staged scan.
+# Hence the mount shape forwards the index translated under /repo, and an index outside the mount takes
+# the stdin shape. Routing every commit through stdin was measured and rejected: it refused deleting a
+# committed credential and editing beside one, because removed and context lines are scanned, and its
+# findings print no File line.
+# Falsified if scripts/pre-commit-gitleaks-selftest.py passes with --hook pointed at a copy that drops
+# the GIT_INDEX_FILE forwarding.
 GITLEAKS_IMAGE='ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f'
 
 echo "Scanning staged diff for secrets..."
@@ -55,6 +67,21 @@ REL_GITDIR=${GIT_PRIVATE_DIR#"$MOUNT_ROOT"/}
 CONTAINER_WORKTREE="/repo${REL_WORKTREE:+/$REL_WORKTREE}"
 CONTAINER_GITDIR="/repo/$REL_GITDIR"
 
+SCAN_SHAPE=stdin
+case "$GIT_TOPLEVEL" in
+  "$MOUNT_ROOT"|"$MOUNT_ROOT"/*) SCAN_SHAPE=mount ;;
+esac
+
+CONTAINER_INDEX=""
+if [ -n "${GIT_INDEX_FILE:-}" ]; then
+  INDEX_DIR=$(CDPATH= cd -- "$(dirname -- "$GIT_INDEX_FILE")" 2>/dev/null && pwd -P)
+  RESOLVED_INDEX="${INDEX_DIR}/$(basename -- "$GIT_INDEX_FILE")"
+  case "$RESOLVED_INDEX" in
+    "$MOUNT_ROOT"/*) CONTAINER_INDEX="/repo/${RESOLVED_INDEX#"$MOUNT_ROOT"/}" ;;
+    *) SCAN_SHAPE=stdin ;;
+  esac
+fi
+
 # Run the scan in one of two shapes, chosen by where the work tree sits.
 #
 # Decisions:
@@ -68,22 +95,23 @@ CONTAINER_GITDIR="/repo/$REL_GITDIR"
 # --verbose is required: without it gitleaks prints only "leaks found: N" and the refusal below, which
 # points at "the Finding/RuleID/File lines above", would reference output never printed. --redact masks
 # the secret VALUE regardless, so verbosity adds file:line detail without adding exposure.
-# The "$MOUNT_ROOT"|"$MOUNT_ROOT"/* branch covers a plain checkout and this repo's nested
-# `.claude/worktrees/<name>` convention; the `*` fallback covers a worktree not reachable under the same
-# mount root as its private git-dir.
-case "$GIT_TOPLEVEL" in
-  "$MOUNT_ROOT"|"$MOUNT_ROOT"/*)
+# The mount shape covers a plain checkout and this repo's nested `.claude/worktrees/<name>` convention;
+# the stdin shape covers a worktree not reachable under the same mount root as its private git-dir, and a
+# commit whose index lies outside the mount.
+case "$SCAN_SHAPE" in
+  mount)
     MSYS_NO_PATHCONV=1 docker run --rm \
       -v "${MOUNT_ROOT}:/repo" \
       -e GIT_DIR="${CONTAINER_GITDIR}" \
       -e GIT_WORK_TREE="${CONTAINER_WORKTREE}" \
+      ${CONTAINER_INDEX:+-e} ${CONTAINER_INDEX:+"GIT_INDEX_FILE=$CONTAINER_INDEX"} \
       "${GITLEAKS_IMAGE}" \
       git --staged --redact --no-banner --verbose --exit-code 2 "${CONTAINER_WORKTREE}"
     GITLEAKS_STATUS=$?
     ;;
   *)
-    # Out-of-tree worktree fallback: pipe the staged diff into gitleaks' `stdin` mode, with no bind mount
-    # and no GIT_DIR/GIT_WORK_TREE indirection.
+    # Fallback for an out-of-tree worktree or an index outside the mount: pipe the staged diff into
+    # gitleaks' `stdin` mode, with no bind mount. Host git reads GIT_INDEX_FILE itself.
     #
     # MSYS_NO_PATHCONV is deliberately NOT set: it stops Git Bash from rewriting Docker path ARGUMENTS, and
     # this invocation passes no path argument and mounts no volume. `VAR=x cmd1 | cmd2` would scope it to

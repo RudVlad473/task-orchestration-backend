@@ -119,3 +119,14 @@ jobs:
 
       - name: Verify k8s invariants
         run: python3 scripts/verify-k8s-invariants.py --no-provisional
+
+  pre-commit-secret-scan:
+    name: The pre-commit secret scan reads the index every commit shape records
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # The selftest pulls the hook's digest-pinned gitleaks image, so it stays a pure function of the commit.
+      - name: Verify the hook scans the index git commit records
+        run: python3 scripts/pre-commit-gitleaks-selftest.py
