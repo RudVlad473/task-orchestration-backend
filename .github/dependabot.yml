@@ -6,6 +6,9 @@
 # Decisions:
 # This file configures *version updates* only. Dependabot *security alerts* are a separate repository
 # setting, confirmed enabled with a read-only `gh api repos/:owner/:repo/vulnerability-alerts` check (204).
+# Alerts need a dependency graph to match against, and GitHub does not resolve Gradle builds: on 2026-10-24
+# the graph held no Maven package at all. workflows/dependency-submission.yml submits the resolved
+# runtimeClasspath graph, which is what lets an alert fire for a Gradle dependency.
 # The github-actions ecosystem entry keeps workflow action references maintained instead of frozen:
 # Dependabot updates a SHA pin and its adjacent version comment together when it opens a bump PR.
 version: 2

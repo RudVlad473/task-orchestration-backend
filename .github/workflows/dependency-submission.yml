@@ -1,0 +1,64 @@
+# Submits the resolved Gradle runtime dependency graph to GitHub, so Dependabot alerts can see it.
+#
+# Decisions:
+# Why it exists: GitHub does not resolve Gradle builds. On 2026-10-24 the repository's dependency graph
+# (`gh api repos/:owner/:repo/dependency-graph/sbom`) listed 11 packages, all GitHub Actions and none a
+# Maven package, so Dependabot security alerts had nothing to match against and had never fired.
+# Only runtimeClasspath is reported (dependency-graph-include-configurations). Test, annotation processor
+# and tooling jars never ship in the image, so an alert on them would be noise about code that never runs
+# in production. The resolution task is `dependencies --configuration runtimeClasspath` for the same reason:
+# it resolves that one configuration instead of every one.
+# The job alone holds contents: write, because the Dependency Submission API requires it; the workflow-level
+# permissions are empty. The job runs third-party Gradle plugin code with that token, so checkout does not
+# persist credentials, the wrapper is validated first, and no Gradle cache is shared with it
+# (cache-disabled). Gradle dependency verification stays strict: the graph plugin the action injects is
+# covered by checksums in gradle/verification-metadata.xml, never by relaxing the verification mode.
+# Tag-pinned like deploy.yml's actions: the risk acceptance in deploy.yml applies to this one too.
+# No schedule and no paths filter. GitHub matches new advisories against the stored graph without a re-run,
+# so a weekly run would add nothing. A snapshot belongs to a commit, and it is unverified whether a commit
+# without one keeps the previous graph, so every push to main submits.
+# TEMPORARY: the second branch under push exists because workflow_dispatch is refused for a workflow file
+# that is absent from the default branch, so a branch push is the only way to run it before merging.
+# It is removed in the final commit of this change.
+name: Dependency Submission
+
+on:
+  push:
+    branches:
+      - main
+      - fix/dependency-scan-and-bumps
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  dependency-submission:
+    runs-on: ubuntu-latest
+    # Runaway guard for the first measurement run: replaced by a value derived from the measured duration in
+    # the final commit of this change.
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      # Same control and placement as deploy.yml's run-tests job: before any wrapper script runs.
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Submit the runtimeClasspath dependency graph
+        uses: gradle/actions/dependency-submission@v6
+        with:
+          cache-disabled: true
+          dependency-graph-include-configurations: '^runtimeClasspath$'
+          dependency-resolution-task: dependencies
+          additional-arguments: --configuration runtimeClasspath
