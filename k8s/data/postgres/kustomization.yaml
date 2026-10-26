@@ -4,8 +4,14 @@ namespace: kanban-data
 resources:
   - postgres.yaml
   - networkpolicy.yaml
+  - backup-cronjob.yaml
 configMapGenerator:
   - name: postgres-init
     files:
       - init/01-create-databases-and-roles.sh
       - init/02-create-monitoring-role.sh
+  # The generated name carries a content hash, so an edit to the script changes only the CronJob's pod
+  # template and never restarts Postgres, unlike the init scripts above.
+  - name: postgres-backup-script
+    files:
+      - backup/postgres-backup.sh

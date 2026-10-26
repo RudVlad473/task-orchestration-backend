@@ -1,0 +1,136 @@
+# Nightly encrypted backup of the production database to an off-VM bucket.
+#
+# Data flow: the CronJob controller creates a Job at 02:17 UTC; its pod mounts the script from a
+# ConfigMap, reads the prod role credentials and the bucket key from two Secrets by single keys, dumps
+# through the postgres-ingress peer for the postgres-client label, encrypts with the age public key and
+# uploads the ciphertext. kube-state-metrics records the Job's last success time, which the missing-backup
+# alert reads, so the CronJob name and namespace are an identity that alert depends on.
+#
+# Decisions:
+# - It runs in kanban-data beside Postgres so the dump stays on the pod network and the Flux Kustomization
+#   that owns the StatefulSet also owns the job that protects it.
+# - It dumps kanban_prod only: nonprod is resettable and is not worth bucket space.
+# - The bucket key has write capability only. A compromised VM can add objects but cannot list, read or
+#   delete the backups, so the script never reads back from the bucket; its integrity signals are the
+#   archive check and the exit status of the upload.
+# - The age private key never reaches the cluster: the pod holds only the public recipient, which is not
+#   a secret and sits in this file as a plain value.
+# - Concurrency Forbid with a 900s deadline: a run never overlaps the next, and a hung run is killed at the
+#   deadline instead of blocking every later night.
+# - The container runs as a non-root uid with a read-only root filesystem. HOME and WORK_DIR point at an
+#   emptyDir because aws-cli writes a cache under HOME and the dump needs scratch space.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgres-backup
+  labels:
+    app.kubernetes.io/name: postgres-backup
+spec:
+  schedule: "17 2 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: postgres-backup
+            # Matched by the third peer in networkpolicy.yaml; no other kanban-data pod carries it.
+            kanban-board/postgres-client: "true"
+        spec:
+          restartPolicy: Never
+          # The job never calls the Kubernetes API, so no service-account token is mounted.
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: backup
+              # Temporary tag, replaced by the built tag and digest before this file is ever pushed.
+              image: rudenkovladimir/kanban-postgres-backup:alpine3.22-unbuilt
+              command:
+                - /bin/sh
+                - /scripts/postgres-backup.sh
+              env:
+                - name: PGHOST
+                  value: postgres.kanban-data.svc.cluster.local
+                - name: PGPORT
+                  value: "5432"
+                # Single keys by secretKeyRef, never the whole Secret: postgres-init also holds the
+                # Postgres superuser password, which must not enter this pod.
+                - name: PGUSER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-init
+                      key: PROD_DB_USER
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-init
+                      key: PROD_DB_PASS
+                - name: PGDATABASE
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-init
+                      key: PROD_DB_NAME
+                # Secret postgres-backup is created on the VM, never committed.
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-backup
+                      key: B2_KEY_ID
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgres-backup
+                      key: B2_APP_KEY
+                - name: B2_ENDPOINT
+                  value: https://s3.eu-central-003.backblazeb2.com
+                - name: B2_BUCKET
+                  value: kanban-prod-backups-16-09-26
+                - name: AWS_DEFAULT_REGION
+                  value: eu-central-003
+                - name: AGE_RECIPIENT
+                  value: age1up3xrd06vmwnhym96sqpflw0j0vhkh9nf29am6neym46x4sdaqpse8hc60
+                # aws-cli 2.23 and later add checksum headers to every upload by default, which some
+                # S3-compatible services reject; compute them only when an operation requires them.
+                - name: AWS_REQUEST_CHECKSUM_CALCULATION
+                  value: when_required
+                - name: AWS_RESPONSE_CHECKSUM_VALIDATION
+                  value: when_required
+                - name: WORK_DIR
+                  value: /work
+                - name: HOME
+                  value: /work
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: work
+                  mountPath: /work
+                - name: tmp
+                  mountPath: /tmp
+                - name: script
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: work
+              emptyDir:
+                sizeLimit: 1Gi
+            - name: tmp
+              emptyDir: {}
+            - name: script
+              configMap:
+                name: postgres-backup-script
+                defaultMode: 0555

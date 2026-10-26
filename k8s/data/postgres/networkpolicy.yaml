@@ -1,5 +1,5 @@
-# Admit TCP 5432 to Postgres only from the two app namespaces and the labelled
-# postgres_exporter pod in monitoring.
+# Admit TCP 5432 to Postgres only from the two app namespaces, the labelled postgres_exporter pod in
+# monitoring and the labelled backup pod in kanban-data.
 #
 # Known holes:
 # A node-local source (the CI SSH forward used by flyway-verify) matches neither peer; it relies on
@@ -30,6 +30,14 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: monitoring
           podSelector:
+            matchLabels:
+              kanban-board/postgres-client: "true"
+        # The backup peer admits the labelled backup pod in kanban-data.
+        #
+        # It is a third, separate entry with a podSelector and no namespaceSelector, so it is limited to
+        # this policy's own namespace and admits only pods carrying the label there, not the namespace's
+        # other pods.
+        - podSelector:
             matchLabels:
               kanban-board/postgres-client: "true"
       ports:
