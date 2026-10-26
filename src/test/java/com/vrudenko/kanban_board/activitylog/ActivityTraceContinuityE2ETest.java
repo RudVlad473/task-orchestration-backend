@@ -22,6 +22,7 @@ import io.opentelemetry.sdk.trace.data.SpanData;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
+import org.apache.avro.specific.SpecificRecord;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 import org.awaitility.Awaitility;
@@ -33,8 +34,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
 
 /**
  * Proves one task creation is one trace from the HTTP request through the async publish and
@@ -58,6 +66,42 @@ import org.springframework.context.annotation.Import;
 @Import(InMemorySpanExporterConfiguration.class)
 @Tag("kafka")
 class ActivityTraceContinuityE2ETest extends AbstractKafkaContainerTest {
+
+    /**
+     * Gives this test's own context a consumer in a group of its own, so the context always
+     * receives a copy of every activity record.
+     *
+     * The real listener's group is shared by every cached Spring context in a full run, and the
+     * broker hands each partition to only one of them, so the receive span would otherwise land
+     * in a context whose exporter this test never reads.
+     */
+    @TestConfiguration
+    static class TraceProbeListenerConfiguration {
+        /**
+         * A factory of its own with an error handler that only logs: the application's handler
+         * dead-letters, so the probe group would write a second dead letter for every poison
+         * payload another test publishes.
+         */
+        @Bean
+        ConcurrentKafkaListenerContainerFactory<Object, Object> traceProbeContainerFactory(
+                ConsumerFactory<Object, Object> consumerFactory) {
+            var factory = new ConcurrentKafkaListenerContainerFactory<Object, Object>();
+            factory.setConsumerFactory(consumerFactory);
+            factory.getContainerProperties().setObservationEnabled(true);
+            factory.setCommonErrorHandler(new DefaultErrorHandler(new FixedBackOff(0L, 0L)));
+            return factory;
+        }
+    }
+
+    /** Separate from the factory's configuration: one class holding both is a creation cycle. */
+    @TestConfiguration
+    static class TraceProbeListener {
+        @KafkaListener(
+                topics = KafkaTopics.ACTIVITY,
+                groupId = "trace-continuity-probe",
+                containerFactory = "traceProbeContainerFactory")
+        void probe(SpecificRecord ignored) {}
+    }
 
     private static final Duration SPAN_WAIT = Duration.ofSeconds(30);
     private static final String SEND_SPAN = KafkaTopics.ACTIVITY + " send";
