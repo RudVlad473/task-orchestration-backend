@@ -44,15 +44,6 @@ public class ActuatorHealthE2ETest extends AbstractAppE2ETest {
     @Nested
     class PublicHealthTest {
         @Test
-        void shouldReturnOk_whenHealthzCheckedWithoutSession() {
-            // arrange & act
-            var statusCode = given().when().get(HEALTHZ_PATH).then().extract().statusCode();
-
-            // assert
-            Assertions.assertThat(statusCode).isEqualTo(HttpStatus.OK.value());
-        }
-
-        @Test
         void shouldReportStatusUp_whenHealthzCheckedWithoutSession() {
             // arrange & act
             var status =
@@ -139,7 +130,7 @@ public class ActuatorHealthE2ETest extends AbstractAppE2ETest {
         }
 
         @Test
-        void shouldReturnNonSuccess_whenEnvEndpointRequestedOnManagementPort() {
+        void shouldReturnUnauthorized_whenEnvEndpointRequestedOnManagementPort() {
             // arrange & act
             var statusCode =
                     given().port(managementPort)
@@ -150,10 +141,11 @@ public class ActuatorHealthE2ETest extends AbstractAppE2ETest {
                             .extract()
                             .statusCode();
 
-            // assert: the exposure allowlist is exactly health and prometheus -- env must not be
-            // reachable, proving the include list is a real allowlist rather than a wildcard
-            Assertions.assertThat(statusCode)
-                    .isGreaterThanOrEqualTo(HttpStatus.MULTIPLE_CHOICES.value());
+            // assert: the exposure allowlist is exactly health and prometheus, so env is not an
+            // exposed endpoint: the management chain (EndpointRequest.toAnyEndpoint()) does not
+            // match it, the request falls through to the main chain and is refused as
+            // unauthenticated; an exposed env would answer 200 here
+            Assertions.assertThat(statusCode).isEqualTo(HttpStatus.UNAUTHORIZED.value());
         }
     }
 }

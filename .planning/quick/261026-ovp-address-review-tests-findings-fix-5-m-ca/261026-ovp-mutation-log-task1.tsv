@@ -1,0 +1,310 @@
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.LayeringArchTest	controllers_must_not_reach_into_repositories	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.LayeringArchTest	domain_services_must_load_through_ownership_verified_findById	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.LayeringArchTest	rest_controllers_must_carry_class_level_validated	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.LayeringArchTest	mutating_handlers_must_bind_request_dto_parameters_from_the_body	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	optionals_must_be_unwrapped_with_an_isEmpty_guard_not_orElseThrow	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dtos_must_carry_the_partial_update_shape	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	save_and_response_dtos_must_not_carry_json_include	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dto_fields_must_not_carry_not_blank	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_mockito_or_mock_beans	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_spring_boot_test_slices	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_assert_with_assertj_and_capture_exceptions_first	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_display_name	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.architecture.TestPlacementArchTest	test_classes_must_not_reside_directly_in_the_root_package	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$Completeness	shouldCoverEveryDiscoveredRoute_withNoUnmatchedMapping()	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/full	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns/{columnId}/tasks	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /tasks/{taskId}/move	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/activity	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/full	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns/{columnId}/tasks	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /users/me/theme	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /users/me/theme	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /tasks/{taskId}/move	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/activity	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$PermitAllExclusions	shouldBeReachableWithoutSession_whenPostingToSignin()	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$PermitAllExclusions	shouldBeReachableWithoutSession_whenPostingToSignup()	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnOnlyForeignUsersOwnBoards_whenForeignUserListsBoards()	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnForeignUsersOwnTheme_whenForeignUserReadsTheme()	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldUpdateOnlyForeignUsersOwnTheme_whenForeignUserUpdatesTheme()	PASS	PASS			
+2026-10-26T17:15:48Z	t1-tracer-pass	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldCreateBoardOwnedByCaller_whenForeignUserCreatesBoard()	PASS	PASS			
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.LayeringArchTest	controllers_must_not_reach_into_repositories	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.LayeringArchTest	domain_services_must_load_through_ownership_verified_findById	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.LayeringArchTest	rest_controllers_must_carry_class_level_validated	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.LayeringArchTest	mutating_handlers_must_bind_request_dto_parameters_from_the_body	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	optionals_must_be_unwrapped_with_an_isEmpty_guard_not_orElseThrow	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dtos_must_carry_the_partial_update_shape	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	save_and_response_dtos_must_not_carry_json_include	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dto_fields_must_not_carry_not_blank	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_mockito_or_mock_beans	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_spring_boot_test_slices	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_assert_with_assertj_and_capture_exceptions_first	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_display_name	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.architecture.TestPlacementArchTest	test_classes_must_not_reside_directly_in_the_root_package	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$Completeness	shouldCoverEveryDiscoveredRoute_withNoUnmatchedMapping()	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/full	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns/{columnId}/tasks	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /tasks/{taskId}/move	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/activity	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/full	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns/{columnId}/tasks	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /users/me/theme	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /users/me/theme	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /tasks/{taskId}/move	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/activity	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$PermitAllExclusions	shouldBeReachableWithoutSession_whenPostingToSignin()	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$PermitAllExclusions	shouldBeReachableWithoutSession_whenPostingToSignup()	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnOnlyForeignUsersOwnBoards_whenForeignUserListsBoards()	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnForeignUsersOwnTheme_whenForeignUserReadsTheme()	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldUpdateOnlyForeignUsersOwnTheme_whenForeignUserUpdatesTheme()	FAIL	FAIL	org.opentest4j.AssertionFailedError	org.opentest4j.AssertionFailedError: expected: DARK but was: LIGHT	src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:17:34Z	t1-M-T1	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldCreateBoardOwnedByCaller_whenForeignUserCreatesBoard()	any	PASS			src/main/java/com/vrudenko/kanban_board/service/UserService.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.LayeringArchTest	controllers_must_not_reach_into_repositories	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.LayeringArchTest	domain_services_must_load_through_ownership_verified_findById	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.LayeringArchTest	rest_controllers_must_carry_class_level_validated	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.LayeringArchTest	mutating_handlers_must_bind_request_dto_parameters_from_the_body	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	optionals_must_be_unwrapped_with_an_isEmpty_guard_not_orElseThrow	any	FAIL	java.lang.AssertionError	java.lang.AssertionError: Architecture Violation [Priority: MEDIUM] - Rule 'no classes should call method where target name 'orElseThrow' and target owner equivalent to java.util.Optional, because doc	src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dtos_must_carry_the_partial_update_shape	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	save_and_response_dtos_must_not_carry_json_include	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dto_fields_must_not_carry_not_blank	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_mockito_or_mock_beans	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_spring_boot_test_slices	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_assert_with_assertj_and_capture_exceptions_first	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_display_name	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.architecture.TestPlacementArchTest	test_classes_must_not_reside_directly_in_the_root_package	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$Completeness	shouldCoverEveryDiscoveredRoute_withNoUnmatchedMapping()	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/full	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns/{columnId}/tasks	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /tasks/{taskId}/move	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/activity	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/full	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}/columns/{columnId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns/{columnId}/tasks	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../tasks/{taskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET .../tasks/{taskId}/subtasks	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../subtasks/{subtaskId}	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /users/me/theme	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /users/me/theme	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /tasks/{taskId}/move	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/activity	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$PermitAllExclusions	shouldBeReachableWithoutSession_whenPostingToSignin()	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$PermitAllExclusions	shouldBeReachableWithoutSession_whenPostingToSignup()	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnOnlyForeignUsersOwnBoards_whenForeignUserListsBoards()	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnForeignUsersOwnTheme_whenForeignUserReadsTheme()	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldUpdateOnlyForeignUsersOwnTheme_whenForeignUserUpdatesTheme()	any	PASS			src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:21:55Z	t1-M-T2	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldCreateBoardOwnedByCaller_whenForeignUserCreatesBoard()	FAIL	FAIL	java.lang.AssertionError	java.lang.AssertionError: Expecting ArrayList: ["8v88h9z2vm68"] to contain: ["8v88ha4z4zk0"] but could not find the following element(s): ["8v88ha4z4zk0"]	src/main/java/com/vrudenko/kanban_board/controller/BoardController.java
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.LayeringArchTest	controllers_must_not_reach_into_repositories	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.LayeringArchTest	domain_services_must_load_through_ownership_verified_findById	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.LayeringArchTest	rest_controllers_must_carry_class_level_validated	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.LayeringArchTest	mutating_handlers_must_bind_request_dto_parameters_from_the_body	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	optionals_must_be_unwrapped_with_an_isEmpty_guard_not_orElseThrow	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dtos_must_carry_the_partial_update_shape	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	save_and_response_dtos_must_not_carry_json_include	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dto_fields_must_not_carry_not_blank	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_mockito_or_mock_beans	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_spring_boot_test_slices	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_assert_with_assertj_and_capture_exceptions_first	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_display_name	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.architecture.TestPlacementArchTest	test_classes_must_not_reside_directly_in_the_root_package	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldReturnNonSuccess_whenEnvEndpointRequestedOnManagementPort()	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldExposeJvmMetrics_whenPrometheusScrapedOnManagementPort()	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldReportStatusUp_whenHealthCheckedOnManagementPort()	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$PublicHealthTest	shouldNotIncludeComponentDetail_whenHealthzCheckedWithoutSession()	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$PublicHealthTest	shouldReportStatusUp_whenHealthzCheckedWithoutSession()	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$RetiredActuatorPathTest	shouldReturnUnauthorized_whenRetiredHealthPathRequestedWithoutSession()	PASS	PASS			
+2026-10-26T17:25:14Z	t1-env-measure	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$RetiredActuatorPathTest	shouldReturnUnauthorized_whenPrometheusPathRequestedOnRoutedPortWithoutSession()	PASS	PASS			
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.LayeringArchTest	controllers_must_not_reach_into_repositories	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.LayeringArchTest	domain_services_must_load_through_ownership_verified_findById	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.LayeringArchTest	rest_controllers_must_carry_class_level_validated	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.LayeringArchTest	mutating_handlers_must_bind_request_dto_parameters_from_the_body	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	optionals_must_be_unwrapped_with_an_isEmpty_guard_not_orElseThrow	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dtos_must_carry_the_partial_update_shape	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	save_and_response_dtos_must_not_carry_json_include	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dto_fields_must_not_carry_not_blank	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_mockito_or_mock_beans	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_spring_boot_test_slices	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_assert_with_assertj_and_capture_exceptions_first	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_display_name	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.architecture.TestPlacementArchTest	test_classes_must_not_reside_directly_in_the_root_package	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldExposeJvmMetrics_whenPrometheusScrapedOnManagementPort()	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldReturnUnauthorized_whenEnvEndpointRequestedOnManagementPort()	FAIL	FAIL	org.opentest4j.AssertionFailedError	org.opentest4j.AssertionFailedError: expected: 401 but was: 200	src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldReportStatusUp_whenHealthCheckedOnManagementPort()	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$PublicHealthTest	shouldNotIncludeComponentDetail_whenHealthzCheckedWithoutSession()	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$PublicHealthTest	shouldReportStatusUp_whenHealthzCheckedWithoutSession()	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$RetiredActuatorPathTest	shouldReturnUnauthorized_whenRetiredHealthPathRequestedWithoutSession()	any	PASS			src/main/resources/application.properties
+2026-10-26T17:26:50Z	t1-M-T3	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$RetiredActuatorPathTest	shouldReturnUnauthorized_whenPrometheusPathRequestedOnRoutedPortWithoutSession()	any	PASS			src/main/resources/application.properties
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.LayeringArchTest	controllers_must_not_reach_into_repositories	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.LayeringArchTest	domain_services_must_load_through_ownership_verified_findById	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.LayeringArchTest	rest_controllers_must_carry_class_level_validated	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.LayeringArchTest	mutating_handlers_must_bind_request_dto_parameters_from_the_body	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	optionals_must_be_unwrapped_with_an_isEmpty_guard_not_orElseThrow	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dtos_must_carry_the_partial_update_shape	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	save_and_response_dtos_must_not_carry_json_include	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.MainCodeStyleArchTest	update_request_dto_fields_must_not_carry_not_blank	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_mockito_or_mock_beans	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_spring_boot_test_slices	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_assert_with_assertj_and_capture_exceptions_first	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.TestCodeStyleArchTest	tests_must_not_use_display_name	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.architecture.TestPlacementArchTest	test_classes_must_not_reside_directly_in_the_root_package	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldExposeJvmMetrics_whenPrometheusScrapedOnManagementPort()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldReturnUnauthorized_whenEnvEndpointRequestedOnManagementPort()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$ManagementPortTest	shouldReportStatusUp_whenHealthCheckedOnManagementPort()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$PublicHealthTest	shouldNotIncludeComponentDetail_whenHealthzCheckedWithoutSession()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$PublicHealthTest	shouldReportStatusUp_whenHealthzCheckedWithoutSession()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$RetiredActuatorPathTest	shouldReturnUnauthorized_whenRetiredHealthPathRequestedWithoutSession()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.ActuatorHealthE2ETest$RetiredActuatorPathTest	shouldReturnUnauthorized_whenPrometheusPathRequestedOnRoutedPortWithoutSession()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$ConcurrentSessionCeiling	shouldRejectThirdSignin_whenConcurrentSessionCeilingIsReached()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Logout	shouldClearSessionCookieAndReturnOk_whenLogoutSucceeds()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$SchemaCreation	shouldCreateSpringSessionTables_whenApplicationStarts()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$SessionFixation	shouldRotateSessionId_whenSigninPresentsAnExistingSession()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$AntiEnumeration	shouldReturnByteIdenticalBody_whenComparingUnregisteredEmailAndWrongPasswordSignins()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$AntiEnumeration	shouldReturnUnauthorizedWithBadCredentialsCode_whenEmailIsWellFormedButUnregistered()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$Authenticated	testWithValidCredential_shouldExposeOnlyIdentityFields_whenUserExists()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$Authenticated	testWithValidCredential_shouldReturnNonCacheableResponse_whenUserExists()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$Authenticated	testWithValidCredential_shouldPopulateCookie_whenUserExists()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$Authenticated	testWithValidCredential_shouldReturnCallerIdentity_whenUserExists()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$FieldValidation	shouldReturnBadRequestWithValidationFailedCode_whenEmailIsMalformed()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signin$Unauthenticated	testWithInvalidCredential_shouldNotPopulateCookie_whenUserDoesntExist()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$SigninPersistence	shouldAddOneSessionRow_whenSigninSucceeds()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$SigninPersistence	shouldPersistSecurityContextAttribute_whenSigninSucceeds()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$SigninPersistence	shouldNotPersistBcryptHash_whenSigninSucceeds()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$Authenticated	testWithValidCredential_shouldPointLocationAtCallerIdentityUri_whenUserExists()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$Authenticated	testWithValidCredential_shouldReturnCreatedIdentity_whenUserExists()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$Authenticated	testWithValidCredential_shouldPopulateCookie_whenUserExists()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$DuplicateEmail	shouldReturnBadRequestNotConflict_whenSignupIsBothInvalidAndDuplicate()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$DuplicateEmail	shouldReturnConflictWithDuplicateResourceCode_whenEmailAlreadyRegistered()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$FieldValidation	shouldReturnBadRequestWithValidationFailedCode_whenDisplayNameIsWhitespaceOnly()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$FieldValidation	shouldReturnBadRequestWithValidationFailedCode_whenEmailIsMalformed()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$Signup$FieldValidation	shouldReturnBadRequestWithValidationFailedCode_whenPasswordLacksUppercase()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$SignupPasswordHashPersistence	shouldPersistNonNullBcryptHashDifferentFromPlaintext_whenSignupSucceedsOverHttp()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthenticationTest$SignupThenSignin	shouldAuthenticate_whenSigninUsesCredentialsFromAnEarlierHttpSignup()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$Completeness	shouldCoverEveryDiscoveredRoute_withNoUnmatchedMapping()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/full	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/columns/{columnId}/tasks	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	POST .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	DELETE .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PUT .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	PATCH /tasks/{taskId}/move	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$CrossUserSweep	GET /boards/{boardId}/activity	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/full	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE /boards/{boardId}/columns/{columnId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /boards/{boardId}/columns/{columnId}/reorder	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/columns/{columnId}/tasks	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../tasks/{taskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	POST .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET .../tasks/{taskId}/subtasks	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	DELETE .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT .../subtasks/{subtaskId}	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /users/me/theme	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PUT /users/me/theme	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	PATCH /tasks/{taskId}/move	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep	GET /boards/{boardId}/activity	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnOnlyForeignUsersOwnBoards_whenForeignUserListsBoards()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldReturnForeignUsersOwnTheme_whenForeignUserReadsTheme()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldUpdateOnlyForeignUsersOwnTheme_whenForeignUserUpdatesTheme()	PASS	PASS			
+2026-10-26T17:29:15Z	t1-pass-final	com.vrudenko.kanban_board.security.AuthorizationGatingTest$ScopedToCaller	shouldCreateBoardOwnedByCaller_whenForeignUserCreatesBoard()	PASS	PASS			

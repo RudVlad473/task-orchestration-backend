@@ -117,7 +117,8 @@ limits the rate (see [Rate limiting at the Caddy edge](#rate-limiting-at-the-cad
   request from a second user to every owned route (`CrossUserSweep`) and expects 403.
   `Completeness.shouldCoverEveryDiscoveredRoute_withNoUnmatchedMapping` finds all routes by
   reflection, so a new route with no test case fails the build.
-- `PermitAllExclusions` proves signin and signup are reachable with no session.
+- `AuthenticationTest`'s signin and signup cases reach both routes with no session, so a route moved
+  behind authentication would answer 401 there.
 - [ActuatorHealthE2ETest](../../src/test/java/com/vrudenko/kanban_board/security/ActuatorHealthE2ETest.java)
   proves `/api/actuator/health` answers with no session, and that `/env` does not.
 

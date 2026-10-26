@@ -431,7 +431,9 @@ public class AuthenticationTest extends AbstractAppMockMvcTest {
             }
 
             /**
-             * The response carries only identity fields; an exact-set check catches a leaked hash.
+             * The response carries the registered identity values: email, displayName, a generated
+             * id and the default theme. The field-set check that catches a leaked hash lives in the
+             * signin case, which returns the same UserResponseDTO.
              */
             @Test
             void testWithValidCredential_shouldReturnCreatedIdentity_whenUserExists()
@@ -466,10 +468,6 @@ public class AuthenticationTest extends AbstractAppMockMvcTest {
                 Assertions.assertThat(responseBody.get("id").asText()).isNotBlank();
                 Assertions.assertThat(responseBody.get("theme").asText())
                         .isEqualTo(ThemePreference.LIGHT.name());
-                var fieldNames = new HashSet<String>();
-                responseBody.fieldNames().forEachRemaining(fieldNames::add);
-                Assertions.assertThat(fieldNames)
-                        .containsExactlyInAnyOrder("id", "email", "displayName", "theme");
             }
 
             /**

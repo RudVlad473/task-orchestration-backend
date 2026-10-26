@@ -5,7 +5,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.vrudenko.kanban_board.constant.ApiPaths;
-import com.vrudenko.kanban_board.constant.ValidationConstants;
 import com.vrudenko.kanban_board.dto.board_dto.BoardResponseDTO;
 import com.vrudenko.kanban_board.dto.board_dto.SaveBoardRequestDTO;
 import com.vrudenko.kanban_board.dto.board_dto.UpdateBoardRequestDTO;
@@ -17,8 +16,6 @@ import com.vrudenko.kanban_board.dto.subtask_dto.UpdateSubtaskRequestDTO;
 import com.vrudenko.kanban_board.dto.task_dto.MoveTaskRequestDTO;
 import com.vrudenko.kanban_board.dto.task_dto.SaveTaskRequestDTO;
 import com.vrudenko.kanban_board.dto.task_dto.UpdateTaskRequestDTO;
-import com.vrudenko.kanban_board.dto.user_dto.SigninRequestDTO;
-import com.vrudenko.kanban_board.dto.user_dto.SignupRequestDTO;
 import com.vrudenko.kanban_board.dto.user_dto.UpdateThemeRequestDTO;
 import com.vrudenko.kanban_board.dto.user_dto.UserResponseDTO;
 import com.vrudenko.kanban_board.entity.ThemePreference;
@@ -437,6 +434,27 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
             // no other user's resource being addressed here to leak or protect
             Assertions.assertThat(result.getResponse().getStatus())
                     .isEqualTo(HttpStatus.CREATED.value());
+
+            // the new board is in the caller's own list: a board saved under another user's id
+            // would answer 201 all the same and be absent here
+            var createdBoardId =
+                    objectMapper
+                            .readValue(
+                                    result.getResponse().getContentAsString(),
+                                    BoardResponseDTO.class)
+                            .getId();
+            var listResult =
+                    mockMvc.perform(get(BOARDS_URL).with(user(foreignUserId)))
+                            .andExpect(status().isOk())
+                            .andReturn();
+            var listedBoards =
+                    List.of(
+                            objectMapper.readValue(
+                                    listResult.getResponse().getContentAsString(),
+                                    BoardResponseDTO[].class));
+            Assertions.assertThat(listedBoards)
+                    .extracting(BoardResponseDTO::getId)
+                    .contains(createdBoardId);
         }
 
         @Test
@@ -483,65 +501,19 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
                     objectMapper.readValue(
                             result.getResponse().getContentAsString(), UserResponseDTO.class);
             Assertions.assertThat(response.getId()).isEqualTo(foreignUserId);
-        }
-    }
+            Assertions.assertThat(response.getTheme()).isEqualTo(ThemePreference.DARK);
 
-    @Nested
-    class PermitAllExclusions {
-        // /signin and /signup are the two deliberately excluded permitAll() routes; proven
-        // reachable without a session here so a silent regression would be caught.
-
-        @Test
-        void shouldBeReachableWithoutSession_whenPostingToSignin() throws Exception {
-            // arrange: a well-shaped nonexistent-credential body; the point is that the request
-            // reaches AuthenticationController at all, not that it succeeds
-            var body =
-                    SigninRequestDTO.builder()
-                            .email(generateValidEmail())
-                            .password(generateValidPassword())
-                            .build();
-
-            // act
-            var result =
-                    mockMvc.perform(
-                                    post(ApiPaths.SIGNIN)
-                                            .contentType(MediaType.APPLICATION_JSON)
-                                            .content(objectMapper.writeValueAsString(body)))
+            // the owning user's stored theme is untouched: a write that landed on another row
+            // would leave this at DARK
+            var owningUserResult =
+                    mockMvc.perform(get(USER_THEME_URL).with(user(getOwningUser().getId())))
+                            .andExpect(status().isOk())
                             .andReturn();
-
-            // assert: rejected as bad credentials (401, BAD_CREDENTIALS), never the entry point's
-            // UNAUTHENTICATED code -- proving the filter chain let the request all the way through
-            // to AuthenticationController instead of blocking it at the gate
-            Assertions.assertThat(result.getResponse().getStatus())
-                    .isEqualTo(HttpStatus.UNAUTHORIZED.value());
-            Assertions.assertThat(result.getResponse().getContentAsString())
-                    .contains("\"code\":\"BAD_CREDENTIALS\"");
-        }
-
-        @Test
-        void shouldBeReachableWithoutSession_whenPostingToSignup() throws Exception {
-            // arrange
-            var body =
-                    SignupRequestDTO.builder()
-                            .email(generateValidEmail())
-                            .password(generateValidPassword())
-                            .displayName(
-                                    dataFactory.getRandomWord(
-                                            ValidationConstants.MIN_USER_DISPLAY_NAME_LENGTH))
-                            .build();
-
-            // act
-            var result =
-                    mockMvc.perform(
-                                    post(ApiPaths.SIGNUP)
-                                            .contentType(MediaType.APPLICATION_JSON)
-                                            .content(objectMapper.writeValueAsString(body)))
-                            .andReturn();
-
-            // assert: a genuinely new signup succeeds (201), proving the route was never blocked at
-            // the security filter chain
-            Assertions.assertThat(result.getResponse().getStatus())
-                    .isEqualTo(HttpStatus.CREATED.value());
+            var owningUserResponse =
+                    objectMapper.readValue(
+                            owningUserResult.getResponse().getContentAsString(),
+                            UserResponseDTO.class);
+            Assertions.assertThat(owningUserResponse.getTheme()).isEqualTo(ThemePreference.LIGHT);
         }
     }
 
