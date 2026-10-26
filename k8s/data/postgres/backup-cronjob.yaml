@@ -54,7 +54,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: backup
-              # Temporary tag, replaced by the built tag and digest before this file is ever pushed.
+              # Built by the backup-image workflow; the digest is what actually runs.
               image: rudenkovladimir/kanban-postgres-backup:alpine3.22-a75558e@sha256:472829cacfcb3fa10fe51f80206075105a57d8a22daf8d322012c197f2282b0a
               command:
                 - /bin/sh
@@ -110,6 +110,20 @@ spec:
                   value: /work
                 - name: HOME
                   value: /work
+              # MEASURED (restart ladder, 2026-10-26): passed 512Mi, 256Mi, 128Mi, 64Mi; failed at 48Mi
+              # (OOMKilled, exit 137). Adopted 96Mi limit (lowest passing rung x1.5) / 64Mi request.
+              #
+              # Decisions:
+              # The cgroup peak read inside the pod was 60.9MiB on every passing rung, against a 163KB
+              # encrypted dump, so the data size is not what sets it. A rung ran one 16s Job, so it never
+              # saw a larger database.
+              # Falsifier: any OOMKilled on this container, or a dump growing past about 10MB, means
+              # re-derive the limit.
+              resources:
+                requests:
+                  memory: 64Mi
+                limits:
+                  memory: 96Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 readOnlyRootFilesystem: true
