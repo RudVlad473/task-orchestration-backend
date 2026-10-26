@@ -509,7 +509,7 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
             var second = createTaskInColumn(cookie, column.getId());
             var third = createTaskInColumn(cookie, column.getId());
             var lowerId = first.getId().compareTo(second.getId()) < 0 ? first : second;
-            var higherId = lowerId == first ? second : first;
+            var higherId = lowerId.equals(first) ? second : first;
 
             // Each save is its own statement, and each UPDATE writes a new row version after the
             // older ones, so the heap order is third, higher, lower: what a missing ORDER BY or a

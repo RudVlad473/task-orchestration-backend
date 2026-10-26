@@ -255,8 +255,7 @@ TEST-05).
 ### How we test it
 
 - [`FlywaySchemaProvenanceTest`](../../src/test/java/com/vrudenko/kanban_board/config/FlywaySchemaProvenanceTest.java)
-  (13 tests in the nested groups `FlywayHistory`, `SchemaShape`, `FlywayOnlyArtifacts`,
-  `SpringSessionCoexistence`).
+  (12 tests in the nested groups `FlywayHistory`, `SchemaShape`, `FlywayOnlyArtifacts`).
 - `ddl-auto=validate` makes every Spring context start fail if an entity and the migrated schema
   disagree.
 
@@ -383,8 +382,9 @@ version-controlled opt-in.
 
 - Every Spring test fails at context start if the container or `@ServiceConnection` wiring
   breaks.
-- [`FlywaySchemaProvenanceTest.SpringSessionCoexistence`](../../src/test/java/com/vrudenko/kanban_board/config/FlywaySchemaProvenanceTest.java)
-  proves Flyway and Spring Session JDBC share the container.
+- [`FlywaySchemaProvenanceTest.SchemaShape`](../../src/test/java/com/vrudenko/kanban_board/config/FlywaySchemaProvenanceTest.java)
+  proves Flyway and Spring Session JDBC share the container: its exact table set includes both
+  session tables.
 
 ### Where this is recorded
 

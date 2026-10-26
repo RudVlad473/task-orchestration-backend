@@ -29,17 +29,17 @@ class FlywaySchemaProvenanceTest extends AbstractPostgresContainerTest {
     @Nested
     class FlywayHistory {
         @Test
-        void shouldRecordSixSuccessfulMigrations_whenContextStarts() {
+        void shouldRecordSuccessfulMigrationsV1ThroughV9_whenContextStarts() {
             // arrange
             var sql =
                     "SELECT count(*) FROM flyway_schema_history WHERE success = true AND version"
-                            + " IN ('1','2','3','4','5','6')";
+                            + " IN ('1','2','3','4','5','6','7','8','9')";
 
             // act
             var successfulCount = jdbcTemplate.queryForObject(sql, Integer.class);
 
             // assert
-            Assertions.assertThat(successfulCount).isEqualTo(6);
+            Assertions.assertThat(successfulCount).isEqualTo(9);
         }
 
         @Test
@@ -209,24 +209,6 @@ class FlywaySchemaProvenanceTest extends AbstractPostgresContainerTest {
 
             // assert
             Assertions.assertThat(columnDefault).startsWith("'LIGHT'");
-        }
-    }
-
-    @Nested
-    class SpringSessionCoexistence {
-        @Test
-        void shouldCreateBothSessionTables_whenSpringSessionInitializerRunsAlongsideFlyway() {
-            // arrange
-            var sql =
-                    "SELECT count(*) FROM information_schema.tables WHERE table_schema ="
-                            + " 'public' AND table_name IN"
-                            + " ('spring_session','spring_session_attributes')";
-
-            // act
-            var count = jdbcTemplate.queryForObject(sql, Integer.class);
-
-            // assert
-            Assertions.assertThat(count).isEqualTo(2);
         }
     }
 }

@@ -952,15 +952,13 @@ the broken mechanism.
 
 ### How it works
 
-It has four nested groups:
+It has three nested groups:
 
 | Group | Assertion |
 |-------|-----------|
-| `FlywayHistory` | Six successful rows for versions 1–6; zero failed rows |
-| `SchemaShape` | Exactly nine base tables in `public` |
+| `FlywayHistory` | Nine successful rows for versions 1–9; zero failed rows |
+| `SchemaShape` | Exactly nine base tables in `public`, including both Spring Session tables |
 | `FlywayOnlyArtifacts` | Names and defaults that only a migration can create: `fk_boards_user`, `uk_activity_log_event_id`, `idx_activity_log_board_created_id`, `uk_boards_user_id_name`, `event_id` is `character varying`, `tasks.version` defaults to `0`, `users.theme` defaults to `'LIGHT'` |
-| `SpringSessionCoexistence` | Both session tables exist |
-
 The negative test is the key one:
 
 ```java

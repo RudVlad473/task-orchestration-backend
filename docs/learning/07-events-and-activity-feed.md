@@ -547,15 +547,21 @@ A serialization failure throws `IllegalStateException`, so the record goes to th
 ### How we test it
 
 [`ActivityLogConsumerE2ETest`](../../src/test/java/com/vrudenko/kanban_board/activitylog/ActivityLogConsumerE2ETest.java)
-publishes through a real Redpanda broker and asserts the persisted row. It covers 9 of the 14
+publishes through a real Redpanda broker and asserts the persisted row. It covers all 14
 types, for example:
 
 - `shouldPersistExactlyOneRow_whenTaskMovedEventPublishedThroughRealBroker` (the epic's required
   end-to-end test, TEST-01)
 - `shouldPersistTaskMoved_withTaskIdSourceColumnIdTargetColumnIdDetail`
 - `shouldPersistColumnDeleted_withColumnIdDetailAndEventTimestamp`
-- `shouldProduceIdenticalDetail_whenTwoTaskMovedEventsShareSameIds` (byte-stable `detail`)
+- `shouldProduceIdenticalDetail_whenTwoTaskMovedEventsShareSameIds` (byte-stable `detail`: both
+  rows equal the same literal, in key order)
 - `shouldProduceTwoRows_whenTwoEventsShareSameBoardUserAndInstantButDifferentEventIds`
+- `shouldPersistBoardDeleted_withEmptyDetail`
+- `shouldPersistColumnUpdated_withColumnIdDetail`
+- `shouldPersistSubtaskUpdated_withTaskIdSubtaskIdIsCompletedAsQuotedString` (`isCompleted` is
+  the string `"true"`, not a JSON boolean)
+- `shouldPersistSubtaskDeleted_withTaskIdThenSubtaskIdDetail`
 
 [`ActivityEventAvroMapperTest`](../../src/test/java/com/vrudenko/kanban_board/event/avro/ActivityEventAvroMapperTest.java)
 round-trips all 14 types in memory.

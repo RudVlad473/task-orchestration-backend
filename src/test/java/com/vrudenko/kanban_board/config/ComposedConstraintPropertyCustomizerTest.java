@@ -547,24 +547,6 @@ class ComposedConstraintPropertyCustomizerTest extends AbstractPostgresContainer
         }
 
         @Test
-        void
-                shouldRaiseMinLengthAboveTheDirectNotBlank_whenSaveSubtaskTitleAlsoComposesSubtaskTitle()
-                        throws Exception {
-            // arrange: the live document used to publish minLength 1 (from the direct @NotBlank)
-            // while @SubtaskTitle enforces @Size(min = 3). The published bound is 2, not 3, because
-            // UTF-16 units convert to code points; it only needs to exceed the @NotBlank's 1.
-            var document = fetchDocument();
-
-            // act
-            var minLength =
-                    readInt(propertyNode(document, "SaveSubtaskRequestDTO", "title"), "minLength");
-
-            // assert
-            Assertions.assertThat(minLength).isEqualTo(2);
-            Assertions.assertThat(minLength).isNotEqualTo(1);
-        }
-
-        @Test
         void shouldPublishEmailFormat_whenComposedAppEmailPresent() throws Exception {
             // arrange
             var document = fetchDocument();

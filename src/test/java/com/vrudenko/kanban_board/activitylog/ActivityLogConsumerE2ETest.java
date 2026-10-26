@@ -8,11 +8,15 @@ import java.util.UUID;
 import com.vrudenko.kanban_board.entity.ActivityAction;
 import com.vrudenko.kanban_board.entity.ActivityLogEntity;
 import com.vrudenko.kanban_board.event.BoardCreatedEvent;
+import com.vrudenko.kanban_board.event.BoardDeletedEvent;
 import com.vrudenko.kanban_board.event.BoardUpdatedEvent;
 import com.vrudenko.kanban_board.event.ColumnCreatedEvent;
 import com.vrudenko.kanban_board.event.ColumnDeletedEvent;
 import com.vrudenko.kanban_board.event.ColumnReorderedEvent;
+import com.vrudenko.kanban_board.event.ColumnUpdatedEvent;
 import com.vrudenko.kanban_board.event.SubtaskCreatedEvent;
+import com.vrudenko.kanban_board.event.SubtaskDeletedEvent;
+import com.vrudenko.kanban_board.event.SubtaskUpdatedEvent;
 import com.vrudenko.kanban_board.event.TaskCreatedEvent;
 import com.vrudenko.kanban_board.event.TaskDeletedEvent;
 import com.vrudenko.kanban_board.event.TaskMovedEvent;
@@ -297,10 +301,18 @@ class ActivityLogConsumerE2ETest extends AbstractKafkaContainerTest {
                     .atMost(Duration.ofSeconds(30))
                     .untilAsserted(
                             () -> {
-                                var firstRow = findByEventId(firstEventId);
-                                var secondRow = findByEventId(secondEventId);
-                                Assertions.assertThat(firstRow.getDetail())
-                                        .isEqualTo(secondRow.getDetail());
+                                var expectedDetail =
+                                        "{\"taskId\":\""
+                                                + taskId
+                                                + "\",\"sourceColumnId\":\""
+                                                + sourceColumnId
+                                                + "\",\"targetColumnId\":\""
+                                                + targetColumnId
+                                                + "\"}";
+                                Assertions.assertThat(findByEventId(firstEventId).getDetail())
+                                        .isEqualTo(expectedDetail);
+                                Assertions.assertThat(findByEventId(secondEventId).getDetail())
+                                        .isEqualTo(expectedDetail);
                             });
         }
 
@@ -503,6 +515,121 @@ class ActivityLogConsumerE2ETest extends AbstractKafkaContainerTest {
                                                         + columnId
                                                         + "\",\"taskId\":\""
                                                         + taskId
+                                                        + "\"}");
+                            });
+        }
+
+        @Test
+        void shouldPersistBoardDeleted_withEmptyDetail() throws Exception {
+            // arrange
+            var eventId = UUID.randomUUID().toString();
+            var event = new BoardDeletedEvent(eventId, randomId(), randomId(), Instant.now());
+
+            // act
+            sendAndAwaitAck(event);
+
+            // assert
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .untilAsserted(
+                            () -> {
+                                var row = findByEventId(eventId);
+                                Assertions.assertThat(row.getAction())
+                                        .isEqualTo(ActivityAction.BOARD_DELETED);
+                                Assertions.assertThat(row.getDetail()).isEqualTo("{}");
+                            });
+        }
+
+        @Test
+        void shouldPersistColumnUpdated_withColumnIdDetail() throws Exception {
+            // arrange
+            var eventId = UUID.randomUUID().toString();
+            var columnId = randomId();
+            var event =
+                    new ColumnUpdatedEvent(
+                            eventId, randomId(), randomId(), columnId, Instant.now());
+
+            // act
+            sendAndAwaitAck(event);
+
+            // assert
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .untilAsserted(
+                            () -> {
+                                var row = findByEventId(eventId);
+                                Assertions.assertThat(row.getAction())
+                                        .isEqualTo(ActivityAction.COLUMN_UPDATED);
+                                Assertions.assertThat(row.getDetail())
+                                        .isEqualTo("{\"columnId\":\"" + columnId + "\"}");
+                            });
+        }
+
+        @Test
+        void shouldPersistSubtaskUpdated_withTaskIdSubtaskIdIsCompletedAsQuotedString()
+                throws Exception {
+            // arrange
+            var eventId = UUID.randomUUID().toString();
+            var taskId = randomId();
+            var subtaskId = randomId();
+            var event =
+                    new SubtaskUpdatedEvent(
+                            eventId,
+                            randomId(),
+                            randomId(),
+                            taskId,
+                            subtaskId,
+                            true,
+                            Instant.now());
+
+            // act
+            sendAndAwaitAck(event);
+
+            // assert: isCompleted is the quoted string "true" (String.valueOf), not a JSON boolean
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .untilAsserted(
+                            () -> {
+                                var row = findByEventId(eventId);
+                                Assertions.assertThat(row.getAction())
+                                        .isEqualTo(ActivityAction.SUBTASK_UPDATED);
+                                Assertions.assertThat(row.getDetail())
+                                        .isEqualTo(
+                                                "{\"taskId\":\""
+                                                        + taskId
+                                                        + "\",\"subtaskId\":\""
+                                                        + subtaskId
+                                                        + "\",\"isCompleted\":\"true\"}");
+                            });
+        }
+
+        @Test
+        void shouldPersistSubtaskDeleted_withTaskIdThenSubtaskIdDetail() throws Exception {
+            // arrange
+            var eventId = UUID.randomUUID().toString();
+            var taskId = randomId();
+            var subtaskId = randomId();
+            var event =
+                    new SubtaskDeletedEvent(
+                            eventId, randomId(), randomId(), taskId, subtaskId, Instant.now());
+
+            // act
+            sendAndAwaitAck(event);
+
+            // assert
+            Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .untilAsserted(
+                            () -> {
+                                var row = findByEventId(eventId);
+                                Assertions.assertThat(row.getAction())
+                                        .isEqualTo(ActivityAction.SUBTASK_DELETED);
+                                Assertions.assertThat(row.getDetail())
+                                        .isEqualTo(
+                                                "{\"taskId\":\""
+                                                        + taskId
+                                                        + "\",\"subtaskId\":\""
+                                                        + subtaskId
                                                         + "\"}");
                             });
         }

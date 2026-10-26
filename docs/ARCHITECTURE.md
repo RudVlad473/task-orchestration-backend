@@ -202,8 +202,7 @@ business method had to see through the instrumentation first.
 - The timer includes the transaction commit only if the aspect runs outside `@Transactional`.
   Boot's own aspect bean has no order and ties with the transaction advisor, which put it inside:
   measured, a move whose commit was held 300 ms was timed at 23 ms. `ObservedAspectConfig` replaces
-  the bean with one ordered just outside the transaction advisor. Pinned by `ObservedAspectWiringTest.AspectOrderTest.shouldPlaceObservationAdvisorBeforeTransactionAdvisor_onTaskService`
-  (advisor order) and
+  the bean with one ordered just outside the transaction advisor. Pinned by
   `ObservedAspectWiringTest.CommitCoverageTest.shouldIncludeCommitInMoveObservation_whenMoveOwnsItsTransaction`
   (a commit made 300 ms slow shows up in the timer).
 - A method that joins its caller's transaction does not own the commit. `TaskService.save` joins
