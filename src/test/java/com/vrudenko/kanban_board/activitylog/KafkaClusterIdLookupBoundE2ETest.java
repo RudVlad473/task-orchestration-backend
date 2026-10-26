@@ -24,12 +24,16 @@ import org.springframework.kafka.core.KafkaAdmin;
  * - The test profile leaves the broker address unreachable, which is the case under test, so no
  *   container is paused and nothing is mocked.
  * - The ceiling is a few seconds above the configured bound, not equal to it, because the lookup
- *   also pays a client start-up cost. The failure it guards against is thirty seconds.
+ *   also pays a client start-up cost. The failure it guards against is a minute.
+ * - The floor is there because Kafka refuses to build an admin client whose default.api.timeout.ms
+ *   is below its request.timeout.ms. That failure returns instantly, so a ceiling alone passed
+ *   against a client that could not start.
  */
 @SpringBootTest
 class KafkaClusterIdLookupBoundE2ETest extends AbstractPostgresContainerTest {
 
     private static final Duration CEILING = Duration.ofSeconds(8);
+    private static final Duration FLOOR = Duration.ofSeconds(1);
 
     @Autowired private KafkaAdmin kafkaAdmin;
 
@@ -43,5 +47,8 @@ class KafkaClusterIdLookupBoundE2ETest extends AbstractPostgresContainerTest {
         // assert
         Assertions.assertThat(clusterId).isNull();
         Assertions.assertThat(elapsed).isLessThan(CEILING);
+        Assertions.assertThat(elapsed)
+                .as("the admin client was built and waited, rather than failing to start")
+                .isGreaterThan(FLOOR);
     }
 }

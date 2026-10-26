@@ -91,7 +91,8 @@ import org.testcontainers.utility.DockerImageName;
             // Restores the admin client's API timeout, which application.properties bounds at 2s.
             //
             // A real broker under suite load needs the headroom, as the producer bounds above do.
-            "spring.kafka.admin.properties.default.api.timeout.ms=30000"
+            "spring.kafka.admin.properties.default.api.timeout.ms=30000",
+            "spring.kafka.admin.properties.request.timeout.ms=30000"
         })
 public abstract class AbstractKafkaContainerTest extends AbstractPostgresContainerTest {
     // The docker-java api.version=1.44 pin (testcontainers-java#11212) lives in
