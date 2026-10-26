@@ -39,6 +39,19 @@ trap 'rm -f "$WORK_DIR/db.dump" "$WORK_DIR/db.dump.age"' EXIT
 
 ts=$(date -u +%Y%m%dT%H%M%SZ)
 
+# A freshly started pod is refused by the NetworkPolicy controller for several seconds, until it adds
+# the pod to the allowed set. Measured 2026-10-26: the first connection attempt of a new labelled pod
+# was refused and the one 10 seconds later succeeded, while a job's own retries all failed.
+tries=0
+until pg_isready -q -t 3; do
+  tries=$((tries + 1))
+  if [ "$tries" -ge 18 ]; then
+    echo "postgres not accepting connections after $tries attempts" >&2
+    exit 1
+  fi
+  sleep 10
+done
+
 log "dump start"
 pg_dump -Fc --no-password -f "$WORK_DIR/db.dump"
 pg_restore -l "$WORK_DIR/db.dump" >/dev/null
