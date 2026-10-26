@@ -146,6 +146,13 @@ def iter_pod_templates(doc):
         pod_spec = template.get("spec")
         if isinstance(pod_spec, dict):
             yield kind, doc.get("metadata", {}).get("name", "<unnamed>"), pod_spec
+    elif kind == "CronJob":
+        # A CronJob nests its pod template one level deeper, under spec.jobTemplate.
+        job_template = (doc.get("spec") or {}).get("jobTemplate") or {}
+        job_spec = job_template.get("spec") or {}
+        pod_spec = (job_spec.get("template") or {}).get("spec")
+        if isinstance(pod_spec, dict):
+            yield kind, doc.get("metadata", {}).get("name", "<unnamed>"), pod_spec
     elif kind == "Pod":
         pod_spec = doc.get("spec")
         if isinstance(pod_spec, dict):

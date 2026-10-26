@@ -88,6 +88,81 @@ def clean_postgres_statefulset():
     }
 
 
+def clean_backup_cronjob():
+    """Return a CronJob whose pod template sits at spec.jobTemplate.spec.template.spec."""
+    return {
+        "kind": "CronJob",
+        "metadata": {"name": "postgres-backup"},
+        "spec": {
+            "jobTemplate": {
+                "spec": {
+                    "template": {
+                        "spec": {
+                            "containers": [
+                                {
+                                    "name": "backup",
+                                    "image": "example/backup:alpine3.22-a75558e",
+                                    "resources": {
+                                        "requests": {"memory": "64Mi"},
+                                        "limits": {"memory": "96Mi"},
+                                    },
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+    }
+
+
+def run_cronjob_cases(expect_violation, expect_clean):
+    expect_clean("clean/CronJob", _gate.check_rendered_doc(clean_backup_cronjob(), "fixture"))
+
+    # The CronJob's pod template is nested one level deeper than a Deployment's, so a gate that only
+    # looks at spec.template.spec reports nothing for any fault below.
+    doc = clean_backup_cronjob()
+    doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["hostNetwork"] = True
+    expect_violation(
+        "I2 (CronJob hostNetwork)", _gate.check_rendered_doc(doc, "fixture"), "I2: fixture: CronJob/"
+    )
+
+    doc = clean_backup_cronjob()
+    container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
+    container["resources"] = {"requests": {"memory": "2Gi"}, "limits": {"memory": "1Gi"}}
+    expect_violation(
+        "I3 (CronJob requests above limits)",
+        _gate.check_rendered_doc(doc, "fixture"),
+        "I3: fixture: CronJob/",
+    )
+
+    doc = clean_backup_cronjob()
+    container = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
+    container["image"] = "example/backup:latest"
+    expect_violation(
+        "I5 (CronJob :latest)", _gate.check_rendered_doc(doc, "fixture"), "I5: fixture: CronJob/"
+    )
+
+    # All three faults at once: each invariant fires on the same CronJob.
+    doc = clean_backup_cronjob()
+    faulty = doc["spec"]["jobTemplate"]["spec"]["template"]["spec"]
+    faulty["hostNetwork"] = True
+    faulty["containers"][0]["image"] = "example/backup:latest"
+    faulty["containers"][0]["resources"] = {
+        "requests": {"memory": "2Gi"},
+        "limits": {"memory": "1Gi"},
+    }
+    violations = _gate.check_rendered_doc(doc, "fixture")
+    for invariant in ("I2:", "I3:", "I5:"):
+        expect_violation(f"CronJob with all faults ({invariant})", violations, invariant)
+
+    # A CronJob with no pod spec under its jobTemplate yields nothing rather than raising.
+    expect_clean(
+        "CronJob without a pod spec",
+        _gate.check_rendered_doc({"kind": "CronJob", "metadata": {"name": "x"}, "spec": {}}, "fixture"),
+    )
+
+
 def run_cases():
     fails = []
 
@@ -299,6 +374,7 @@ def run_cases():
     )
 
     run_i11_cases(expect_violation, expect_clean)
+    run_cronjob_cases(expect_violation, expect_clean)
 
     return fails
 
