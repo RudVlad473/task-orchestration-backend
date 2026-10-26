@@ -70,8 +70,11 @@ encrypted_bytes=$(wc -c <"$WORK_DIR/db.dump.age" | tr -d ' ')
 encrypted_sha256=$(sha256sum "$WORK_DIR/db.dump.age" | cut -d ' ' -f 1)
 
 daily_key="daily/${PGDATABASE}-$ts.dump.age"
+# B2 refuses a PUT without a checksum header while the bucket carries an Object Lock default, and the
+# container sets the checksum mode to when_required, so every put-object names its algorithm. From the
+# pod the refusal shows as "Connection was closed before we received a valid response".
 aws s3api put-object --endpoint-url "$B2_ENDPOINT" --bucket "$B2_BUCKET" \
-  --key "$daily_key" --body "$WORK_DIR/db.dump.age" >/dev/null
+  --key "$daily_key" --body "$WORK_DIR/db.dump.age" --checksum-algorithm CRC32 >/dev/null
 log "uploaded $daily_key"
 keys="$daily_key"
 
@@ -80,7 +83,7 @@ day_of_week=${BACKUP_DAY_OF_WEEK_OVERRIDE:-$(date -u +%u)}
 if [ "$day_of_week" = 7 ]; then
   weekly_key="weekly/${PGDATABASE}-$ts.dump.age"
   aws s3api put-object --endpoint-url "$B2_ENDPOINT" --bucket "$B2_BUCKET" \
-    --key "$weekly_key" --body "$WORK_DIR/db.dump.age" >/dev/null
+    --key "$weekly_key" --body "$WORK_DIR/db.dump.age" --checksum-algorithm CRC32 >/dev/null
   log "uploaded $weekly_key"
   keys="$keys $weekly_key"
 fi

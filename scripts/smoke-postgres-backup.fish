@@ -7,7 +7,7 @@
 # `aws` first on PATH (it logs its arguments and copies the --body file out), and runs the real script in
 # an alpine:3.22 container for five cases:
 #
-#   1. a non-Sunday run uploads exactly one object under daily/
+#   1. a non-Sunday run uploads exactly one object under daily/, naming a checksum algorithm
 #   2. a Sunday run uploads the same bytes under daily/ and weekly/
 #   3. the uploaded object is age ciphertext that decrypts to exactly the dump size the script logged
 #   4. an unreachable database exits non-zero with zero uploads
@@ -16,7 +16,7 @@
 # Prints PASS or FAIL per case, removes every container, network and temp file it created even on
 # failure, and exits non-zero if any case failed.
 #
-# BACKUP_SCRIPT overrides the script under test (used to prove the cases fail against a broken script).
+# SMOKE_BACKUP_SCRIPT overrides the script under test (used to prove the cases fail against a broken script).
 
 set -g repo (path resolve (status dirname)/..)
 set -g BACKUP_SCRIPT $repo/k8s/data/postgres/backup/postgres-backup.sh
@@ -182,7 +182,12 @@ if test (count $keys1) -ge 1
     string match -qr '^daily/kanban_prod-[0-9]{8}T[0-9]{6}Z\.dump\.age$' -- $keys1[1]
     or set -ga reasons "unexpected object key: $keys1[1]"
 end
-finish_case 1 "non-Sunday run uploads exactly one object under daily/"
+# B2 refuses an Object Lock bucket's PUT without a checksum header, and the container's when_required
+# mode sends none unless the call names an algorithm.
+set -l unchecked (cx "grep -v -e '--checksum-algorithm' /smoke/case1/aws.log" | count)
+test $unchecked -eq 0
+or set -ga reasons "$unchecked put-object call(s) without --checksum-algorithm"
+finish_case 1 "non-Sunday run uploads exactly one object under daily/, naming a checksum algorithm"
 
 # ---------------------------------------------------------------- case 2: Sunday
 
