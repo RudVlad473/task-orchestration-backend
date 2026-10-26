@@ -13,9 +13,11 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -30,13 +32,19 @@ import org.springframework.transaction.event.TransactionalEventListener;
  *
  * Decisions:
  *
- * Dispatch is @Async onto the kafkaPublishExecutor pool (AsyncConfig):
+ * Dispatch is a submit to the kafkaPublishExecutor pool (AsyncConfig), made by the AFTER_COMMIT
+ * listener itself:
  * KafkaTemplate.send() blocks its caller inside KafkaProducer.doSend ->
  * waitOnMetadata for up to max.block.ms before returning its future, so the AFTER_COMMIT
  * thread (the request thread in production, the fixture-setup thread in tests) stalled for that
- * bound on every mutation. Without @Async this was a real 20 to 25 minute full-suite hang.
+ * bound on every mutation. Without the pool this was a real 20 to 25 minute full-suite hang.
  *
- * A failed publish reaches this class by one of two paths, and each is counted once in
+ * The listener is not @Async because a full pool then rejected the call inside Spring's proxy,
+ * before this class ran, so the event was dropped with no count and no log naming it. Submitting
+ * here keeps the event in hand when that happens. A rejected submit is never run on the caller's
+ * thread: that would put the broker wait back on the request.
+ *
+ * A failed publish reaches this class by one of three paths, and each is counted once in
  * kanban.kafka.publish.failures (tagged with the event's class name) through
  * countPublishFailure:
  *
@@ -45,12 +53,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * - A failure before any future exists makes send throw synchronously: Avro serialization or a
  *   schema registry lookup runs inside KafkaProducer.doSend, so an unreachable registry throws a
  *   SerializationException instead of returning a failed future (SchemaRegistryOutageE2ETest
- *   proves it). The catch around the mapping and the send counts it and rethrows, so Spring's
- *   uncaught-exception handler for Async methods still logs the failure as it did before the
- *   counter existed.
+ *   proves it). The catch around the mapping and the send counts it and logs it, naming the
+ *   event.
+ * - A full pool rejects the submit with TaskRejectedException, so the send never starts. The
+ *   catch around the submit counts it and logs it, naming the event.
  *
- * The paths are exclusive for one publish: a synchronous throw returns no future, so no callback
- * is attached and the failure is counted exactly once.
+ * The paths are exclusive for one publish: a rejected submit never reaches send, and a
+ * synchronous throw returns no future, so no callback is attached and the failure is counted
+ * exactly once.
  *
  * Every event type's counter is registered at startup, so a pod's first failed publish is
  * already an increase from 0 that Prometheus' increase() can see.
@@ -62,6 +72,9 @@ public class KafkaEventPublisher {
     @Autowired private KafkaTemplate<String, Object> kafkaTemplate;
     @Autowired private ActivityEventAvroMapper activityEventAvroMapper;
     @Autowired private MeterRegistry meterRegistry;
+
+    @Autowired
+    @Qualifier("kafkaPublishExecutor") private TaskExecutor kafkaPublishExecutor;
 
     // Register one series per event type at startup, not on its first failure.
     //
@@ -86,9 +99,22 @@ public class KafkaEventPublisher {
         publishFailureCounter(event.getClass().getSimpleName()).increment();
     }
 
-    @Async("kafkaPublishExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onActivityEvent(ActivityEvent event) {
+        try {
+            kafkaPublishExecutor.execute(() -> send(event));
+        } catch (TaskRejectedException e) {
+            countPublishFailure(event);
+            log.error(
+                    "Dropped {} (eventId={}, boardId={}): the publish pool rejected it",
+                    event.getClass().getSimpleName(),
+                    event.eventId(),
+                    event.boardId(),
+                    e);
+        }
+    }
+
+    private void send(ActivityEvent event) {
         CompletableFuture<SendResult<String, Object>> sent;
         try {
             sent =
@@ -98,7 +124,14 @@ public class KafkaEventPublisher {
                             activityEventAvroMapper.toAvro(event));
         } catch (RuntimeException e) {
             countPublishFailure(event);
-            throw e;
+            log.error(
+                    "Failed to publish {} (eventId={}, boardId={}) to {}",
+                    event.getClass().getSimpleName(),
+                    event.eventId(),
+                    event.boardId(),
+                    KafkaTopics.ACTIVITY,
+                    e);
+            return;
         }
 
         // The chained future from whenComplete() is deliberately unused; assigning it to `unused`

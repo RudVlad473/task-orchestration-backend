@@ -103,8 +103,8 @@ public class ResetService {
      *
      * Accepted, bounded race with ActivityLogConsumer (not engineered away).
      * UserService.deleteById's cascade publishes domain events (e.g.
-     * BoardDeletedEvent) that KafkaEventPublisher sends @Async on
-     * AFTER_COMMIT. If ActivityLogConsumer processes one for a just-deleted user after
+     * BoardDeletedEvent) that KafkaEventPublisher sends from a pool
+     * on AFTER_COMMIT. If ActivityLogConsumer processes one for a just-deleted user after
      * this method's activity_log cleanup ran and this transaction committed, a single stray
      * activity_log row referencing that now-nonexistent user can reappear. Not solved by
      * pausing the Kafka listeners as resetAll() does: that would stall the activity feed

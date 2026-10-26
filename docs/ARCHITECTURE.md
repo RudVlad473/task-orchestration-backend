@@ -257,8 +257,8 @@ the HTTP outcome (D-01). The same-column and cross-column position-shifting case
 
 The failure-path decisions are the substance here:
 
-- **The request never waits on the broker.** The after-commit listener is `@Async` on a dedicated
-  `kafkaPublishExecutor` pool, because `KafkaTemplate.send()` blocks the calling thread inside
+- **The request never waits on the broker.** The after-commit listener submits the send to a dedicated
+  `kafkaPublishExecutor` pool (a full pool is counted and logged, never run on the caller), because `KafkaTemplate.send()` blocks the calling thread inside
   `waitOnMetadata` even before it returns a future. Producer timeouts (`max.block.ms`,
   `request.timeout.ms`, `delivery.timeout.ms`) are bounded at 2s rather than left at the 60s
   default, so an unreachable broker can't turn into a self-inflicted request hang. A failed send is

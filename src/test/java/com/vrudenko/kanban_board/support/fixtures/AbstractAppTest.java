@@ -188,7 +188,7 @@ public abstract class AbstractAppTest extends AbstractPostgresContainerTest {
      * for a new FK-less table, not add a second isolation mechanism. The third call clears
      * RecordingActivityEventListener's singleton CopyOnWriteArrayList, shared across every
      * test class in a JVM fork. That is safe because
-     * RecordingActivityEventListener.onActivityEvent has no @Async (unlike
+     * RecordingActivityEventListener.onActivityEvent hands off to no pool (unlike
      * KafkaEventPublisher.onActivityEvent), so it runs synchronously on the committing thread and
      * every event this test produced is recorded before this hook runs; nothing queued on another
      * thread can be lost. Every test asserting on the recorder already clears it in its own arrange

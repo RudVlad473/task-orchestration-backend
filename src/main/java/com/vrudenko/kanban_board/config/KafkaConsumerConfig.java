@@ -1,5 +1,6 @@
 package com.vrudenko.kanban_board.config;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 
 import com.vrudenko.kanban_board.constant.KafkaTopics;
@@ -45,6 +46,8 @@ import org.springframework.util.backoff.FixedBackOff;
 public class KafkaConsumerConfig implements DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumerConfig.class);
 
+    private static final Duration CLUSTER_ID_RETRY_WINDOW = Duration.ofSeconds(30);
+
     private DefaultKafkaProducerFactory<String, Object> deadLetterProducerFactory;
 
     @Bean
@@ -83,12 +86,25 @@ public class KafkaConsumerConfig implements DisposableBean {
      * setObservationEnabled(true) is called here instead. That is what writes the traceparent
      * header on each record and gives the send its own span. The deadLetterKafkaTemplate stays
      * unobserved: dead-lettering already has its counter and log line.
+     *
+     * The cluster id lookup an observed send makes is negative-cached, because with the broker down
+     * it fails after the admin client's 2 second bound on every send, on top of the producer's own
+     * wait. After a failed lookup the next ones in the following 30 seconds return null at once,
+     * so a send in that window carries no cluster id attribute on its span. The 30 seconds is a
+     * judgement, not a measurement.
      */
     @Bean
     @Primary
     public KafkaTemplate<String, Object> kafkaTemplate(
             ProducerFactory<String, Object> kafkaProducerFactory) {
-        var template = new KafkaTemplate<>(kafkaProducerFactory);
+        var clusterIdCache = new NegativeLookupCache(System::nanoTime, CLUSTER_ID_RETRY_WINDOW);
+        var template =
+                new KafkaTemplate<>(kafkaProducerFactory) {
+                    @Override
+                    protected String clusterId() {
+                        return clusterIdCache.lookup(super::clusterId);
+                    }
+                };
         template.setObservationEnabled(true);
         return template;
     }

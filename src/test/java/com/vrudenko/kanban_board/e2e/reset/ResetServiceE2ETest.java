@@ -157,8 +157,8 @@ class ResetServiceE2ETest extends AbstractKafkaContainerTest {
     /**
      * Awaits activity_log reaching exactly expectedRowCount.
      *
-     * Why this is the way it is: KafkaEventPublisher#onActivityEvent is @Async
-     * on AFTER_COMMIT, so returning from createDomainFixture() does not mean its
+     * Why this is the way it is: KafkaEventPublisher#onActivityEvent hands the send
+     * to a pool on AFTER_COMMIT, so returning from createDomainFixture() does not mean its
      * events reached the broker. Without this wait resetAll() races a bug found live: a
      * fixture event arriving after the topic-trim step survives it, is consumed by the listener
      * resetAll() restarts in its finally block, and lands a stray row after the
@@ -472,7 +472,8 @@ class ResetServiceE2ETest extends AbstractKafkaContainerTest {
             // observed on every run in this environment.
             //
             // The cascade publishes 1 BoardDeletedEvent (the fixture owns 1 board) via
-            // KafkaEventPublisher's @Async AFTER_COMMIT listener; its produce, consume and persist
+            // KafkaEventPublisher's AFTER_COMMIT listener, sent from a pool; its produce, consume
+            // and persist
             // round trip completes before this assertion and reinserts 1 stray activity_log row
             // for the deleted user. The race is bounded by the boards the fixture owns, and that id
             // can never be a valid delete target again.

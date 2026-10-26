@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaAdmin;
+import org.springframework.test.context.TestPropertySource;
 
 /**
  * Proves a send with the broker unreachable does not wait on the cluster id for longer than the
@@ -23,16 +24,26 @@ import org.springframework.kafka.core.KafkaAdmin;
  *   slower than before observation was enabled.
  * - The test profile leaves the broker address unreachable, which is the case under test, so no
  *   container is paused and nothing is mocked.
- * - The ceiling is a few seconds above the configured bound, not equal to it, because the lookup
- *   also pays a client start-up cost. The failure it guards against is a minute.
+ * - The ceiling is about two seconds above the configured bound of 2 seconds, not equal to it,
+ *   because the lookup also pays a client start-up cost. A regression to 7 seconds fails it, as
+ *   does the minute it guards against.
+ * - The class restores the 2 second admin bounds, which the test profile lowers to 50
+ *   milliseconds, so its own context is built with the production values.
  * - The floor is there because Kafka refuses to build an admin client whose default.api.timeout.ms
  *   is below its request.timeout.ms. That failure returns instantly, so a ceiling alone passed
  *   against a client that could not start.
  */
 @SpringBootTest
+@TestPropertySource(
+        properties = {
+            // Restores the production admin bounds, which application-test.properties lowers to
+            // 50ms; the floor below needs a client that waits.
+            "spring.kafka.admin.properties.default.api.timeout.ms=2000",
+            "spring.kafka.admin.properties.request.timeout.ms=2000"
+        })
 class KafkaClusterIdLookupBoundE2ETest extends AbstractPostgresContainerTest {
 
-    private static final Duration CEILING = Duration.ofSeconds(8);
+    private static final Duration CEILING = Duration.ofSeconds(4);
     private static final Duration FLOOR = Duration.ofSeconds(1);
 
     @Autowired private KafkaAdmin kafkaAdmin;

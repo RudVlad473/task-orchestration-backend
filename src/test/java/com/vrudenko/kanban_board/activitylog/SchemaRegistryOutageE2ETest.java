@@ -69,12 +69,10 @@ import org.springframework.test.context.DynamicPropertySource;
  *   exists, so KafkaTemplate.send() throws SerializationException and the whenComplete
  *   callback in KafkaEventPublisher is never reached. KafkaEventPublisher therefore wraps the
  *   mapping and the send in a catch that counts the failure in kanban.kafka.publish.failures and
- *   rethrows (PublishFailureCounterTest here pins the count). The rethrow lets Spring's default
- *   SimpleAsyncUncaughtExceptionHandler, which guards the Async method, log the failure at ERROR
- *   naming onActivityEvent, without the event's eventId/boardId. The user-facing guarantee holds
- *   (the mutation persists, the caller is never blocked, the failure is logged and counted). A
- *   failure after the send returned a future is the other path, covered by
- *   KafkaPublishFailureE2ETest.
+ *   logs it at ERROR with the event's eventId and boardId (PublishFailureCounterTest here pins
+ *   the count). The user-facing guarantee holds (the mutation persists, the caller is never
+ *   blocked, the failure is logged and counted). A failure after the send returned a future is
+ *   the other path, covered by KafkaPublishFailureE2ETest.
  */
 @SpringBootTest
 @Tag("kafka")
@@ -123,11 +121,8 @@ class SchemaRegistryOutageE2ETest extends AbstractKafkaContainerTest {
         return RandomStringUtils.randomAlphabetic(10).toLowerCase(Locale.ROOT) + "@example.com";
     }
 
-    // Attached to the ROOT logger, not KafkaEventPublisher's: the failure never reaches its
+    // Attached to the ROOT logger so any logger's ERROR line is seen; the failure never reaches the
     // whenComplete callback (see the class Javadoc).
-    //
-    // It is a synchronous throw caught by Spring's default @Async handler, a different logger, so
-    // a ListAppender on KafkaEventPublisher's own logger would see nothing.
     private ch.qos.logback.classic.Logger rootLogger;
     private ListAppender<ILoggingEvent> logAppender;
 
@@ -183,7 +178,7 @@ class SchemaRegistryOutageE2ETest extends AbstractKafkaContainerTest {
                             .build());
 
             // assert -- one failed publish is one increment, tagged with the event's class name,
-            // and the throw is still logged at the async boundary.
+            // and the throw is still logged, naming the event.
             assertRisesByExactlyOne(publishFailures, baseline);
             Assertions.assertThat(
                             logAppender.list.stream()
@@ -193,7 +188,9 @@ class SchemaRegistryOutageE2ETest extends AbstractKafkaContainerTest {
                                                                     == ch.qos.logback.classic.Level
                                                                             .ERROR
                                                             && event.getFormattedMessage()
-                                                                    .contains("onActivityEvent")))
+                                                                    .contains(
+                                                                            "Failed to publish "
+                                                                                    + eventTag)))
                     .isTrue();
         }
     }
@@ -263,9 +260,8 @@ class SchemaRegistryOutageE2ETest extends AbstractKafkaContainerTest {
                                 Assertions.assertThat(rowsForBoard).isEmpty();
                             });
 
-            // assert -- the never-swallowed half: some error was logged naming onActivityEvent. It
-            // does NOT match the "Failed to publish" line KafkaEventPublisher's whenComplete would
-            // log for a broker-down failure (see the class Javadoc).
+            // assert -- the never-swallowed half: an error naming the failed publish and its board
+            // was logged.
             boolean loggedFailure =
                     logAppender.list.stream()
                             .anyMatch(
@@ -273,7 +269,13 @@ class SchemaRegistryOutageE2ETest extends AbstractKafkaContainerTest {
                                             event.getLevel() == ch.qos.logback.classic.Level.ERROR
                                                     && event.getFormattedMessage() != null
                                                     && event.getFormattedMessage()
-                                                            .contains("onActivityEvent"));
+                                                            .contains("Failed to publish")
+                                                    && event.getFormattedMessage()
+                                                            .contains(
+                                                                    "boardId="
+                                                                            + createdBoard
+                                                                                    .get()
+                                                                                    .getId()));
             Assertions.assertThat(loggedFailure).isTrue();
         }
     }
