@@ -90,19 +90,19 @@ Next milestone not yet scoped — run `/gsd-new-milestone` to define it.
 **Goal:** The app reports on itself, someone is told when it breaks, and production data is backed up off the VM: Prometheus app metrics on a separate management port, Alertmanager paging Telegram with a healthchecks.io dead-man's switch, structured JSON logs and OpenTelemetry tracing through Kafka into Tempo, production post-deploy health verification, and a nightly encrypted `pg_dump` to Backblaze B2 with a missing-backup alert. Ends in a measurement: time-to-notification per alert, fired once on purpose. Backend half only: the console work (Next.js `traceparent`, error tracking, Web Vitals, production Playwright smoke) belongs to `kanban-board-frontend`. Source plan: `/home/andre/dev/custom-ai-skills/skills/thoth/state/20261013-production-ownership-plan.md` (library specifics in it are from memory and must be checked against the versions in `build.gradle`). Decisions: `14-CONTEXT.md`. Out of scope: HA, PDB, HPA (needs a second node).
 **Requirements**: TBD (CONTEXT.md decisions D-01..D-15 are the contract)
 **Depends on:** Phase 13
-**Plans:** 13 plans
+**Plans:** 5/13 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 14-01-PLAN.md — Tracer: metrics on an unrouted management port scraped by Prometheus, public health at /api/healthz, probes and PodMonitor, gated rollout (wave 1)
-- [ ] 14-02-PLAN.md — Backup prep: Object Lock decision, tested backup script and lifecycle JSON, B2 EU Central account/key/age keypair (wave 1)
+- [x] 14-01-PLAN.md — Tracer: metrics on an unrouted management port scraped by Prometheus, public health at /api/healthz, probes and PodMonitor, gated rollout (wave 1)
+- [x] 14-02-PLAN.md — Backup prep: Object Lock decision, tested backup script and lifecycle JSON, B2 EU Central account/key/age keypair (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 14-03-PLAN.md — Nightly encrypted pg_dump CronJob to B2: image decision, NetworkPolicy peer, first run, key capability proof, measured limits, runbook (wave 2)
-- [ ] 14-04-PLAN.md — Request-path counters, ECS JSON logs and security events, four hottest endpoints timed (three with service Observations) (wave 2)
+- [x] 14-03-PLAN.md — Nightly encrypted pg_dump CronJob to B2: image decision, NetworkPolicy peer, first run, key capability proof, measured limits, runbook (wave 2)
+- [x] 14-04-PLAN.md — Request-path counters, ECS JSON logs and security events, four hottest endpoints timed (three with service Observations) (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 14-05-PLAN.md — Kafka publish-failure and dead-letter counters, latency buckets, exact-name Prometheus scrape contract (wave 3)
+- [x] 14-05-PLAN.md — Kafka publish-failure and dead-letter counters, latency buckets, exact-name Prometheus scrape contract (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 14-06-PLAN.md — Alertmanager to Telegram (nonprod muted), Watchdog dead-man to healthchecks.io, filtered default rules, kanban-alerts rules, measured limits (wave 4)
