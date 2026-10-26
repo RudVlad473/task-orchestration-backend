@@ -1,0 +1,55 @@
+# Evidence manifest: applied once, read, then deleted. Proves the VM's B2 key can write but not list or read.
+# It prints only each command's exit code and the error code, never a response body. No postgres-client label.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: b2-capability-check
+  namespace: kanban-data
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 120
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+        - name: check
+          image: rudenkovladimir/kanban-postgres-backup:alpine3.22-a75558e@sha256:472829cacfcb3fa10fe51f80206075105a57d8a22daf8d322012c197f2282b0a
+          command:
+            - /bin/sh
+            - -c
+            - |
+              K=daily/kanban_prod-20261026T121927Z.dump.age
+              aws s3api list-objects-v2 --endpoint-url "$B2_ENDPOINT" --bucket "$B2_BUCKET" --max-items 1 >/dev/null 2>/tmp/e1
+              echo "list-objects-v2 exit=$? $(grep -o 'AccessDenied\|not entitled' /tmp/e1 | head -1)"
+              aws s3api get-object --endpoint-url "$B2_ENDPOINT" --bucket "$B2_BUCKET" --key "$K" /tmp/o >/dev/null 2>/tmp/e2
+              echo "get-object exit=$? $(grep -o 'AccessDenied\|not entitled' /tmp/e2 | head -1)"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef: {name: postgres-backup, key: B2_KEY_ID}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: {name: postgres-backup, key: B2_APP_KEY}
+            - name: B2_ENDPOINT
+              value: https://s3.eu-central-003.backblazeb2.com
+            - name: B2_BUCKET
+              value: kanban-prod-backups-16-09-26
+            - name: AWS_DEFAULT_REGION
+              value: eu-central-003
+            - name: HOME
+              value: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      volumes:
+        - name: tmp
+          emptyDir: {}

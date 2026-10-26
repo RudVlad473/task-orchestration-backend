@@ -406,65 +406,69 @@ The first-boot provisioning script that creates the databases/roles above was ha
 live volume was already created — see "Provisioning script hardening — Plan 11-07" further down
 for what changed and what it does and does not cover.
 
-## Backups and restore — current coverage and the documented gap (D-12)
+## Backups and restore — current coverage
 
-**There is no backup of the production database.** Not a reduced backup, not an out-of-date one —
-none exists. A container loss or a volume loss on the Netcup VM means total, unrecoverable data
-loss of everything in `kanban_prod` and `kanban_nonprod`. A reader skimming this heading for
-reassurance should stop here: there isn't any.
+**`kanban_prod` is backed up every night to an off-VM bucket. `kanban_nonprod` is not backed up**
+(it is resettable on purpose). Everything below was verified live on 2026-10-26 except where it
+says otherwise.
 
-**What was lost by leaving Neon.** The managed provider supplied point-in-time recovery as a
-platform feature, at no engineering cost to this project. Nothing on the self-hosted instance
-replaces it. This is an acknowledged, deliberate regression under D-12 — narrower scope for this
-phase, with the automation that would close it explicitly deferred — not an oversight discovered
-after the fact.
+**What runs.** A Flux-managed CronJob `postgres-backup` in namespace `kanban-data`
+(`k8s/data/postgres/backup-cronjob.yaml`) starts at 02:17 UTC. Its pod runs
+`k8s/data/postgres/backup/postgres-backup.sh` from a ConfigMap, in a pinned image built by the
+`Backup Image` workflow from `k8s/data/postgres/backup/Dockerfile`. The script waits for Postgres,
+runs `pg_dump -Fc` of `kanban_prod`, checks the archive with `pg_restore -l`, encrypts it with
+`age` to a public recipient, and uploads it to the Backblaze B2 bucket `kanban-prod-backups-16-09-26`
+(EU Central, S3 endpoint `https://s3.eu-central-003.backblazeb2.com`) as
+`daily/kanban_prod-<UTC timestamp>.dump.age`. On Sundays it uploads a second copy under `weekly/`.
 
-**The manual procedure that WOULD be used, if a restore were needed today.** Written from this
-deployment's real container and volume names, so it is usable under pressure rather than a
-description of a procedure:
+**Retention.** Lifecycle rules (`infra/b2/backup-bucket-lifecycle.json`) hide `daily/` objects after
+7 days and `weekly/` objects after 28 days, and delete hidden versions a day later. The bucket's
+Object Lock default is Governance mode, 7 days.
 
-Dump each database from the running container, over an administrative SSH session as the `deploy`
-user, writing to a timestamped file outside the container (never inside — a dump living only in a
-container that might be the thing that failed is not a backup):
+**What the key can and cannot do.** The VM's B2 key can write, and cannot list or read. A job in the
+cluster using it got `AccessDenied` on both `list-objects-v2` and `get-object` (exit 254). So someone
+who takes over the VM can add objects but cannot read or enumerate existing backups. Governance
+mode, unlike Compliance, can be bypassed by a key holding the bypass capability, so the lock
+protects against accidental deletion, not against the account owner.
 
-```bash
-# From /opt/deploy/kanban-board-backend, as deploy:
-docker exec kanban-board-backend-postgres-1 pg_dump -U kanban_admin -Fc kanban_prod \
-  > /opt/deploy/kanban-board-backend/kanban_prod-$(date -u +%Y%m%dT%H%M%SZ).dump
-docker exec kanban-board-backend-postgres-1 pg_dump -U kanban_admin -Fc kanban_nonprod \
-  > /opt/deploy/kanban-board-backend/kanban_nonprod-$(date -u +%Y%m%dT%H%M%SZ).dump
-```
+**The private key.** The age private key exists only in the operator's password manager. The pod
+holds only the public recipient, so it cannot decrypt its own output.
 
-(`-Fc`, the custom archive format, is what `pg_restore` below expects; a plain-SQL dump would need
-`psql` instead.) The resulting `.dump` file should be copied off the VM immediately (`scp` to an
-operator machine) — leaving it only on the same host the database itself runs on defends against
-nothing.
-
-Restoring into a fresh container (the shape a total volume loss would require): bring up a new,
-empty `postgres` container against a fresh volume (`docker compose up -d postgres` after `docker
-volume rm` on the old, corrupted volume — or, more simply, a wholly new deploy of plan 11-01's
-manifest), let the init script provision the empty databases and roles as it does on any first
-boot, then:
+**Run one by hand and read it.**
 
 ```bash
-docker cp kanban_prod-<timestamp>.dump kanban-board-backend-postgres-1:/tmp/restore.dump
-docker exec kanban-board-backend-postgres-1 pg_restore -U kanban_admin -d kanban_prod --clean --if-exists /tmp/restore.dump
+J=backup-manual-$(date -u +%Y%m%d-%H%M%S)   # lowercase only: a Job name rejects capitals
+ssh netcup-prod "k3s kubectl -n kanban-data create job --from=cronjob/postgres-backup $J"
+ssh netcup-prod "k3s kubectl -n kanban-data wait --for=condition=complete --timeout=300s job/$J"
+ssh netcup-prod "k3s kubectl -n kanban-data logs job/$J"
 ```
 
-(repeat for `kanban_nonprod` against its own dump file).
+A good log ends with `uploaded daily/kanban_prod-...` and `done keys=... encrypted_bytes=... sha256=...`.
+Confirm the object in the Backblaze console file view for the bucket. The first manual run took 16
+seconds for a 163 KB encrypted dump.
 
-**This procedure is written but has never been executed, as of 2026-08-26.** No test restore has
-been performed, into a scratch database or otherwise. An untested restore procedure is worse than
-no procedure if it is mistaken for a verified one — the command shapes above are believed correct
-from `pg_dump`/`pg_restore`'s documented behavior, not proven against this deployment.
+**Two failures that looked like something else.**
+- A new backup pod is refused by the NetworkPolicy controller for several seconds after it starts,
+  and the log says `pg_dump: error: connection ... failed: Connection refused`. The script now polls
+  `pg_isready` for up to 3 minutes before dumping. Measured 2026-10-26: a labelled probe pod's first
+  attempt was refused and the second, 10 seconds later, succeeded, while a Job's own retries all
+  failed.
+- The upload log says `Connection was closed before we received a valid response`. B2 refuses a PUT
+  without a checksum header while the bucket has an Object Lock default, and the container sets the
+  checksum mode to `when_required`. `put-object` therefore passes `--checksum-algorithm CRC32`.
 
-**What closing this gap properly would require**, scoped rather than left vague: a scheduled dump
-(a cron job or systemd timer on the VM, or a CI-triggered job, running the `pg_dump` commands above
-on a regular cadence), off-host storage for the resulting `.dump` files (this VM is a single point
-of failure for both the live data and any backup stored only on it), a retention policy (how many
-dated dumps to keep, and for how long), and at least one actually-executed test restore into a
-scratch database to prove the procedure works before it is relied on. None of this is built by this
-plan — D-12 defers it explicitly.
+**Memory.** The container's limit is 96Mi with a 64Mi request, from a restart ladder (the dated
+MEASURED comment in the manifest has the rungs).
+
+**Alerts.** The default `KubeJobFailed` rule reports a failed backup Job. A rule for "no successful
+backup in 26 hours" is planned in this phase's alerting work and is not live as of 2026-10-26.
+
+**Restore: written, never executed.** The shape is: download the newest `daily/` object from the B2
+console, decrypt it with the private key (`age -d -i <identity file> <object> > db.dump`), list it
+with `pg_restore -l db.dump`, and restore into a scratch database with `pg_restore -d <scratch> --clean
+--if-exists db.dump`. No restore has been run against this deployment, and the end-of-phase check
+(decrypt one real backup and list its tables) is still outstanding. The restore runbook and drill
+land in Phase 14.1.
 
 ## DNS — DuckDNS
 
@@ -1091,9 +1095,9 @@ All times UTC, 2026-09-30.
   (dashboards are in git, but users, sessions and UI-only edits are not), and Caddy's `caddy-data`
   (ACME account and certificates; Traefik and cert-manager hold the live ones).
 - The 72 MB anonymous Postgres-shaped volume `e757bd8d...`: never identified, not restorable.
-- **No automated backups exist** (D-12, still open). Anything written to Postgres after the
-  2026-09-26 dump exists only in the k3s Postgres PVC on this one VM's disk. The retained dump
-  protects the pre-cutover state only.
+- **Automated backups of `kanban_prod` started 2026-10-26** (see "Backups and restore"). Until then,
+  anything written to Postgres after the 2026-09-26 dump existed only in the k3s Postgres PVC on this
+  one VM's disk. `kanban_nonprod` is still not backed up.
 - Every local Docker image on the VM (23.58 GB); all were pullable from their registries.
 
 ### Decommission date
