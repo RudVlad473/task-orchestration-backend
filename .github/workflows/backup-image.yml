@@ -1,0 +1,71 @@
+# Builds the image the nightly database backup CronJob runs and pushes it to Docker Hub.
+#
+# The Dockerfile lives under k8s/data/postgres/backup/ next to the script it serves. deploy.yml ignores k8s/**,
+# so a change to it never rebuilds the application image, and this workflow is the only thing that builds it.
+#
+# Decisions:
+# - Triggers: a push to main that touches the Dockerfile or this file, and a manual run. The image only changes
+#   when Alpine or a package version is bumped on purpose.
+# - The tag is alpine3.22-<short sha>. The CronJob pins the tag together with the digest printed in the job
+#   summary, so the manifest names exact bytes and a rebuild under the same tag cannot change what runs.
+# - The job runs in the production environment because that is where DOCKERHUB_TOKEN lives, as in deploy.yml.
+#   The token reaches docker login through env and stdin only, never through expression interpolation in run.
+# - Single platform, linux/amd64: the cluster is one x86_64 node.
+name: Backup Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - k8s/data/postgres/backup/Dockerfile
+      - .github/workflows/backup-image.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  DOCKERHUB_USER: rudenkovladimir
+  DOCKERHUB_REPOSITORY: kanban-postgres-backup
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+
+      - name: Set image tag
+        id: tag
+        run: echo "image_tag=alpine3.22-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image (linux/amd64)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: k8s/data/postgres/backup
+          file: k8s/data/postgres/backup/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.tag.outputs.image_tag }}
+
+      - name: Write the pinned image reference to the job summary
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          echo "Image reference for the CronJob:" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$DOCKERHUB_USER/$DOCKERHUB_REPOSITORY:$IMAGE_TAG@$IMAGE_DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
