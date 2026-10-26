@@ -33,6 +33,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 public class TaskService {
@@ -69,6 +71,33 @@ public class TaskService {
     }
 
     /**
+     * Run the increment once the surrounding transaction has committed, so a request whose commit
+     * fails or rolls back is never counted.
+     *
+     * The flush a service method does before its counter proves only that the SQL ran, not that the
+     * commit succeeded: PostgreSQL can still reject the commit, and a counted-then-failed request
+     * would show on the dashboard as a task that does not exist.
+     *
+     * With no active synchronization this throws instead of counting at once or skipping: a silent
+     * skip undercounts and an immediate count brings the bug back, and each hides behind a request
+     * that otherwise succeeds.
+     */
+    private void incrementAfterCommit(Runnable increment) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            throw new IllegalStateException(
+                    "A business counter must be incremented inside a transaction.");
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        increment.run();
+                    }
+                });
+    }
+
+    /**
      * Create the task at the end of its column and publish TaskCreatedEvent after commit.
      *
      * The @Transactional annotation is declared here, not left to
@@ -99,7 +128,7 @@ public class TaskService {
                         task.getId(),
                         Instant.now()));
 
-        meterRegistry.counter(MetricNames.TASKS_CREATED).increment();
+        incrementAfterCommit(() -> meterRegistry.counter(MetricNames.TASKS_CREATED).increment());
 
         return taskMapper.toTaskResponseDTO(task);
     }
@@ -270,14 +299,14 @@ public class TaskService {
                         targetColumn.getId(),
                         Instant.now()));
 
-        // Counted only here, after the version check and the move both succeeded, so a rejected
-        // move is a conflict and never also a move.
-        meterRegistry
-                .counter(
-                        MetricNames.TASKS_MOVED,
-                        MetricNames.TAG_MOVE,
-                        sameColumn ? MetricNames.MOVE_SAME_COLUMN : MetricNames.MOVE_CROSS_COLUMN)
-                .increment();
+        // Counted only after the version check and the move both succeeded and the transaction
+        // committed, so a rejected or rolled-back move is a conflict and never also a move.
+        var moveKind = sameColumn ? MetricNames.MOVE_SAME_COLUMN : MetricNames.MOVE_CROSS_COLUMN;
+        incrementAfterCommit(
+                () ->
+                        meterRegistry
+                                .counter(MetricNames.TASKS_MOVED, MetricNames.TAG_MOVE, moveKind)
+                                .increment());
 
         return taskMapper.toTaskResponseDTO(task);
     }

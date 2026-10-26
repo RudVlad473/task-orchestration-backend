@@ -8,6 +8,8 @@ import com.vrudenko.kanban_board.dto.task_dto.MoveTaskRequestDTO;
 import com.vrudenko.kanban_board.dto.task_dto.SaveTaskRequestDTO;
 import com.vrudenko.kanban_board.dto.task_dto.UpdateTaskRequestDTO;
 import com.vrudenko.kanban_board.dto.user_dto.SigninRequestDTO;
+import com.vrudenko.kanban_board.repository.TaskRepository;
+import com.vrudenko.kanban_board.service.TaskService;
 import com.vrudenko.kanban_board.support.fixtures.AbstractAppE2ETest;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -21,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import static io.restassured.RestAssured.given;
 
@@ -36,6 +40,12 @@ import static io.restassured.RestAssured.given;
 public class BusinessMetricsE2ETest extends AbstractAppE2ETest {
 
     @Autowired private MeterRegistry meterRegistry;
+
+    @Autowired private TaskRepository taskRepository;
+
+    @Autowired private TaskService taskService;
+
+    @Autowired private PlatformTransactionManager transactionManager;
 
     private double count(String name, String... tags) {
         var counter = meterRegistry.find(name).tags(tags).counter();
@@ -282,10 +292,60 @@ public class BusinessMetricsE2ETest extends AbstractAppE2ETest {
             Assertions.assertThat(timerCount(MetricNames.OBSERVATION_TASK_CREATE))
                     .isEqualTo(timerBefore + 1);
         }
+
+        @Test
+        void shouldNotRaiseCounter_whenTaskInsertIsRejectedAtCommit() {
+            // arrange: PostgreSQL rejects a NUL character in text, which validation lets through
+            var cookie = signin();
+            var counterBefore = count(MetricNames.TASKS_CREATED);
+            var rowsBefore = taskRepository.countByColumnId(mockPopulatedColumn.getId());
+
+            // act
+            var statusCode =
+                    given().cookie(cookie.getFirst(), cookie.getSecond())
+                            .contentType(ContentType.JSON)
+                            .body(SaveTaskRequestDTO.builder().title("bad\u0000title").build())
+                            .when()
+                            .post(columnPath(mockPopulatedColumn.getId()))
+                            .then()
+                            .extract()
+                            .statusCode();
+
+            // assert: a failed create is not a created task
+            Assertions.assertThat(HttpStatus.valueOf(statusCode).isError()).isTrue();
+            Assertions.assertThat(taskRepository.countByColumnId(mockPopulatedColumn.getId()))
+                    .isEqualTo(rowsBefore);
+            Assertions.assertThat(count(MetricNames.TASKS_CREATED)).isEqualTo(counterBefore);
+        }
     }
 
     @Nested
     class TaskMovedTest {
+        @Test
+        void shouldNotRaiseMoveCounter_whenMoveTransactionRollsBackAfterTheMoveRan() {
+            // arrange
+            var sameBefore = movedCount(MetricNames.MOVE_SAME_COLUMN);
+            var crossBefore = movedCount(MetricNames.MOVE_CROSS_COLUMN);
+            var dto =
+                    MoveTaskRequestDTO.builder()
+                            .targetColumnId(mockColumns.get(0).getId())
+                            .version(mockPopulatedTask.getVersion())
+                            .build();
+
+            // act: the outer transaction makes the service join it, then fails the commit
+            new TransactionTemplate(transactionManager)
+                    .executeWithoutResult(
+                            status -> {
+                                taskService.moveToColumn(
+                                        getOwningUser().getId(), mockPopulatedTask.getId(), dto);
+                                status.setRollbackOnly();
+                            });
+
+            // assert: the move was undone, so it is not a move
+            Assertions.assertThat(movedCount(MetricNames.MOVE_CROSS_COLUMN)).isEqualTo(crossBefore);
+            Assertions.assertThat(movedCount(MetricNames.MOVE_SAME_COLUMN)).isEqualTo(sameBefore);
+        }
+
         @Test
         void shouldRaiseSameColumnCounterAndTimerByOne_whenTaskIsMovedWithinItsColumn() {
             // arrange
