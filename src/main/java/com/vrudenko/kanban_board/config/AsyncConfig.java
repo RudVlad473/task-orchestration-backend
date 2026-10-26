@@ -3,12 +3,17 @@ package com.vrudenko.kanban_board.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.support.ContextPropagatingTaskDecorator;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
  * Enable @Async and provide the bounded pool KafkaEventPublisher dispatches onto,
  * so a Kafka publish never runs on the caller's thread whatever the broker's reachability.
+ *
+ * The pool carries a ContextPropagatingTaskDecorator, which restores the request's observation
+ * context on the pool thread, so the publish joins the request's trace instead of starting a new
+ * one.
  */
 @Configuration
 @EnableAsync
@@ -20,6 +25,7 @@ public class AsyncConfig {
         executor.setMaxPoolSize(4);
         executor.setQueueCapacity(200);
         executor.setThreadNamePrefix("kafka-publish-");
+        executor.setTaskDecorator(new ContextPropagatingTaskDecorator());
         executor.initialize();
         return executor;
     }

@@ -78,12 +78,19 @@ public class KafkaConsumerConfig implements DisposableBean {
      * and so ignored a KafkaConnectionDetails override (e.g.
      * Testcontainers'@ServiceConnection). deadLetterKafkaTemplate stays reachable only by bean
      * name or @Qualifier.
+     *
+     * For the same reason Boot's template observation property never reaches this bean, so
+     * setObservationEnabled(true) is called here instead. That is what writes the traceparent
+     * header on each record and gives the send its own span. The deadLetterKafkaTemplate stays
+     * unobserved: dead-lettering already has its counter and log line.
      */
     @Bean
     @Primary
     public KafkaTemplate<String, Object> kafkaTemplate(
             ProducerFactory<String, Object> kafkaProducerFactory) {
-        return new KafkaTemplate<>(kafkaProducerFactory);
+        var template = new KafkaTemplate<>(kafkaProducerFactory);
+        template.setObservationEnabled(true);
+        return template;
     }
 
     /**
