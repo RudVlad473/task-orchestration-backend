@@ -102,7 +102,7 @@ public class BoardServiceTest extends AbstractAppTest {
     }
 
     @Test
-    void testDeleteById_shouldReturnFalse_whenBoardNotFound() {
+    void testDeleteById_shouldThrowNotFound_whenBoardWasAlreadyDeleted() {
         // Arrange
         var userId = getOwningUser().getId();
         var boardsBeforeDeletion = boardService.findAllByUserId(userId);
@@ -120,7 +120,7 @@ public class BoardServiceTest extends AbstractAppTest {
     }
 
     @Test
-    void testDeleteById_shouldReturnTrue_whenBoardFoundAndDeleted() {
+    void testDeleteById_shouldThrowNotFoundOnReload_whenBoardFoundAndDeleted() {
         // Arrange
         var userId = getOwningUser().getId();
         var boardId = mockPopulatedBoard.getId();

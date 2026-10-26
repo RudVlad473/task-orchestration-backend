@@ -153,6 +153,12 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
         return orderedTasks(columnId).stream().map(TaskEntity::getPosition).toList();
     }
 
+    private void setPosition(String taskId, int position) {
+        var task = taskRepository.findById(taskId).orElseThrow();
+        task.setPosition(position);
+        taskRepository.save(task);
+    }
+
     @Test
     void move_toColumnOnSameBoard_succeedsAndAnnouncesTaskMovedEvent() throws Exception {
         // arrange
@@ -353,6 +359,87 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
             Assertions.assertThat(positionsOf(destColumn.getId())).containsExactly(0, 1, 2);
         }
 
+        private int moveWithinColumn(
+                Cookie cookie,
+                ColumnResponseDTO column,
+                TaskResponseDTO moving,
+                Integer targetPosition)
+                throws Exception {
+            var moveDto =
+                    MoveTaskRequestDTO.builder()
+                            .targetColumnId(column.getId())
+                            .version(moving.getVersion())
+                            .targetPosition(targetPosition)
+                            .build();
+
+            return mockMvc.perform(
+                            patch(getMoveUrl(moving.getId()))
+                                    .cookie(cookie)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(objectMapper.writeValueAsString(moveDto)))
+                    .andReturn()
+                    .getResponse()
+                    .getStatus();
+        }
+
+        @Test
+        void shouldMoveFirstTaskToEnd_andShiftOthersUp_whenTargetIsLastPositionInSameColumn()
+                throws Exception {
+            // arrange
+            var cookie = signinCookie();
+            var column = createEmptyColumn(cookie);
+            var a = createTaskInColumn(cookie, column.getId());
+            var b = createTaskInColumn(cookie, column.getId());
+            var c = createTaskInColumn(cookie, column.getId());
+
+            // act
+            var status = moveWithinColumn(cookie, column, a, 2);
+
+            // assert
+            Assertions.assertThat(status).isEqualTo(HttpStatus.OK.value());
+            Assertions.assertThat(orderedTaskIds(column.getId()))
+                    .containsExactly(b.getId(), c.getId(), a.getId());
+            Assertions.assertThat(positionsOf(column.getId())).containsExactly(0, 1, 2);
+        }
+
+        @Test
+        void shouldAppendAtEnd_whenTargetPositionIsOmittedInSameColumn() throws Exception {
+            // arrange
+            var cookie = signinCookie();
+            var column = createEmptyColumn(cookie);
+            var a = createTaskInColumn(cookie, column.getId());
+            var b = createTaskInColumn(cookie, column.getId());
+            var c = createTaskInColumn(cookie, column.getId());
+
+            // act
+            var status = moveWithinColumn(cookie, column, a, null);
+
+            // assert
+            Assertions.assertThat(status).isEqualTo(HttpStatus.OK.value());
+            Assertions.assertThat(orderedTaskIds(column.getId()))
+                    .containsExactly(b.getId(), c.getId(), a.getId());
+            Assertions.assertThat(positionsOf(column.getId())).containsExactly(0, 1, 2);
+        }
+
+        @Test
+        void shouldClampToEnd_whenTargetPositionExceedsColumnSizeInSameColumn() throws Exception {
+            // arrange
+            var cookie = signinCookie();
+            var column = createEmptyColumn(cookie);
+            var a = createTaskInColumn(cookie, column.getId());
+            var b = createTaskInColumn(cookie, column.getId());
+            var c = createTaskInColumn(cookie, column.getId());
+
+            // act
+            var status = moveWithinColumn(cookie, column, a, 999);
+
+            // assert
+            Assertions.assertThat(status).isEqualTo(HttpStatus.OK.value());
+            Assertions.assertThat(orderedTaskIds(column.getId()))
+                    .containsExactly(b.getId(), c.getId(), a.getId());
+            Assertions.assertThat(positionsOf(column.getId())).containsExactly(0, 1, 2);
+        }
+
         @Test
         void shouldReturnBadRequest_whenTargetPositionIsNegative() throws Exception {
             // arrange
@@ -414,28 +501,34 @@ public class TaskMoveTest extends AbstractAppMockMvcTest {
         }
 
         @Test
-        void shouldReturnSameOrderTwice_whenReadingSameColumnRepeatedly() throws Exception {
+        void shouldOrderByPositionThenId_whenTwoTasksSharePosition() throws Exception {
             // arrange
             var cookie = signinCookie();
             var column = createEmptyColumn(cookie);
-            createTaskInColumn(cookie, column.getId());
-            createTaskInColumn(cookie, column.getId());
-            createTaskInColumn(cookie, column.getId());
+            var first = createTaskInColumn(cookie, column.getId());
+            var second = createTaskInColumn(cookie, column.getId());
+            var third = createTaskInColumn(cookie, column.getId());
+            var lowerId = first.getId().compareTo(second.getId()) < 0 ? first : second;
+            var higherId = lowerId == first ? second : first;
 
-            // act — reads TaskRepository.findAllByColumnId directly with no test-side sort: the
-            // (position, id) order must come from the production query, or dropping the id
-            // tiebreak would go undetected.
-            var firstRead =
-                    taskRepository.findAllByColumnId(column.getId()).stream()
-                            .map(TaskEntity::getId)
-                            .toList();
-            var secondRead =
+            // Each save is its own statement, and each UPDATE writes a new row version after the
+            // older ones, so the heap order is third, higher, lower: what a missing ORDER BY or a
+            // missing id tiebreak would return.
+            setPosition(third.getId(), 0);
+            setPosition(higherId.getId(), 2);
+            setPosition(lowerId.getId(), 2);
+
+            // act: read the production query directly with no test-side sort, or the sort would
+            // hide a dropped ORDER BY. The lower id comes first by String.compareTo, which agrees
+            // with PostgreSQL's order for lowercase base36 ids.
+            var ids =
                     taskRepository.findAllByColumnId(column.getId()).stream()
                             .map(TaskEntity::getId)
                             .toList();
 
             // assert
-            Assertions.assertThat(firstRead).isEqualTo(secondRead);
+            Assertions.assertThat(ids)
+                    .containsExactly(third.getId(), lowerId.getId(), higherId.getId());
         }
 
         @Test

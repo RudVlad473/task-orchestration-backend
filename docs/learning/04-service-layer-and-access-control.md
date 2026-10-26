@@ -611,8 +611,11 @@ The id breaks ties, so two reads of the same data always give the same order.
   `shouldLeaveBothColumnsContiguous_whenMovingTaskToDifferentColumnAtPositionZero`,
   `shouldAppendAtEnd_whenTargetPositionIsOmitted`,
   `shouldClampToEnd_whenTargetPositionExceedsDestinationSize`,
+  `shouldMoveFirstTaskToEnd_andShiftOthersUp_whenTargetIsLastPositionInSameColumn`,
+  `shouldAppendAtEnd_whenTargetPositionIsOmittedInSameColumn`,
+  `shouldClampToEnd_whenTargetPositionExceedsColumnSizeInSameColumn`,
   `shouldReturnConflict_andLeavePositionsUnchanged_whenVersionIsStale`,
-  `shouldReturnSameOrderTwice_whenReadingSameColumnRepeatedly`.
+  `shouldOrderByPositionThenId_whenTwoTasksSharePosition`.
 - [`ColumnControllerTest.Reorder`](../../src/test/java/com/vrudenko/kanban_board/controller/ColumnControllerTest.java):
   `shouldMoveThirdColumnToFront_andShiftOthersDown_whenTargetPositionIsZero`,
   `shouldClampToEnd_whenTargetPositionExceedsBoardColumnCount`,

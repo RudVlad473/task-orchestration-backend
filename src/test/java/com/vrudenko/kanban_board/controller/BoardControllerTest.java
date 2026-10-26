@@ -139,11 +139,24 @@ public class BoardControllerTest extends AbstractAppTest {
             var url = getBoardPrefix() + "/" + boardId;
 
             // Act
-            // Assert
             mockMvc.perform(delete(url).with(user(userId)))
                     .andDo(MockMvcResultHandlers.print())
                     .andExpect(status().isOk())
                     .andReturn();
+
+            // Assert: the board is gone from the owner's list and the two empty boards remain
+            var listResponse =
+                    mockMvc.perform(get(getBoardPrefix()).with(user(userId)))
+                            .andExpect(status().isOk())
+                            .andReturn();
+            var remainingBoards =
+                    objectMapper.readValue(
+                            listResponse.getResponse().getContentAsString(),
+                            BoardResponseDTO[].class);
+            Assertions.assertThat(remainingBoards)
+                    .extracting(BoardResponseDTO::getId)
+                    .containsExactlyInAnyOrderElementsOf(
+                            mockEmptyBoards.stream().map(BoardResponseDTO::getId).toList());
         }
     }
 

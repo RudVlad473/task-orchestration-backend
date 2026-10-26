@@ -398,7 +398,9 @@ public class ColumnServiceTest extends AbstractAppTest {
          *
          * If ColumnService.deleteById left the tasks behind, deleting the column row
          * would violate that foreign key and this method would throw, so a clean return is itself
-         * the assertion, besides the explicit before/after count below.
+         * the assertion. The before-count only rules out a vacuous pass on an empty column; an
+         * after-count would assert nothing more, since the foreign key already makes zero tasks
+         * certain once the column row is gone.
          */
         @Test
         void shouldDeleteAllTasks_whenColumnHasTasks() {

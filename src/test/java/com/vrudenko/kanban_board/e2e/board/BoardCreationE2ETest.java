@@ -254,6 +254,9 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
                             .extract();
 
             // assert
+            Assertions.assertThat(response.body().jsonPath().getString("code"))
+                    .as("error code, status %s", response.statusCode())
+                    .isEqualTo("DUPLICATE_RESOURCE");
             Assertions.assertThat(response.statusCode()).isEqualTo(HttpStatus.CONFLICT.value());
             Assertions.assertThat(boardService.findAllByUserId(getOwningUser().getId()).size())
                     .isEqualTo(boardCountAfterFirstCreate);
@@ -374,6 +377,9 @@ public class BoardCreationE2ETest extends AbstractAppE2ETest {
                             .extract();
 
             // assert
+            Assertions.assertThat(response.body().jsonPath().getString("code"))
+                    .as("error code, status %s", response.statusCode())
+                    .isEqualTo("DUPLICATE_RESOURCE");
             Assertions.assertThat(response.statusCode()).isEqualTo(HttpStatus.CONFLICT.value());
 
             var boards =

@@ -199,5 +199,27 @@ public class UserServiceTest extends AbstractAppTest {
 
             Assertions.assertThat(storedTheme).isEqualTo("DARK");
         }
+
+        @Test
+        void shouldPersistLight_whenWritingLightAfterDark() {
+            // Arrange
+            var userId = getOwningUser().getId();
+            var darkDto = UpdateThemeRequestDTO.builder().theme(ThemePreference.DARK).build();
+            var lightDto = UpdateThemeRequestDTO.builder().theme(ThemePreference.LIGHT).build();
+
+            // Act & Assert: LIGHT is also the column default, so only a write that follows a
+            // DARK one shows the value was written rather than left alone
+            userService.updateTheme(userId, darkDto);
+            var storedAfterDark =
+                    jdbcTemplate.queryForObject(
+                            "SELECT theme FROM users WHERE id = ?", String.class, userId);
+            Assertions.assertThat(storedAfterDark).isEqualTo("DARK");
+
+            userService.updateTheme(userId, lightDto);
+            var storedAfterLight =
+                    jdbcTemplate.queryForObject(
+                            "SELECT theme FROM users WHERE id = ?", String.class, userId);
+            Assertions.assertThat(storedAfterLight).isEqualTo("LIGHT");
+        }
     }
 }
