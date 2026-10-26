@@ -55,7 +55,7 @@ spec:
           containers:
             - name: backup
               # Temporary tag, replaced by the built tag and digest before this file is ever pushed.
-              image: rudenkovladimir/kanban-postgres-backup:alpine3.22-unbuilt
+              image: rudenkovladimir/kanban-postgres-backup:alpine3.22-a75558e@sha256:472829cacfcb3fa10fe51f80206075105a57d8a22daf8d322012c197f2282b0a
               command:
                 - /bin/sh
                 - /scripts/postgres-backup.sh
