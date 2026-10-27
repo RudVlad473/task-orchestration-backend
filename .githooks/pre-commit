@@ -183,9 +183,12 @@ fi
 # Decisions:
 # It fails closed. A check that quietly does not run looks exactly like a clean one, so a missing Node or a
 # missing install refuses the commit and prints the install command instead of skipping.
-# It runs only when a staged path is a fact source of the model (migrations, the k8s base and data
-# manifests, KafkaTopics.java) or the model itself, because every other commit needs neither Node nor the
-# install.
+# It runs only when a staged path is a fact source of the model (migrations, any manifest under k8s,
+# KafkaTopics.java) or the model itself, because every other commit needs neither Node nor the install.
+# The whole k8s tree triggers it because the namespace and placement readers read every manifest tree under
+# k8s: a typo in k8s/platform, k8s/overlays or k8s/monitoring must be refused at commit time, not only in
+# CI. The cost is that any k8s commit needs Node and the docs/architecture install, about a second, and
+# k8s commits already run the four-minute Gradle gates.
 # `git diff --cached` reads the GIT_INDEX_FILE that git exports to this hook, so it sees the staged paths
 # of plain, pathspec, `-a` and deleting commits alike. --no-renames keeps the old path of a file moved out
 # of one of the roots.
@@ -195,15 +198,15 @@ fi
 # Known holes:
 # sync.mjs reads the working tree, not the index, so a regenerated file left unstaged passes here while the
 # commit carries the stale one. CI checks the committed tree.
-# Metadata sources outside the trigger paths (k8s/platform and the cited Java packages) are caught in CI
-# only.
+# Metadata sources under src/main/java (the cited Java packages) are outside the trigger paths and are
+# caught in CI only.
 # A Java change that adds or removes a cross-package import makes generated.c4 stale, but src/main/java is
 # not a trigger path, so CI's likec4-model-drift job catches it. A trigger would make Node and a
 # per-worktree install a prerequisite of every Java commit.
 #
 # Falsified if scripts/pre-commit-likec4-selftest.py passes with --hook pointed at a copy without this step.
 LIKEC4_TRIGGERS=$(git diff --cached --name-only --no-renames -- \
-  src/main/resources/db/migration k8s/base k8s/data docs/architecture \
+  src/main/resources/db/migration k8s docs/architecture \
   ':(glob)src/main/java/**/constant/KafkaTopics.java') || {
   echo "Could not list the staged paths for the LikeC4 drift check. Commit refused rather than skipping the check."
   exit 1

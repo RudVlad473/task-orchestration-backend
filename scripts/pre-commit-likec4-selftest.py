@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Self-test for .githooks/pre-commit's LikeC4 drift step: the real hook runs in scratch repos against every commit shape that touches, or avoids, the model's fact sources.
 
-The cases cover nine refusals for drift, three matching commits that pass the check, two refusals
+The cases cover ten refusals for drift, three matching commits that pass the check, two refusals
 for missing tooling and one commit of an unrelated path that must not run the step at all.
 
 Exit codes: 0 when every case passes, 1 when any fails, 2 when the environment is unusable (no hook,
@@ -46,6 +46,7 @@ MIGRATION_SQL = "CREATE TABLE selftest_drift (id TEXT PRIMARY KEY);\n"
 WORKER_MANIFEST = "k8s/base/selftest-worker.yaml"
 WORKER_YAML = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: selftest-worker\n"
 CRONJOB = "k8s/data/postgres/backup-cronjob.yaml"
+TRAEFIK_CONFIG = "k8s/platform/traefik/helmchartconfig.yaml"
 MODEL = "docs/architecture/model/model.c4"
 VIEWS = "docs/architecture/model/views.c4"
 
@@ -433,6 +434,15 @@ def test_15_viewpoint_without_a_view_is_refused():
     refused_for_drift(code, out, repo, before, "viewpoint development has no view")
 
 
+def test_16_misspelled_platform_namespace_is_refused():
+    case_dir, repo = make_repo("platform-namespace-typo", True)
+    replace_in(repo, TRAEFIK_CONFIG, "namespace: kube-system", "namespace: kube-sytem")
+    git(repo, "add", TRAEFIK_CONFIG)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, "namespace kube-sytem is defined in")
+
+
 def preflight(hook):
     """Return an error message when the environment cannot run the cases, else None."""
     if not os.path.isfile(hook):
@@ -442,6 +452,8 @@ def preflight(hook):
             return "%s is not on PATH" % tool
     if not os.path.isdir(os.path.join(REPO_ROOT, "docs", "architecture", "node_modules", "likec4")):
         return "likec4 is not installed. Run: %s" % INSTALL_COMMAND
+    if not os.path.isdir(os.path.join(REPO_ROOT, "docs", "architecture", "node_modules", "yaml")):
+        return "yaml is not installed. Run: %s" % INSTALL_COMMAND
     return None
 
 
