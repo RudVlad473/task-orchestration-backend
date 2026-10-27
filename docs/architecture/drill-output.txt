@@ -68,3 +68,34 @@
   DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
   - viewpoint development has no view
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D10: a namespace node is deleted from the model (cert-manager)
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - namespace cert-manager is defined in k8s/platform/cert-manager/cert-manager.yaml but has no namespace node in the deployment model
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D10b: a manifest namespace is misspelled (kube-sytem)
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - namespace kube-sytem is defined in k8s/platform/traefik/helmchartconfig.yaml but has no namespace node in the deployment model
+  - deployment node netcup.k3s.kube-system names namespace 'kube-system', which no manifest under k8s/ defines
+  - placement: traefik is deployed in [kube-system] in the model, manifests place it in [kube-sytem]
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D11: an instance is moved into the wrong namespace (backup to kanban-prod)
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - placement: backup is deployed in [kanban-prod] in the model, manifests place it in [kanban-data]
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D15: a new k8s Deployment under k8s/platform
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 5 workloads):
+  - k8s Deployment/worker has no element carrying metadata workload 'Deployment/worker'
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D16: a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)
+  exit=1
+  DRIFT (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - placement: certmgr is deployed in [flux-system] in the model, manifests place it in [cert-manager]
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D16b (control): the same element drawn in its targetNamespace (cert-manager)
+  exit=0
+  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service

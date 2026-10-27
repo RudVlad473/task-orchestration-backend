@@ -1,0 +1,94 @@
+== baseline: untouched scratch copy
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D1: a new migration adds table attachments
+  exit=1
+  DRIFT (33 elements, 7 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D2: a new Kafka topic constant
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 3 topics, 4 workloads):
+  - topic kanban.audit is in KafkaTopics.java but not in the model
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D3: a new k8s Deployment named worker
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 5 workloads):
+  - k8s Deployment/worker has no element carrying metadata workload 'Deployment/worker'
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D4: a manifest the model cites as its source is deleted
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 3 workloads):
+  - model claims workload StatefulSet/postgres but k8s/ has no such manifest
+  - postgres: metadata source 'k8s/data/postgres/postgres.yaml' does not exist
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D5 (negative control): a controller class is renamed
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D6: a view loses its viewpoint tag
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - view process carries no viewpoint tag
+  - viewpoint process has no view
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D6b: a view carries two viewpoint tags
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - view process carries 2 viewpoint tags
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D7: a migration adds a foreign key by ALTER TABLE
+  exit=1
+  DRIFT (33 elements, 6 tables, 5 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D7b: a migration drops a named foreign key
+  exit=1
+  DRIFT (33 elements, 6 tables, 3 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D7c: a migration drops a foreign-key column
+  exit=1
+  DRIFT (33 elements, 6 tables, 3 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D8: a new cross-package import
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 39 package edges, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
+  package cycles (reported, not gated): base, config, constant, dto, entity, mapper, repository, security, service
+== D8b: a two-package cycle appears
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 39 package edges, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service | exception, handler
+== D9: the only development view is retagged
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - viewpoint development has no view
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D10: a namespace node is deleted from the model (cert-manager)
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D10b: a manifest namespace is misspelled (kube-sytem)
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D11: an instance is moved into the wrong namespace (backup to kanban-prod)
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D15: a new k8s Deployment under k8s/platform
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D16: a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)
+  exit=0
+  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D16b (control): the same element drawn in its targetNamespace (cert-manager)
+  exit=0
+  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service

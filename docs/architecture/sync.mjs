@@ -13,7 +13,7 @@
 // view never edits the real model.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative, resolve, sep } from 'node:path'
+import { dirname, join, posix, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -292,6 +292,92 @@ function manifestNamespaces(docs) {
   return found
 }
 
+// Maps (file, document) to the namespaces that document lands in on the cluster.
+//
+// A kustomization with a top-level `namespace` stamps it on every file it reaches through
+// `resources`, directly or through a nested kustomization directory, and the outermost one wins as
+// in kustomize. Only a kustomize.config.k8s.io Kustomization is followed. A Flux Kustomization's
+// spec.targetNamespace is not modelled, and a HelmRelease is placed by its declared
+// spec.targetNamespace, never by the objects its chart renders.
+//
+// Two Flux kinds break the inherited-then-own order. A source object (HelmRepository and its
+// siblings) only tells Flux where to fetch from and sits in flux-system by convention, so it
+// lands nowhere. A HelmRelease with spec.targetNamespace lands there, because that is where the
+// chart's workloads run and kustomize rewrites metadata.namespace, not spec.targetNamespace.
+function placements(docs) {
+  const kustomizations = new Map()
+  for (const { file, o } of docs) {
+    if (typeof o.apiVersion === 'string' && o.apiVersion.startsWith('kustomize.config.k8s.io') && o.kind === 'Kustomization') {
+      kustomizations.set(posix.dirname(file), o)
+    }
+  }
+  // Calls onFile for each file a kustomization reaches and onDir for each nested kustomization
+  // directory, skipping an entry that is not a string, is absolute or leaves k8s/.
+  const walk = (dir, onFile, onDir, visited = new Set()) => {
+    if (visited.has(dir)) return
+    visited.add(dir)
+    const resources = kustomizations.get(dir)?.resources
+    if (!Array.isArray(resources)) return
+    for (const entry of resources) {
+      if (typeof entry !== 'string' || posix.isAbsolute(entry)) continue
+      const target = posix.normalize(posix.join(dir, entry))
+      if (target !== 'k8s' && !target.startsWith('k8s/')) continue
+      if (kustomizations.has(target)) {
+        onDir(target)
+        walk(target, onFile, onDir, visited)
+      } else onFile(target)
+    }
+  }
+  const named = [...kustomizations].filter(([, k]) => typeof k.namespace === 'string')
+  const nested = new Set()
+  for (const [dir] of named) walk(dir, () => {}, (d) => nested.add(d))
+  const inherited = new Map()
+  for (const [dir, k] of named) {
+    if (nested.has(dir)) continue
+    walk(
+      dir,
+      (file) => inherited.set(file, (inherited.get(file) ?? new Set()).add(k.namespace)),
+      () => {},
+    )
+  }
+  return (file, o) => {
+    const api = typeof o.apiVersion === 'string' ? o.apiVersion : ''
+    if (api.startsWith('source.toolkit.fluxcd.io/')) return []
+    if (o.kind === 'HelmRelease' && api.startsWith('helm.toolkit.fluxcd.io/') && typeof o.spec?.targetNamespace === 'string') {
+      return [o.spec.targetNamespace]
+    }
+    if (inherited.has(file)) return [...inherited.get(file)]
+    return typeof o.metadata?.namespace === 'string' ? [o.metadata.namespace] : []
+  }
+}
+
+// For each element that has deployment instances, the namespaces its instances sit in must equal
+// the namespaces its anchor documents land in. The anchors are the documents named by its
+// `workload` metadata (Kind/name), else the documents at or under each `k8s/` path in its
+// `source`. An element with no anchor document is not checked.
+function checkPlacement(computed, docs, problems) {
+  const placeOf = placements(docs)
+  const byElement = new Map()
+  for (const i of computed.deployment.instances()) {
+    const ns = [...i.ancestors()].find((a) => a.kind === 'namespace')?.title
+    if (!byElement.has(i.element.id)) byElement.set(i.element.id, { element: i.element, namespaces: new Set() })
+    if (ns) byElement.get(i.element.id).namespaces.add(ns)
+  }
+  for (const id of [...byElement.keys()].sort()) {
+    const { element, namespaces } = byElement.get(id)
+    const workloads = [element.getMetadata('workload')].flat().filter(Boolean)
+    const sources = [element.getMetadata('source')].flat().filter((s) => typeof s === 'string' && s.startsWith('k8s/'))
+    const anchors = docs.filter(({ file, o }) =>
+      workloads.length ? workloads.includes(`${o.kind}/${o.metadata?.name}`) : sources.some((s) => file === s || file.startsWith(`${s}/`)),
+    )
+    if (!anchors.length) continue
+    const expected = new Set(anchors.flatMap(({ file, o }) => placeOf(file, o)))
+    const have = [...namespaces].sort().join(',')
+    const want = [...expected].sort().join(',')
+    if (have !== want) problems.push(`placement: ${id} is deployed in [${have}] in the model, manifests place it in [${want}]`)
+  }
+}
+
 // --- generation -----------------------------------------------------------------------
 
 // One function per fact source, each returning the lines it contributes, so a source added
@@ -416,6 +502,8 @@ async function check() {
   for (const n of [...nsNodes].sort((a, b) => a.title.localeCompare(b.title))) {
     if (!defined.has(n.title)) problems.push(`deployment node ${n.id} names namespace '${n.title}', which no manifest under k8s/ defines`)
   }
+
+  checkPlacement(computed, docs, problems)
 
   const pkgs = packages()
   const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${manifestWorkloads.size} workloads`

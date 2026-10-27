@@ -1,21 +1,25 @@
 #!/usr/bin/env fish
 # Drift drills for sync.mjs. Each drill edits a scratch copy of the code facts and of the model,
 # then runs `sync.mjs check --root --model` and reports whether the check caught it. Every drill
-# is expected to be caught except D5, a negative control that is documented as not caught.
+# is expected to be caught except D5, a negative control that is documented as not caught, and
+# D13b and D16b, controls that must stay clean.
 # The real model is never edited: a drill that changes a view changes the scratch copy.
+# SYNC names another sync.mjs to run. Running the harness once with the script from before a
+# rule existed and once with the current one records the drill as not caught and then caught.
 
 set here (dirname (status filename))
 set repo (realpath $here/../..)
 set sync $here/sync.mjs
+set -q SYNC; and set sync $SYNC
 set scratch $here/out/drill-root
 
 function fresh --inherit-variable repo --inherit-variable scratch --inherit-variable here
     test -e $scratch; and trash-put $scratch
-    mkdir -p $scratch/src/main/resources/db $scratch/src/main/java/com/vrudenko/kanban_board $scratch/k8s
+    mkdir -p $scratch/src/main/resources/db $scratch/src/main/java/com/vrudenko/kanban_board
     cp -r $repo/src/main/resources/db/migration $scratch/src/main/resources/db/
     cp $repo/src/main/resources/application.properties $scratch/src/main/resources/
     cp -r $repo/src/main/java/com/vrudenko/kanban_board/. $scratch/src/main/java/com/vrudenko/kanban_board/
-    cp -r $repo/k8s/base $repo/k8s/data $repo/k8s/platform $scratch/k8s/
+    cp -r $repo/k8s $scratch/
     cp -r $here/model $scratch/model
 end
 
@@ -24,6 +28,13 @@ function run --inherit-variable sync --inherit-variable scratch
     set code $status
     echo "  exit=$code"
     printf '  %s\n' $out
+end
+
+# Adds the element certmgr, anchored on the real k8s/platform/cert-manager directory and linked
+# to traefik so it stays drawn, and places its one instance in the namespace node named by $argv[1].
+function certmgr_into --inherit-variable scratch
+    printf '%s\n' 'model {' "  certmgr = system 'cert-manager' {" '    metadata {' "      source 'k8s/platform/cert-manager'" '    }' '  }' "  traefik -[sync]-> certmgr 'probe'" '}' >$scratch/model/certmgr.c4
+    sed -i "s|^\(      $argv[1] = namespace .*{\)\$|\1\n        instanceOf certmgr|" $scratch/model/deployment.c4
 end
 
 echo "== baseline: untouched scratch copy"
@@ -95,6 +106,37 @@ run
 echo "== D9: the only development view is retagged"
 fresh
 sed -i 's|^    #development$|    #logical|' $scratch/model/views.c4
+run
+
+echo "== D10: a namespace node is deleted from the model (cert-manager)"
+fresh
+sed -i '/^      cert-manager = namespace .cert-manager. {$/,/^      }$/d' $scratch/model/deployment.c4
+run
+
+echo "== D10b: a manifest namespace is misspelled (kube-sytem)"
+fresh
+sed -i 's|namespace: kube-system|namespace: kube-sytem|' $scratch/k8s/platform/traefik/helmchartconfig.yaml
+run
+
+echo "== D11: an instance is moved into the wrong namespace (backup to kanban-prod)"
+fresh
+sed -i '/^        instanceOf backup$/d' $scratch/model/deployment.c4
+sed -i 's|^\(      prod = namespace .*{\)$|\1\n        instanceOf backup|' $scratch/model/deployment.c4
+run
+
+echo "== D15: a new k8s Deployment under k8s/platform"
+fresh
+printf 'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: worker\n' >$scratch/k8s/platform/worker.yaml
+run
+
+echo "== D16: a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)"
+fresh
+certmgr_into flux-system
+run
+
+echo "== D16b (control): the same element drawn in its targetNamespace (cert-manager)"
+fresh
+certmgr_into cert-manager
 run
 
 trash-put $scratch
