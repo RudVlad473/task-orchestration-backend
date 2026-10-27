@@ -1,0 +1,11 @@
+== fish docs/architecture/drill.fish > docs/architecture/drill-output.txt (exit 0)
+== node docs/architecture/sync.mjs generate (exit 0)
+
+== git diff --stat -- docs/architecture/drill-output.txt docs/architecture/model/generated.c4 (empty means byte-identical)
+== git diff --exit-code on the same two files
+exit=0
+
+== node docs/architecture/sync.mjs check
+OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+exit=0
