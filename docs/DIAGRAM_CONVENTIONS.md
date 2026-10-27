@@ -310,8 +310,8 @@ packages into layers was not tried.
   `render-manifest.tsv`, because a migration ends when its old home is gone, and that is a later
   change;
 - a LikeC4 text-size legibility rule;
-- the two checks still proposed under Checks: an unknown-metadata-key check and a server-title
-  check.
+- the server-title check, the one check still proposed (the unknown-metadata-key check is built, see
+  the metadata-key rule under Checks).
 
 ## Layout and naming
 
