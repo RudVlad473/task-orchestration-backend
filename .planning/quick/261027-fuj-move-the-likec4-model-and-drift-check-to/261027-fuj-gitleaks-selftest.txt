@@ -1,0 +1,8 @@
+PASS: test_index_outside_repo_leak_is_refused
+PASS: test_nested_worktree_pathspec_leak_is_refused
+PASS: test_out_of_tree_worktree_pathspec_leak_is_refused
+PASS: test_staged_leak_plain_commit_is_refused
+PASS: test_unstaged_clean_pathspec_commit_succeeds_and_scans_bytes
+PASS: test_unstaged_leak_commit_all_is_refused
+PASS: test_unstaged_leak_pathspec_commit_is_refused
+7/7 passed

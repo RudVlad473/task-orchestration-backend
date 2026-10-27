@@ -46,8 +46,9 @@ A fact a dropped class-level diagram carried moves into the prose that embedded 
 ## LikeC4 standard
 
 Approved 2026-10-27. The target is one LikeC4 model with one viewpoint per Kruchten view, in place of
-a set of separate Mermaid files. Today that model is spike 006, at
-`.planning/spikes/006-likec4-model-of-this-app/model/`. No diagram under `docs/` uses it yet.
+a set of separate Mermaid files. That model lives in `docs/architecture/model/`, driven by
+`docs/architecture/likec4.fish` (`start|validate|png|site|check|sync`). Its pinned tooling installs once
+per checkout with `pnpm --dir docs/architecture install`. No diagram embedded in the docs uses it yet.
 
 The survives-a-refactor test in "What earns a diagram" stays the inclusion test, so nothing
 class-level is drawn in LikeC4 either.
@@ -122,12 +123,17 @@ The measurements against the legibility bounds are in the verification outcomes 
 
 ### Checks
 
-The drift script is spike 007's `.planning/spikes/007-likec4-code-sync-seam/sync.mjs`.
+The drift script is `docs/architecture/sync.mjs`, built in spike 007.
 
 - **Proven in spike 007:** validate; the generated file is up to date; the topic set matches
   `KafkaTopics.java`; the workload set matches `k8s/base` and `k8s/data`; every `metadata.source`
   path exists.
 - **Drills:** 4 of 4 drift kinds were caught. A renamed controller class is not caught, by design.
+- **Wired:** the pre-commit hook runs `node docs/architecture/sync.mjs check` when a staged path is
+  under `src/main/resources/db/migration`, `k8s/base`, `k8s/data` or `docs/architecture`, or is
+  `KafkaTopics.java`, and refuses the commit when Node or the install is missing. The
+  `likec4-model-drift` job in `.github/workflows/invariant-checks.yml` runs the hook's self-test and the
+  check. A changed metadata source outside those paths is caught in CI only.
 - **Key vocabulary:** the DSL cannot declare allowed metadata keys (V2 below), so the drift script
   owns the key vocabulary.
 - **Proposed by this standard, not built:**
@@ -186,7 +192,6 @@ V6, natural width against the Legibility test section's bounds (width 1117, disp
 
 **Outside this change.** This change leaves out:
 
-- moving the model out of `.planning/spikes/`;
 - migrating any of the seven Mermaid diagrams;
 - the four diagrams with no LikeC4 counterpart yet: `signup`, `error-status-split`, `push-to-image`
   and `inbound-packet-path`;

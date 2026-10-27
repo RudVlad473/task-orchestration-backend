@@ -18,10 +18,12 @@ on:
       - main
     # Ordered list, later entries override earlier ones: everything, minus inert docs and planning files,
     # with the always-loaded agent instruction files re-included because they are markdown too.
+    # docs/architecture/ is re-included right after "!docs/**" because the model there is checked against the code.
     paths:
       - "**"
       - ".*/**"
       - "!docs/**"
+      - "docs/architecture/**"
       - "!**/*.md"
       - "!.planning/**"
       - ".claude/**"
@@ -34,6 +36,7 @@ on:
       - "**"
       - ".*/**"
       - "!docs/**"
+      - "docs/architecture/**"
       - "!**/*.md"
       - "!.planning/**"
       - ".claude/**"
@@ -130,3 +133,35 @@ jobs:
       # The selftest pulls the hook's digest-pinned gitleaks image, so it stays a pure function of the commit.
       - name: Verify the hook scans the index git commit records
         run: python3 scripts/pre-commit-gitleaks-selftest.py
+
+  likec4-model-drift:
+    name: The LikeC4 model in docs/architecture still describes the code it is checked against
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # v6 is the first major that installs pnpm 11, and it reads the version from the packageManager field.
+      # Trusted by tag like the other actions here: this job's token is read-only and the job holds no secrets,
+      # and deploy.yml pins a non-GitHub action by digest only in a job whose token can write.
+      - name: Install pnpm at the version the manifest pins
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: docs/architecture/package.json
+
+      - name: Install Node at the version the model was verified with
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24.19.0'
+
+      - name: Install the pinned LikeC4 tooling from the lockfile
+        run: pnpm --dir docs/architecture install --frozen-lockfile
+
+      # Runs ahead of the gate, as in every job above.
+      - name: Verify the hook's LikeC4 step can fire
+        run: python3 scripts/pre-commit-likec4-selftest.py
+
+      - name: Verify the model matches the code
+        run: node docs/architecture/sync.mjs check

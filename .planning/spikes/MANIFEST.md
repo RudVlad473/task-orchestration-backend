@@ -37,6 +37,9 @@ far: sync is a seam we write (a script that generates model fragments from code 
 model's metadata against code facts), and it covers tables, topics, workloads and cited paths, not
 relationships.
 
+The model, `sync.mjs` and the tooling moved to `docs/architecture/` on 2026-10-27. Spikes 005-007 keep their
+READMEs, and 005 its smoke model, as evidence.
+
 **Requirements:**
 - Model by runtime role (thread pool, topic, table, pod, node), never classes, per
   docs/DIAGRAM_CONVENTIONS.md "does the diagram's truth survive a refactor".

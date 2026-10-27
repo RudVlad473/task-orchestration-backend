@@ -1,0 +1,22 @@
+== drift check
+OK (17 elements, 6 tables, 2 topics, 4 workloads)
+exit=0
+== model validate
+INFO  likec4.lang layout wasm
+INFO  likec4.c4:validate ✓ Valid (5 files)
+INFO  likec4.c4:validate validate
+exit=0
+== f8q evidence validate
+INFO  likec4.lang layout wasm
+INFO  likec4.c4:validate ✓ Valid (6 files)
+INFO  likec4.c4:validate validate
+exit=0
+== smoke validate
+INFO  likec4.lang layout wasm
+INFO  likec4.c4:validate ✓ Valid (1 files)
+INFO  likec4.c4:validate validate
+exit=0
+== diagram guard
+FAIL flowchart-rules docs/learning/kafka-architecture-overview.md:11 inline diagram must open with the shared init line
+1 violation(s); 11 diagram(s), 68 doc(s) scanned
+exit=1

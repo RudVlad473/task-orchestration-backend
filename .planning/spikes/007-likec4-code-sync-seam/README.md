@@ -11,6 +11,8 @@ tags: [likec4, drift, ci, model-api, flyway, kubernetes]
 
 # Spike 007: the code-to-model seam
 
+`sync.mjs`, `drill.fish` and `drill-output.txt` moved to `docs/architecture/` on 2026-10-27. Only this README stays here as evidence. The policy lives in docs/DIAGRAM_CONVENTIONS.md, section "LikeC4 standard".
+
 ## What This Validates
 
 LikeC4 reads no Java. "Syncing with the codebase" therefore needs a seam written here. This spike builds the smallest one and tries to break it.
@@ -22,9 +24,9 @@ LikeC4's Model API (`LikeC4.fromWorkspace`, `computedModel().elements()`, `eleme
 ## How to Run
 
 ```
-node .planning/spikes/007-likec4-code-sync-seam/sync.mjs check      # 1.1 s, exit 1 on drift
-node .planning/spikes/007-likec4-code-sync-seam/sync.mjs generate   # rewrites model/generated.c4
-fish .planning/spikes/007-likec4-code-sync-seam/drill.fish          # the drift drills
+node docs/architecture/sync.mjs check      # 1.1 s, exit 1 on drift
+node docs/architecture/sync.mjs generate   # rewrites docs/architecture/model/generated.c4
+fish docs/architecture/drill.fish          # the drift drills
 ```
 
 ## What to Expect

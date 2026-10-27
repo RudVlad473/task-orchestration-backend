@@ -1,0 +1,4 @@
+# The esbuild install script is not needed: validate, build and the drift check run without it.
+# An undecided entry makes pnpm 11 exit 1 on install.
+allowBuilds:
+  esbuild: false

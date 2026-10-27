@@ -11,6 +11,8 @@ tags: [likec4, diagrams, c4, deployment, dynamic-view]
 
 # Spike 006: LikeC4 model of this app
 
+The model (`model/`, five `.c4` files) and `likec4.fish` moved to `docs/architecture/` on 2026-10-27. Only this README stays here as evidence. The policy lives in docs/DIAGRAM_CONVENTIONS.md, section "LikeC4 standard".
+
 ## What This Validates
 
 Given the real topology, when modelled once, then five views render from one source: `index` (context), `process`, `data`, `production` (deployment) and `signin` (dynamic).
@@ -18,9 +20,9 @@ Given the real topology, when modelled once, then five views render from one sou
 ## How to Run
 
 ```
-fish .planning/spikes/006-likec4-model-of-this-app/likec4.fish start    # live viewer, http://localhost:61000
-fish .planning/spikes/006-likec4-model-of-this-app/likec4.fish png      # out/*.png (not committed: the repo's root `out/` ignore rule covers them; regenerate)
-fish .planning/spikes/006-likec4-model-of-this-app/likec4.fish site     # static site in out/site
+fish docs/architecture/likec4.fish start    # live viewer, http://localhost:61000
+fish docs/architecture/likec4.fish png      # docs/architecture/out/*.png (not committed: out/ is ignored; regenerate)
+fish docs/architecture/likec4.fish site     # static site in docs/architecture/out/site
 ```
 
 ## What to Expect

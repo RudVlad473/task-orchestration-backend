@@ -11,6 +11,8 @@ tags: [likec4, toolchain, pnpm, playwright]
 
 # Spike 005: LikeC4 toolchain and views
 
+The pinned tooling from this spike (`package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`) moved to `docs/architecture/` on 2026-10-27, and `docs/architecture/.gitignore` replaces this spike's. Only this README and the `smoke/` model stay here as evidence. The policy lives in docs/DIAGRAM_CONVENTIONS.md, section "LikeC4 standard".
+
 ## What This Validates
 
 Given this repo's Node 24 / WSL box with no Graphviz installed, when `likec4` 1.60.0 validates, exports PNG and builds a static site, then all three work offline and the output is legible.
@@ -24,11 +26,11 @@ Given this repo's Node 24 / WSL box with no Graphviz installed, when `likec4` 1.
 ## How to Run
 
 ```
-pnpm --dir .planning/spikes/005-likec4-toolchain-and-views install
-.planning/spikes/005-likec4-toolchain-and-views/node_modules/.bin/likec4 validate .planning/spikes/005-likec4-toolchain-and-views/smoke
+pnpm --dir docs/architecture install
+docs/architecture/node_modules/.bin/likec4 validate .planning/spikes/005-likec4-toolchain-and-views/smoke
 ```
 
-Everything past this smoke model goes through `../006-likec4-model-of-this-app/likec4.fish`.
+Everything past this smoke model goes through `docs/architecture/likec4.fish`.
 
 ## What to Expect
 

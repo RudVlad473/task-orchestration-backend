@@ -8,9 +8,16 @@
 #   sync      regenerate model/generated.c4 from the code
 
 set here (dirname (status filename))
-set spikes (realpath $here/..)
-set bin $spikes/005-likec4-toolchain-and-views/node_modules/.bin/likec4
-set sync $spikes/007-likec4-code-sync-seam/sync.mjs
+set bin $here/node_modules/.bin/likec4
+set sync $here/sync.mjs
+
+switch $argv[1]
+    case start validate png site
+        if not test -x $bin
+            echo "likec4 is not installed. Run: pnpm --dir docs/architecture install" >&2
+            exit 3
+        end
+end
 
 switch $argv[1]
     case start

@@ -1,0 +1,23 @@
+== baseline: untouched scratch copy
+  exit=0
+  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+== D1: a new migration adds table attachments
+  exit=1
+  DRIFT (17 elements, 7 tables, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (tables changed in the migrations)
+== D2: a new Kafka topic constant
+  exit=1
+  DRIFT (17 elements, 6 tables, 3 topics, 4 workloads):
+  - topic kanban.audit is in KafkaTopics.java but not in the model
+== D3: a new k8s Deployment named worker
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 5 workloads):
+  - k8s Deployment/worker has no element carrying metadata workload 'Deployment/worker'
+== D4: a manifest the model cites as its source is deleted
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 3 workloads):
+  - model claims workload StatefulSet/postgres but k8s/ has no such manifest
+  - postgres: metadata source 'k8s/data/postgres/postgres.yaml' does not exist
+== D5 (negative control): a controller class is renamed
+  exit=0
+  OK (17 elements, 6 tables, 2 topics, 4 workloads)

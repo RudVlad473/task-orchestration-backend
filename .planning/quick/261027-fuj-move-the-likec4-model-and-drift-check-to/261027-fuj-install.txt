@@ -1,0 +1,19 @@
+== frozen install
+✓ Lockfile passes supply-chain policies (verified 1h ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +54
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 54, reused 1, downloaded 0, added 0
+Progress: resolved 54, reused 52, downloaded 0, added 0
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /home/andre/.local/share/pnpm/store/v11
+  Virtual store is at:             node_modules/.pnpm
+Progress: resolved 54, reused 53, downloaded 0, added 53
+Progress: resolved 54, reused 54, downloaded 0, added 54, done
+
+devDependencies:
++ likec4 1.60.0
+
+Done in 4.8s using pnpm v11.20.0
+exit=0

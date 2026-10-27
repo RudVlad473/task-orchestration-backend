@@ -1,7 +1,8 @@
 {
-  "name": "spike-005-likec4",
+  "name": "kanban-architecture-model",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@11.20.0",
   "devDependencies": {
     "likec4": "1.60.0"
   }

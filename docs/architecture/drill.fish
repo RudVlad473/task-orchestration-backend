@@ -1,10 +1,10 @@
 #!/usr/bin/env fish
-# Drift drills for spike 007. Each drill edits a scratch copy of the code facts, then runs
+# Drift drills for sync.mjs. Each drill edits a scratch copy of the code facts, then runs
 # `sync.mjs check --root` and reports whether the check caught it (expected: caught, except
 # the last drill, a negative control that is documented as not caught).
 
 set here (dirname (status filename))
-set repo (realpath $here/../../..)
+set repo (realpath $here/../..)
 set sync $here/sync.mjs
 set scratch $here/out/drill-root
 

@@ -31,6 +31,9 @@ leaves the VM's internal Docker network (no host port is published) — see
 
 - Docker, with the Compose v2 plugin (`docker compose version` should succeed)
 - JDK 21, only if you want to run the app outside of Compose via `./gradlew bootRun`
+- Node 22.22.3 or later and pnpm 11, needed only to commit changes under `src/main/resources/db/migration`,
+  `k8s/base`, `k8s/data`, `docs/architecture` or `KafkaTopics.java`. Run
+  `pnpm --dir docs/architecture install` once per checkout and once per git worktree.
 
 ## Quickstart
 

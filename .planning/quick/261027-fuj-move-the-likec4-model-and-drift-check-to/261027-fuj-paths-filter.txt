@@ -1,0 +1,19 @@
+push and pull_request lists identical in HEAD: True
+push and pull_request lists identical in working tree: True
+
+path                                             old       new       flip
+docs/architecture/model/model.c4                 excluded  included  excluded->included
+docs/architecture/sync.mjs                       excluded  included  excluded->included
+docs/architecture/pnpm-lock.yaml                 excluded  included  excluded->included
+docs/architecture/README.md                      excluded  excluded  
+docs/ARCHITECTURE.md                             excluded  excluded  
+docs/diagrams/process/activity-pipeline.mmd      excluded  excluded  
+src/main/resources/db/migration/V1__init.sql     included  included  
+k8s/base/redpanda/redpanda.yaml                  included  included  
+.planning/quick/x/y.txt                          excluded  excluded  
+.claude/CLAUDE.md                                included  included  
+.github/workflows/invariant-checks.yml           included  included  
+
+flipped: ['docs/architecture/model/model.c4', 'docs/architecture/sync.mjs', 'docs/architecture/pnpm-lock.yaml']
+only the three non-Markdown docs/architecture paths flip, excluded->included: True
+RESULT: PASS

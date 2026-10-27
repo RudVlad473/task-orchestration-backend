@@ -28,18 +28,20 @@ already establishes: `@SpringBootTest @AutoConfigureMockMvc`, `@Value("${springd
 autowire the `OpenAPI` bean directly — springdoc caches the built document, so a test holding the
 live instance risks mutating state shared with other assertions in the same Spring context.
 
-**LikeC4 models (spikes 005-007).** One model under `006-.../model/*.c4`, driven through
-`006-.../likec4.fish` (`start|validate|png|site|check|sync`). Elements are runtime roles, never
-classes. A fact the code can contradict carries `metadata { source '<repo path>' workload
-'<Kind/name>' }`; `007-.../sync.mjs check` fails on drift and `sync` regenerates `generated.c4` from
-the Flyway migrations. A drift drill is only valid against a green baseline (spike 007 trail).
+**LikeC4 models (spikes 005-007).** One model under `docs/architecture/model/*.c4`, driven through
+`docs/architecture/likec4.fish` (`start|validate|png|site|check|sync`). Elements are runtime roles,
+never classes. A fact the code can contradict carries `metadata { source '<repo path>' workload
+'<Kind/name>' }`; `docs/architecture/sync.mjs check` fails on drift and `sync` regenerates
+`generated.c4` from the Flyway migrations. A drift drill is only valid against a green baseline
+(spike 007 trail).
 
 ## Tools & Libraries
 
-`likec4` 1.60.0 (pnpm, spike-local `package.json`); PNG export additionally needs Playwright
+`likec4` 1.60.0 (pnpm, `docs/architecture/package.json`, installed with
+`pnpm --dir docs/architecture install`); PNG export additionally needs Playwright
 Chromium revision 1248 (`chromium-headless-shell`) in `~/.cache/ms-playwright`. `computedModel()` is
-async despite the docs. `node_modules/` is not gitignored repo-wide: a spike that installs packages
-ships its own `.gitignore`.
+async despite the docs. `node_modules/` is not gitignored repo-wide: a folder that installs packages
+ships its own `.gitignore` (`docs/architecture/.gitignore` does).
 
 `io.swagger.v3.oas.annotations.*` (springdoc-openapi-starter-webmvc-ui's transitive
 swagger-annotations dependency) — already on the classpath, no new dependency needed for

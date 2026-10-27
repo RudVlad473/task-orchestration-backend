@@ -178,6 +178,56 @@ else
   echo "WARNING: Python 3 is unavailable; skipping instruction-file budget check. CI instruction-budget remains required."
 fi
 
+# LikeC4 model drift: refuse a commit that leaves the model out of step with the code it describes.
+#
+# Decisions:
+# It fails closed. A check that quietly does not run looks exactly like a clean one, so a missing Node or a
+# missing install refuses the commit and prints the install command instead of skipping.
+# It runs only when a staged path is a fact source of the model (migrations, the k8s base and data
+# manifests, KafkaTopics.java) or the model itself, because every other commit needs neither Node nor the
+# install.
+# `git diff --cached` reads the GIT_INDEX_FILE that git exports to this hook, so it sees the staged paths
+# of plain, pathspec, `-a` and deleting commits alike. --no-renames keeps the old path of a file moved out
+# of one of the roots.
+# It sits after the cheap checks and before Gradle, so a stale model is refused in about a second instead
+# of after the ~4 minutes that spotlessCheck and fastTest take.
+#
+# Known holes:
+# sync.mjs reads the working tree, not the index, so a regenerated file left unstaged passes here while the
+# commit carries the stale one. CI checks the committed tree.
+# Metadata sources outside the trigger paths (k8s/platform and the cited Java packages) are caught in CI
+# only.
+#
+# Falsified if scripts/pre-commit-likec4-selftest.py passes with --hook pointed at a copy without this step.
+LIKEC4_TRIGGERS=$(git diff --cached --name-only --no-renames -- \
+  src/main/resources/db/migration k8s/base k8s/data docs/architecture \
+  ':(glob)src/main/java/**/constant/KafkaTopics.java') || {
+  echo "Could not list the staged paths for the LikeC4 drift check. Commit refused rather than skipping the check."
+  exit 1
+}
+
+if [ -n "$LIKEC4_TRIGGERS" ]; then
+  echo "Checking the LikeC4 model against the code it describes..."
+  if ! command -v node >/dev/null 2>&1; then
+    echo "Node is not on PATH, so the LikeC4 drift check cannot run. Install Node 22.22.3 or later, then run: pnpm --dir docs/architecture install"
+    echo "Commit refused rather than skipping the check."
+    exit 1
+  fi
+  node docs/architecture/sync.mjs check < /dev/null
+  LIKEC4_STATUS=$?
+  if [ "$LIKEC4_STATUS" -eq 1 ]; then
+    echo "LikeC4 model drift (see the DRIFT list above). Update docs/architecture/model, or run"
+    echo "node docs/architecture/sync.mjs generate when a migration changed the tables, then re-stage."
+    echo "Commit refused."
+    exit 1
+  elif [ "$LIKEC4_STATUS" -ne 0 ]; then
+    echo "LikeC4 drift check did not run to completion (exit ${LIKEC4_STATUS}, node $(node --version 2>&1))."
+    echo "If its tooling is not installed, run: pnpm --dir docs/architecture install"
+    echo "Commit refused rather than skipping the check."
+    exit 1
+  fi
+fi
+
 echo "Checking formatting..."
 ./gradlew spotlessCheck < /dev/null
 if [ $? -ne 0 ]; then
