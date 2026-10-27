@@ -48,4 +48,10 @@ specification {
 
   tag generated
   tag planned
+
+  tag logical
+  tag process
+  tag development
+  tag physical
+  tag scenarios
 }

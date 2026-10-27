@@ -6,6 +6,7 @@ views {
   }
 
   view process of kanban {
+    #process
     title 'Process view: how a committed mutation becomes an activity_log row'
     description 'Thread and messaging boundaries. The request thread never waits on Kafka.'
     include
@@ -16,18 +17,21 @@ views {
   }
 
   view data of postgres {
+    #logical
     title 'Data: tables, generated from the Flyway migrations'
     description 'Every box here is written by sync.mjs from a CREATE TABLE statement.'
     include postgres.*
   }
 
   deployment view production {
+    #physical
     title 'Physical view: what runs where'
     description 'Mapping of software to nodes. The VPS is x86_64.'
     include netcup, netcup.k3s, netcup.**
   }
 
   dynamic view signin {
+    #scenarios
     title 'Scenario: signin'
     description 'POST /api/signin through to a session cookie.'
 

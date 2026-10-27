@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Self-test for .githooks/pre-commit's LikeC4 drift step: the real hook runs in scratch repos against every commit shape that touches, or avoids, the model's fact sources.
 
-The cases cover five refusals for drift, three matching commits that pass the check, two refusals
+The cases cover six refusals for drift, three matching commits that pass the check, two refusals
 for missing tooling and one commit of an unrelated path that must not run the step at all.
 
 Exit codes: 0 when every case passes, 1 when any fails, 2 when the environment is unusable (no hook,
@@ -38,7 +38,7 @@ INSTALL_COMMAND = "pnpm --dir docs/architecture install"
 STALE_TEXT = "generated.c4 is stale"
 
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
-OK_TALLY = re.compile(r"^OK \(\d+ elements, \d+ tables, \d+ topics, \d+ workloads\)$", re.MULTILINE)
+OK_TALLY = re.compile(r"^OK \(\d+ elements(, \d+ [a-z ]+)+\)$", re.MULTILINE)
 
 KAFKA_TOPICS = "src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java"
 MIGRATION = "src/main/resources/db/migration/V9999__selftest.sql"
@@ -395,6 +395,15 @@ def test_11_unrelated_path_runs_no_drift_step():
     before = head_of(repo)
     code, out = commit(case_dir, repo)
     committed_without_step(code, out, repo, before)
+
+
+def test_12_untagged_view_is_refused():
+    case_dir, repo = make_repo("untagged-view", True)
+    replace_in(repo, VIEWS, "    #process\n", "")
+    git(repo, "add", VIEWS)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, "view process carries no viewpoint tag")
 
 
 def preflight(hook):

@@ -21,3 +21,11 @@
 == D5 (negative control): a controller class is renamed
   exit=0
   OK (17 elements, 6 tables, 2 topics, 4 workloads)
+== D6: a view loses its viewpoint tag
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 4 workloads):
+  - view process carries no viewpoint tag
+== D6b: a view carries two viewpoint tags
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 4 workloads):
+  - view process carries 2 viewpoint tags

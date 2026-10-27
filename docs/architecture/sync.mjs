@@ -1,12 +1,15 @@
 // The seam between the codebase and the LikeC4 model.
 //
-//   node docs/architecture/sync.mjs generate [--root DIR]   rewrite model/generated.c4 from the code
-//   node docs/architecture/sync.mjs check    [--root DIR]   exit 1 when the model and the code disagree
+//   node docs/architecture/sync.mjs generate [--root DIR] [--model DIR]   rewrite generated.c4 from the code
+//   node docs/architecture/sync.mjs check    [--root DIR] [--model DIR]   exit 1 when the model and the code disagree
 //
 // Exit codes: 0 clean, 1 drift, 2 usage, 3 tooling missing (likec4 not installed).
 //
 // --root points at a directory laid out like the repo (used by the drift drills, which
-// run against a scratch copy so the real code is never edited). The model stays the real one.
+// run against a scratch copy so the real code is never edited).
+// --model points at the folder holding the .c4 files and generated.c4. The default is the
+// model/ folder beside this script. The drills pass a scratch copy, so a drill that edits a
+// view never edits the real model.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -18,7 +21,8 @@ const args = process.argv.slice(2)
 const mode = args[0]
 const rootIdx = args.indexOf('--root')
 const root = rootIdx >= 0 ? resolve(args[rootIdx + 1]) : repo
-const modelDir = join(here, 'model')
+const modelIdx = args.indexOf('--model')
+const modelDir = modelIdx >= 0 ? resolve(args[modelIdx + 1] ?? '') : join(here, 'model')
 const generatedFile = join(modelDir, 'generated.c4')
 
 async function loadLikeC4() {
@@ -30,6 +34,10 @@ async function loadLikeC4() {
     process.exit(3)
   }
 }
+
+// The five Kruchten viewpoints. This list and the `tag` lines in model/spec.c4 are the same
+// set, and the check below is what keeps a view from sitting outside it.
+const VIEWPOINTS = ['logical', 'process', 'development', 'physical', 'scenarios']
 
 // --- facts read from the code ---------------------------------------------------------
 
@@ -109,7 +117,18 @@ async function check() {
   const likec4 = await LikeC4.fromWorkspace(modelDir, { printErrors: false, throwIfInvalid: false, logger: false })
   const invalid = likec4.getErrors()
   if (invalid.length) problems.push(`model does not validate: ${invalid.map((e) => e.message).join('; ')}`)
-  const elements = [...(await likec4.computedModel()).elements()]
+  const computed = await likec4.computedModel()
+  const elements = [...computed.elements()]
+
+  // Every view except index belongs to exactly one Kruchten viewpoint. index is the system
+  // context that opens the set, so it sits outside the 4+1 and carries no viewpoint tag.
+  // views() returns every kind of view, so deployment and dynamic views are held to the rule too.
+  for (const view of computed.views()) {
+    if (view.id === 'index') continue
+    const own = [...view.tags].filter((t) => VIEWPOINTS.includes(t))
+    if (own.length === 0) problems.push(`view ${view.id} carries no viewpoint tag`)
+    else if (own.length > 1) problems.push(`view ${view.id} carries ${own.length} viewpoint tags`)
+  }
 
   const modelTopics = new Set(elements.filter((e) => e.kind === 'topic').map((e) => e.title))
   for (const t of topics()) if (!modelTopics.has(t)) problems.push(`topic ${t} is in KafkaTopics.java but not in the model`)
@@ -132,12 +151,17 @@ async function check() {
   console.log(`OK (${tally})`)
 }
 
+if ((mode === 'generate' || mode === 'check') && !existsSync(modelDir)) {
+  console.error(`model folder ${modelDir} does not exist\nusage: sync.mjs generate|check [--root DIR] [--model DIR]`)
+  process.exit(2)
+}
+
 if (mode === 'generate') {
   writeFileSync(generatedFile, render())
   console.log(`wrote ${generatedFile} (${tables().size} tables)`)
 } else if (mode === 'check') {
   await check()
 } else {
-  console.error('usage: sync.mjs generate|check [--root DIR]')
+  console.error('usage: sync.mjs generate|check [--root DIR] [--model DIR]')
   process.exit(2)
 }
