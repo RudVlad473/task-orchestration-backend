@@ -1,0 +1,70 @@
+Scanning staged diff for secrets...
+[90m11:28AM[0m [32mINF[0m [1m0 commits scanned.[0m
+[90m11:28AM[0m [32mINF[0m [1mscanned ~41145 bytes (41.15 KB) in 130ms[0m
+[90m11:28AM[0m [32mINF[0m [1mno leaks found[0m
+No secrets found in staged diff.
+Checking code-comment policy...
+OK: 330 files, 1280 comment blocks
+Checking always-loaded instruction-file budget...
+   4886  .claude/CLAUDE.md  hop 0
+TOTAL 4886
+CEILING 5100
+about 1221 tokens (bytes/4, rough)
+OK: 4886 bytes within a ceiling of 5100.
+Checking the LikeC4 model against the code it describes...
+OK (17 elements, 6 tables, 2 topics, 4 workloads)
+Checking formatting...
+Starting a Gradle Daemon (subsequent builds will be faster)
+> Task :spotlessInternalRegisterDependencies UP-TO-DATE
+> Task :spotlessJava UP-TO-DATE
+> Task :spotlessJavaCheck UP-TO-DATE
+> Task :spotlessCheck UP-TO-DATE
+
+BUILD SUCCESSFUL in 16s
+3 actionable tasks: 3 up-to-date
+Compiling and running fast tests...
+> Task :generateAvroProtocol NO-SOURCE
+> Task :generateAvroJava UP-TO-DATE
+> Task :compileJava
+> Task :processResources UP-TO-DATE
+> Task :classes
+> Task :generateTestAvroProtocol NO-SOURCE
+> Task :generateTestAvroJava NO-SOURCE
+> Task :compileTestJava UP-TO-DATE
+> Task :processTestResources NO-SOURCE
+> Task :testClasses UP-TO-DATE
+> Task :fastTest UP-TO-DATE
+
+BUILD SUCCESSFUL in 12s
+5 actionable tasks: 1 executed, 4 up-to-date
+[main de30039] feat(quick-261027-fuj): gate LikeC4 model drift at commit and in CI from docs/architecture
+ 39 files changed, 801 insertions(+), 47 deletions(-)
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-after.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-base-sha.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-baseline.txt
+ rename .planning/{spikes/007-likec4-code-sync-seam/drill-output.txt => quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-drill-rerun.txt} (100%)
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-gitleaks-selftest.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-install.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-paths-filter.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-selftest-green.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-selftest-red-filter-mutant.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-selftest-red-unwired.txt
+ create mode 100644 .planning/quick/261027-fuj-move-the-likec4-model-and-drift-check-to/261027-fuj-system-node.txt
+ delete mode 100644 .planning/spikes/005-likec4-toolchain-and-views/pnpm-workspace.yaml
+ delete mode 100644 .planning/spikes/006-likec4-model-of-this-app/.gitignore
+ delete mode 100644 .planning/spikes/007-likec4-code-sync-seam/.gitignore
+ rename {.planning/spikes/005-likec4-toolchain-and-views => docs/architecture}/.gitignore (76%)
+ create mode 100644 docs/architecture/drill-output.txt
+ rename {.planning/spikes/007-likec4-code-sync-seam => docs/architecture}/drill.fish (94%)
+ rename {.planning/spikes/006-likec4-model-of-this-app => docs/architecture}/likec4.fish (76%)
+ rename {.planning/spikes/006-likec4-model-of-this-app => docs/architecture}/model/deployment.c4 (100%)
+ rename {.planning/spikes/006-likec4-model-of-this-app => docs/architecture}/model/generated.c4 (91%)
+ rename {.planning/spikes/006-likec4-model-of-this-app => docs/architecture}/model/model.c4 (100%)
+ rename {.planning/spikes/006-likec4-model-of-this-app => docs/architecture}/model/spec.c4 (100%)
+ rename {.planning/spikes/006-likec4-model-of-this-app => docs/architecture}/model/views.c4 (100%)
+ rename {.planning/spikes/005-likec4-toolchain-and-views => docs/architecture}/package.json (55%)
+ rename {.planning/spikes/005-likec4-toolchain-and-views => docs/architecture}/pnpm-lock.yaml (100%)
+ create mode 100644 docs/architecture/pnpm-workspace.yaml
+ rename {.planning/spikes/007-likec4-code-sync-seam => docs/architecture}/sync.mjs (83%)
+ create mode 100644 scripts/pre-commit-likec4-selftest.py
+exit=0
