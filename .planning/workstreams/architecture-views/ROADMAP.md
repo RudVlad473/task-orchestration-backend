@@ -22,7 +22,7 @@ numbering restarts at 1 in this workstream. Requirements are in `REQUIREMENTS.md
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundations, Edge Fix and Honesty Gates** - Traefik moves out of the nonexistent `edge` namespace, and the namespace, placement, metadata-key and view-membership checks are built and proven red then green
+- [x] **Phase 1: Foundations, Edge Fix and Honesty Gates** - Traefik moves out of the nonexistent `edge` namespace, and the namespace, placement, metadata-key and view-membership checks are built and proven red then green (completed 2026-10-27)
 - [ ] **Phase 2: Model Completion** - Delivery, monitoring, cert-manager and edge facts in Physical; Schema Registry, backup and Avro subjects in Process and Logical; seven scenarios; the YAML fact reader; the standard amended
 - [ ] **Phase 3: Build and Serve on a Staging Certificate** - CI builds the site image on model changes, Flux serves the static build at the architecture hostname on a staging certificate, and the publish path is modelled as built
 - [ ] **Phase 4: Leak Review and Production Go-Live** - Leak scan of the built artifact and the user's review, then the production certificate flip, the uptime probe and the public links
@@ -41,7 +41,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. On a scratch copy, a deployment instance with no relationship makes `check` exit 1 and name the instance. Such an instance appears in no computed deployment view (Pitfall 2, measured). Adding a relationship or removing the instance returns exit 0.
   5. Each new rule has a numbered drill in `docs/architecture/drill.fish`. The recorded output shows the break not caught before the rule exists and caught after it. `fresh()` copies every directory the new readers read, and a reader pointed at a missing directory exits non-zero instead of reporting clean. The pre-commit hook triggers on `k8s/platform`, and `scripts/pre-commit-likec4-selftest.py` passes with more than the 15 cases it had at research time.
 
-**Plans**: 3/3 plans executed
+**Plans**: 3/3 plans complete
 
 Plans:
 - [x] 01-01-PLAN.md — yaml@2.9.1 behind a human legitimacy gate; namespace rule red on the real `edge` defect and landed with the Traefik-to-kube-system fix; `workloads()` port and `render()` split, byte-identical
@@ -145,7 +145,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundations, Edge Fix and Honesty Gates | 3/3 | In Progress | - |
+| 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
 | 2. Model Completion | 0/TBD | Not started | - |
 | 3. Build and Serve on a Staging Certificate | 0/TBD | Not started | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |
