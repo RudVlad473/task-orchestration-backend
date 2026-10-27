@@ -5,10 +5,10 @@ current_phase: 14
 current_phase_name: "Production ownership: backend observability, alerting and recovery"
 status: executing
 stopped_at: Phase 14 context gathered
-last_updated: "2026-10-27T11:38:17.011Z"
+last_updated: "2026-10-27T11:56:39.119Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 14 execution started
-state_head: de300399b6077a9abaff1c2954ecbe535c6bde10
+state_head: c9e4e15f97137b549eae3303748f2e2483746023
 progress:
   total_phases: 1
   completed_phases: 2
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-09-08)
 Phase: 14 (Production ownership: backend observability, alerting and recovery) — EXECUTING
 Plan: 6 of 13 summarized (14-01 to 14-05, 14-07); next ready is 14-06 (needs human setup)
 Status: Executing Phase 14
-Last activity: 2026-10-27 - Completed quick task 261027-fuj: LikeC4 model moved to docs/architecture, drift gated in the pre-commit hook and invariant-checks CI; earlier: quick task 261027-f8q (LikeC4 standard), closed out 14-07
+Last activity: 2026-10-27 - Fast tasks: how to view the LikeC4 diagrams (LOCAL_DEV.md, viewer port corrected to 5173) and Zed tasks for the architecture model; earlier: quick task 261027-fuj (LikeC4 model moved to docs/architecture, drift gated in hook and CI)
 
 ## Performance Metrics
 
@@ -180,6 +180,8 @@ confusion risk, `NVD_API_KEY` resolution failure) were resolved during Phases 8�
 | 261026-ovp | Address review-tests findings: fix 5 cannot-fail tests, delete 5 duplicates, drop 2 shape pins, add mutation-proven tests (tests only) | 2026-10-26 | ef63a29 | [261026-ovp-address-review-tests-findings-fix-5-m-ca](./quick/261026-ovp-address-review-tests-findings-fix-5-m-ca/) |
 | 261027-f8q | Write the approved LikeC4 diagramming standard into docs/DIAGRAM_CONVENTIONS.md after verifying six unverified dependencies | 2026-10-27 | 3abab0a | [261027-f8q-write-the-approved-likec4-diagramming-st](./quick/261027-f8q-write-the-approved-likec4-diagramming-st/) |
 | 261027-fuj | Move the LikeC4 model and drift check to docs/architecture and wire it into pre-commit and invariant-checks CI | 2026-10-27 | de30039 | [261027-fuj-move-the-likec4-model-and-drift-check-to](./quick/261027-fuj-move-the-likec4-model-and-drift-check-to/) |
+| 35 | Document how to view the LikeC4 diagrams in LOCAL_DEV.md and correct the viewer port (5173, not 61000) | 2026-10-27 | d39803e | — |
+| 36 | Add Zed tasks to view, export, check and sync the LikeC4 architecture model (.zed/tasks.json) | 2026-10-27 | c9e4e15 | — |
 
 ## Deferred Items
 
