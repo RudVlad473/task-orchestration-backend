@@ -25,16 +25,16 @@ model {
     }
 
     publisher = thread 'kafka-publish executor' {
-      technology 'Spring @TransactionalEventListener(AFTER_COMMIT)'
-      description 'Publishes one Avro event per committed mutation. The HTTP response never waits on it.'
+      technology 'Spring ThreadPoolTaskExecutor, bounded pool'
+      description 'Publishes the Avro events of committed board, column, task and subtask mutations. The AFTER_COMMIT listener only submits to this pool, so the request thread does not wait on Kafka.'
       metadata {
-        source 'src/main/java/com/vrudenko/kanban_board/event'
+        source 'src/main/java/com/vrudenko/kanban_board/config/AsyncConfig.java'
       }
     }
 
     consumer = thread 'activity-log consumer' {
       technology 'Spring Kafka listener, group activity-log'
-      description 'Idempotent insert into activity_log; 3 retries 1 s apart, then the dead-letter topic.'
+      description 'Idempotent insert into activity_log; retries, then the dead-letter topic.'
       metadata {
         source 'src/main/java/com/vrudenko/kanban_board/activitylog'
       }
@@ -42,7 +42,7 @@ model {
   }
 
   postgres = datastore 'Postgres 16' {
-    description 'Single instance in ns kanban-data, shared by prod and nonprod databases'
+    description 'Single instance in ns kanban-data, holding the prod and nonprod databases'
     metadata {
       source 'k8s/data/postgres/postgres.yaml'
       workload 'StatefulSet/postgres'
@@ -64,8 +64,8 @@ model {
     }
   }
 
-  backup = system 'Postgres backup' {
-    description 'CronJob, daily 02:17, runs postgres-backup.sh as the prod DB role'
+  backup = job 'Postgres backup' {
+    description 'CronJob that runs postgres-backup.sh as the prod DB role'
     metadata {
       source 'k8s/data/postgres/backup-cronjob.yaml'
       workload 'CronJob/postgres-backup'
@@ -80,23 +80,23 @@ model {
     }
 
     activity = topic 'kanban.activity' {
-      description '1 partition, Avro, keyed by event id'
+      description 'Avro, keyed by event id'
     }
     dlt = topic 'kanban.activity.dlt' {
-      description 'Dead-letter topic for events that failed 3 retries'
+      description 'Dead-letter topic for events the consumer still failed to process after its retries'
     }
   }
 
   // --- relationships: runtime facts, not class calls ---
-  backup -[sync]-> postgres 'daily 02:17, PGHOST postgres.kanban-data'
+  backup -[sync]-> postgres 'PGHOST postgres.kanban-data'
   client -[sync]-> traefik 'HTTPS :443'
   traefik -[sync]-> kanban.api 'HTTP :8080'
-  kanban.api -[sync]-> postgres 'JDBC: users, boards, columns, tasks, subtasks, session tables'
+  kanban.api -[sync]-> postgres 'JDBC: users, boards, columns, tasks, subtasks, spring_session, spring_session_attributes'
   kanban.api -[async]-> kanban.publisher 'AFTER_COMMIT hand-off'
   kanban.publisher -[async]-> redpanda.activity 'Avro, keyed by event id'
   redpanda.activity -[async]-> kanban.consumer 'poll, group activity-log'
   kanban.consumer -[sync]-> postgres 'INSERT activity_log, idempotent on event_id'
-  kanban.consumer -[async]-> redpanda.dlt 'after 3 retries'
+  kanban.consumer -[async]-> redpanda.dlt 'after retries'
 
   // Authored foreign key: Spring Session's own schema (schema-postgresql.sql in spring-session-jdbc 3.5.7).
   postgres.spring_session_attributes -[fk]-> postgres.spring_session 'session_primary_id'
