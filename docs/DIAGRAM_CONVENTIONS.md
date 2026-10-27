@@ -60,6 +60,141 @@ The approved design and the outcomes of its verification are in
 `.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/`, as `261027-f8q-BRIEF.md` and
 the `verify/` folder.
 
+### Entities and rules
+
+- **Element.** A runtime thing with identity. The kinds are a closed set: `actor`, `system`,
+  `container`, `component`, `thread`, `datastore`, `table`, `topic`, `job`.
+- **Relationship.** A runtime interaction between two Elements, of kind `sync` or `async`, labelled
+  with a protocol-level fact.
+- **Deployment node and Instance.** The nodes are `server`, `cluster` and `namespace`. An Instance is
+  an Element placed on one node through `instanceOf`. Prod and nonprod are two Instances of one
+  Element, not two copies. Instances inherit all logical relationships, so the physical view re-draws
+  no edges.
+- **Viewpoint.** One of logical, process, development, physical, scenarios. Each View belongs to
+  exactly one Viewpoint. A View projects Elements and never owns one.
+- **Provenance.** Exactly one per fact, on a ladder of three rungs:
+  - `generated`: written from code, never edited;
+  - `checked`: hand-written, and carries `metadata` that a script compares with the code;
+  - `authored`: hand-written and unverified.
+
+  Prefer moving a fact up the ladder. A relationship that is authored is said to be authored.
+- **Kinds versus tags.** Kinds say what a thing is. Tags carry only cross-cutting facts: `generated`,
+  `planned`, and one tag per Viewpoint.
+- **Numbers in labels.** A retry count, a schedule or a ceiling is either covered by a check or left
+  out of the label.
+- **CPU architecture.** Every physical node carries its CPU architecture in its title, because the
+  `technology` field does not render on deployment nodes (measured in spike 006). This is the LikeC4
+  form of the Physical View rule at the top of this document.
+- **The `index` view.** An `index` context view is the landing page. It sits outside the 4+1.
+- **Identifiers.** Hyphenated ids are allowed, under the rule `[a-zA-Z_][a-zA-Z0-9_-]*` (V3 below).
+
+### Viewpoints
+
+| Kruchten view | LikeC4 construct | Represents | Does not represent | Provenance |
+|---|---|---|---|---|
+| Logical | plain `view` over `table` elements | tables and the FK ownership chain | columns, entity classes, DTOs | generated (see V4 below); framework-owned tables authored |
+| Process | `view ... of kanban` | request threads, named executors, topics, consumer groups, DB writes | method calls, class names | topics checked; executors and groups authored |
+| Development | `view ... of kanban`, packages as `component` | top-level packages and their dependency direction | classes, third-party libraries | edges generated from imports (see V5 below); no cycle rule |
+| Physical | `deployment` model and `deployment view` | servers (arch in title), cluster, namespaces, workloads | pods, replicas, secrets, the monitoring stack (excluded, as in `production-host.mmd`) | workloads checked against `k8s/base` and `k8s/data`; nodes authored |
+| Scenarios | `dynamic view`, one per outcome | client-visible facts: method and path, status and `code`, cookie, SQL action, topic | internal calls | authored |
+
+Three notes on the table.
+
+**(a) The Logical row.** It bends the "rarely needed" bullet at the top of this document. It earns a
+place because every fact in it is generated, so it costs no upkeep. The exception is the tables of
+Spring Session. `spring.session.jdbc.initialize-schema=always` creates them at startup, outside
+Flyway (`src/main/resources/application.properties` line 187), so they never appear in generated
+output. They are authored and labelled as such.
+
+**(b) Scenarios.** The old `signin` diagram drew its `alt` branches in one picture. The standard is
+one dynamic view per outcome (`signin-ok`, `signin-bad-credentials`, `signin-ceiling`), because one
+trace is one Kruchten scenario. The cost is several views instead of one. Only the first two were
+rendered in verification. Branches inside one view were not tested and are not adopted.
+
+**(c) Scenario layout.** The approved design adopts two layouts and this standard does not choose
+between them:
+
+- `variant sequence` draws a UML sequence diagram only when the PNG export is given `--seq`. Without
+  it, the export draws the ordinary layout, a 4534 x 506 strip for `signin-ok`.
+- `autoLayout TopBottom` takes `signin` from 4970 x 524 to 1384 x 2504.
+
+The measurements against the legibility bounds are in the verification outcomes below.
+
+### Checks
+
+The drift script is spike 007's `.planning/spikes/007-likec4-code-sync-seam/sync.mjs`.
+
+- **Proven in spike 007:** validate; the generated file is up to date; the topic set matches
+  `KafkaTopics.java`; the workload set matches `k8s/base` and `k8s/data`; every `metadata.source`
+  path exists.
+- **Drills:** 4 of 4 drift kinds were caught. A renamed controller class is not caught, by design.
+- **Key vocabulary:** the DSL cannot declare allowed metadata keys (V2 below), so the drift script
+  owns the key vocabulary.
+- **Proposed by this standard, not built:**
+  - an unknown-metadata-key check;
+  - an "every view has a viewpoint tag" check;
+  - an "every `server` node title names an architecture" check.
+
+### Verification outcomes (2026-10-27)
+
+Each outcome opens with its verdict. Evidence paths are relative to the `verify/` folder named
+above. Every pixel size is recorded as text in `verify/png-dimensions.txt`, because the repo ignores
+`out/` folders, so a render kept in one is not in git.
+
+| # | Question | Outcome | Evidence |
+|---|---|---|---|
+| V1 | Does the `sequence` dynamic-view variant work, and can branches be separate views? | ADOPTED with a condition. `variant sequence` parses, but the PNG export draws the ordinary diagram layout unless `--seq` is passed (a 4534 x 506 strip without it). With `--seq` it draws a real UML sequence diagram, and `signin-ok` and `signin-bad-credentials` both render. An `alt`/`else` inside one view was not tested and is not adopted. | `verify/lc4/exp.c4`, `verify/out-seq/signin-ok.png`, `verify/out-seq/signin-bad-credentials.png`, `verify/png-dimensions.txt`, `likec4 export png --help` |
+| V2 | Can the DSL declare allowed metadata keys so a typo fails? | NOT ADOPTED. A `metadata` block inside `specification` is a parse error (`Expecting token of type '}' but found metadata`). A typo key (`sorce`) validates silently. Metadata keys exist only in the TypeScript builder API. Consequence: the drift script must own the key vocabulary. | `verify/lc4-meta/meta.c4`, two validate runs |
+| V3 | Are hyphenated ids allowed? | ADOPTED. Element `sub-el` and scoped view `process-activity` validate and render. The LikeC4 docs give the identifier rule `[a-zA-Z_][a-zA-Z0-9_-]*`. | `verify/lc4/exp.c4`, `verify/png-dimensions.txt` |
+| V4 | Can tables and FKs come from `information_schema` of a Flyway-migrated scratch Postgres? | ADOPTED. Replaying V1 to V9 into a throwaway `postgres:16` and reading back through `information_schema` gives 6 tables and 4 FKs (boards to users, columns to boards, tasks to columns, subtasks to tasks). The container was removed afterwards. Today this gives the same 6 tables as the regex in spike 007, so the gain is only for FKs, or for tables added later by ALTER, and that gain is unmeasured. Gap: Spring Session JDBC creates its tables at startup (`spring.session.jdbc.initialize-schema=always`), outside Flyway, so they never appear. They are an authored, labelled exception. | `verify/fk.fish`, `verify/fk-result.txt`, `application.properties:187` |
+| V5 | Can package edges come from imports, with a no-cycles rule? | PARTLY. Edge extraction is ADOPTED: 38 edges over 14 top-level packages. The no-cycles rule is NOT ADOPTED: `tsort` reports cycles in the current code (base and entity import each other; config, security and service form a loop). A gate would fail today. Whether 38 edges is readable in one view is unmeasured. Collapsing to layers is a possibility, not a result. | `verify/pkg.fish`, `verify/pkg-result.txt` |
+| V6 | Does `autoLayout TopBottom` fit dynamic views to the legibility gate? | ADOPTED for scenarios, with the gate itself still undefined for LikeC4. `signin` goes from 4970 x 524 to 1384 x 2504 PNG. The export uses `deviceScaleFactor` 2, the same 2x as this repo, so natural size is the PNG size divided by 2. The measurements against the gate follow the table. The 12 px text floor cannot be checked, because LikeC4's label font size was not measured. `scripts/verify-diagrams.py` reads `.mmd` and PNG pairs and a Mermaid manifest, so it does not check `.c4` views. | `verify/png-dimensions.txt`, `verify/out-seq/signin-ok.png`, the CLI bundle's `deviceScaleFactor:2` |
+
+V6, natural width against the Legibility test section's bounds (width 1117, displayed height 1600):
+
+- `index`: 854 wide, passes.
+- `process`: 1233 wide, fails. That is spike 006's render. The verify workspace's re-render of the
+  same view is 2508 divided by 2, which is 1254, and fails too. Why the two renders differ was not
+  established.
+- `production`: 2041 wide, fails.
+- `signin` horizontal: 2485 wide, fails.
+- `signin-ok` and `signin-bad-credentials` as sequence: 1599 wide each, fail.
+- `signin` with `autoLayout TopBottom`: 692 x 1252, passes.
+
+### Undefined, not adopted, and outside this change
+
+**Undefined.** The legibility rule for LikeC4 is undefined.
+
+- The 12 px text floor cannot be checked, because LikeC4's label font size was not measured.
+- The 1117 bound was derived from the label size Mermaid draws, in the Legibility test section. It is
+  not known to be the right bound for LikeC4.
+- `scripts/verify-diagrams.py` reads `.mmd` and PNG pairs and the Mermaid manifest, so nothing checks
+  a `.c4` view.
+
+**Not adopted.**
+
+- Declared metadata keys, because the DSL cannot declare them (V2).
+- The no-cycles rule, because a gate would fail on today's code (V5).
+- Branches inside one dynamic view, because they were not tested (V1).
+
+**Unmeasured.**
+
+- Whether 38 edges reads in one development view. Collapsing to layers is a possibility, not a result.
+- The gain of `information_schema` over spike 007's regex, which today gives the same 6 tables. The
+  gain applies only to FKs, or to tables added later by ALTER.
+
+**Outside this change.** This change leaves out:
+
+- moving the model out of `.planning/spikes/`;
+- migrating any of the seven Mermaid diagrams;
+- the four diagrams with no LikeC4 counterpart yet: `signup`, `error-status-split`, `push-to-image`
+  and `inbound-packet-path`;
+- retiring `render-diagrams.sh`, `verify-diagrams.py`, `mermaid-config.json` and
+  `render-manifest.tsv`, because a migration ends when its old home is gone, and that is a later
+  change;
+- a LikeC4 text-size legibility rule;
+- the three unbuilt checks listed under Checks.
+
 ## Layout and naming
 
 Every diagram is `docs/diagrams/<view>/<subject>.mmd` plus a rendered `<subject>.png` twin in the
