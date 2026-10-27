@@ -48,6 +48,10 @@ async function loadTooling() {
 // set, and the check below is what keeps a view from sitting outside it.
 const VIEWPOINTS = ['logical', 'process', 'development', 'physical', 'scenarios']
 
+// The metadata keys the checks read. The DSL cannot declare metadata keys, so this list is the
+// vocabulary: a key outside it is reported, and adding a key means editing it here.
+const METADATA_KEYS = ['source', 'workload']
+
 // --- facts read from the code ---------------------------------------------------------
 
 function tables() {
@@ -378,6 +382,27 @@ function checkPlacement(computed, docs, problems) {
   }
 }
 
+// Reports every metadata key outside METADATA_KEYS on elements, deployment nodes, instances and
+// relationships, each in id order. A relationship's own id is a hash, so it is written as
+// `source -> target`. A misspelled `source` would otherwise skip the source-exists check silently.
+function checkMetadataKeys(computed, problems) {
+  const surfaces = [
+    ['element', [...computed.elements()].map((x) => [x.id, x])],
+    ['deployment node', [...computed.deployment.nodes()].map((x) => [x.id, x])],
+    ['instance', [...computed.deployment.instances()].map((x) => [x.id, x])],
+    ['relationship', [...computed.relationships()].map((x) => [`${x.source.id} -> ${x.target.id}`, x])],
+  ]
+  for (const [surface, items] of surfaces) {
+    for (const [id, item] of items.sort((a, b) => a[0].localeCompare(b[0]))) {
+      for (const key of Object.keys(item.getMetadata() ?? {}).sort()) {
+        if (!METADATA_KEYS.includes(key)) {
+          problems.push(`${surface} ${id} carries metadata key '${key}', not in the allowlist (${METADATA_KEYS.join(', ')})`)
+        }
+      }
+    }
+  }
+}
+
 // --- generation -----------------------------------------------------------------------
 
 // One function per fact source, each returning the lines it contributes, so a source added
@@ -503,6 +528,7 @@ async function check() {
     if (!defined.has(n.title)) problems.push(`deployment node ${n.id} names namespace '${n.title}', which no manifest under k8s/ defines`)
   }
 
+  checkMetadataKeys(computed, problems)
   checkPlacement(computed, docs, problems)
 
   const pkgs = packages()

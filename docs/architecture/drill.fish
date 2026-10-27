@@ -139,4 +139,16 @@ fresh
 certmgr_into cert-manager
 run
 
+echo "== D12: a metadata key is misspelled on an element (sourc)"
+fresh
+sed -i "s|^      source 'k8s/platform/traefik'|      sourc 'k8s/platform/traefik'|" $scratch/model/model.c4
+run
+
+echo "== D12b: unknown metadata keys on a deployment node, an instance and a relationship"
+fresh
+sed -i "s|^\(      kube-system = namespace .*{\)\$|\1\n        metadata { nodekey 'x' }|" $scratch/model/deployment.c4
+sed -i "s|^        instanceOf traefik\$|        instanceOf traefik {\n          metadata { instkey 'y' }\n        }|" $scratch/model/deployment.c4
+sed -i "s|^  client -\[sync\]-> traefik 'HTTPS :443'\$|  client -[sync]-> traefik 'HTTPS :443' {\n    metadata { relkey 'z' }\n  }|" $scratch/model/model.c4
+run
+
 trash-put $scratch

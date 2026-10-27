@@ -99,3 +99,15 @@
   exit=0
   OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D12: a metadata key is misspelled on an element (sourc)
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - element traefik carries metadata key 'sourc', not in the allowlist (source, workload)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D12b: unknown metadata keys on a deployment node, an instance and a relationship
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - deployment node netcup.k3s.kube-system carries metadata key 'nodekey', not in the allowlist (source, workload)
+  - instance netcup.k3s.kube-system.traefik carries metadata key 'instkey', not in the allowlist (source, workload)
+  - relationship client -> traefik carries metadata key 'relkey', not in the allowlist (source, workload)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
