@@ -124,17 +124,72 @@ authorization, given the real-traffic-interruption and Let's Encrypt cert-safety
 
 ### Pending Todos
 
-59 pending todos in `.planning/todos/pending/` as of 2026-09-27 (count drifted from this
-section's earlier "~46" since v1.3 close and was not tracked incrementally; not re-audited here,
-just corrected to the current `ls | wc -l`). Newest: `2026-09-27-two-kustomizations-race-for-the-grafana-ingressroute-name.md`
-(moderate, infra — the edge/monitoring Kustomization IngressRoute-name collision found live during
-13-09's Flux resume, filed rather than fixed since it is out of that plan's scope). Also recent:
-`2026-09-24-netcup-vps-intermittent-tcp-retransmits-under-sustained-throughput.md`
-(minor, infra — a real but thin iperf3 retransmit/bitrate-dip signal found while triaging an
-orphaned diagnostics file during the 2026-09-25 docs cleanup). Full inventory in this document's
-Deferred Items table below, acknowledged and carried forward at v1.3 close. None block the next
-milestone; triage candidates for it via
-`.planning/todos/pending/`.
+- [2026-08-01] [tooling] Bump Java version from 21 to 25 (current LTS) — [todo file](.planning/todos/pending/2026-08-01-bump-java-version-from-21-to-25-current-lts.md)
+- [2026-08-02] [backend] Enable virtual threads in Spring Boot config — [todo file](.planning/todos/pending/2026-08-02-enable-virtual-threads-in-spring-boot-config.md)
+- [2026-08-03] [tooling] Evaluate NullAway for null-safety dataflow analysis — [todo file](.planning/todos/pending/2026-08-03-evaluate-nullaway-for-null-safety-dataflow.md)
+- [2026-08-04] [backend] Explore an alert-service integration as a separate microservice — [todo file](.planning/todos/pending/2026-08-04-explore-alert-service-as-a-separate-microservice-for-tech-ex.md)
+- [2026-08-06] [backend] D-02's replay-from-zero rationale is not delivered by non-transitive BACKWARD — [todo file](.planning/todos/pending/2026-08-06-d-02-backward-non-transitive-vs-replay-from-zero.md)
+- [2026-08-10] [testing] Investigate refactoring existing near-duplicate tests to @ParameterizedTest — [todo file](.planning/todos/pending/2026-08-10-investigate-refactoring-existing-tests-to-parameterized.md)
+- [2026-08-10] [backend] Kafka-sourced ActivityEvent fields are persisted with no re-validation and no producer-authentication bou… — [todo file](.planning/todos/pending/2026-08-10-kafka-activity-consumer-trusts-unvalidated-event-fields.md)
+- [2026-08-11] [backend] ActivityAction enum lives in entity/ but is not a JPA entity — relocate to match its actual role — [todo file](.planning/todos/pending/2026-08-11-activityaction-enum-misplaced-in-entity-package.md)
+- [2026-08-11] [backend] Add OpenAPI breaking-change detection to CI (schema diffing against a checked-in baseline) — [todo file](.planning/todos/pending/2026-08-11-add-openapi-breaking-change-detection-to-ci.md)
+- [2026-08-11] [docs] Revisit Java code comment and JavaDoc verbosity policy — [todo file](.planning/todos/pending/2026-08-11-revisit-java-code-comment-and-javadoc-verbosity-policy.md)
+- [2026-08-11] [backend] TaskMovedEvent carries no position, unlike the new ColumnReorderedEvent (fork D-E, resolved E1) — [todo file](.planning/todos/pending/2026-08-11-taskmovedevent-position-asymmetry-not-fixed-in-s5e-fork-d-e.md)
+- [2026-08-11] [backend] activity_log has no retention policy, and its growth rate just materially accelerated — [todo file](.planning/todos/pending/2026-08-11-unbounded-activity-log-growth-rate-materially-accelerated-by-s.md)
+- [2026-08-11] [backend] UpdateBoardRequestDTO.name's optionality rests on the same unexamined assumption D-02 declined to accep… — [todo file](.planning/todos/pending/2026-08-11-updateboardrequestdto-name-optionality-rests-on-same-unex.md)
+- [2026-08-12] [infra] Add a nonprod/staging environment and wire Playwright E2E tests against real (non-mocked) deploys — [todo file](.planning/todos/pending/2026-08-12-add-nonprod-staging-environment-and-playwright-e2e-ci-gate.md)
+- [2026-08-12] [backend] Four remaining ResponseEntity.created(URI.create(request.getRequestURI())) sites now diverge from s… — [todo file](.planning/todos/pending/2026-08-12-four-remaining-created-location-sites-now-diverge-from-signup.md)
+- [2026-08-12] [backend] POST /signup's Location header names a URI with no GET handler (GET /users/me does not exist) — [todo file](.planning/todos/pending/2026-08-12-signup-location-header-points-at-a-uri-with-no-get-handler.md)
+- [2026-08-13] [tooling] Ratchet dependencyCheckAnalyze's failBuildOnCVSS after a real baseline exists — [todo file](.planning/todos/pending/2026-08-13-ratchet-failbuildoncvss-after-a-real-dependency-check-baseline.md)
+- [2026-08-13] [security] "Two independent session-concurrency enforcers coexist (filter-held, in-memory vs. bean, JDBC-backed)" — [todo file](.planning/todos/pending/2026-08-13-two-independent-session-ceiling-enforcers-coexist.md)
+- [2026-08-16] [tooling] gsd-tools' state.record-metric (or equivalent) writes the wrong progress percent -- reproduced twice,… — [todo file](.planning/todos/pending/2026-08-16-gsd-tools-state-record-metric-writes-wrong-progress-percent.md)
+- [2026-08-18] [security] 500 ProblemDetail response's `detail` carries the raw exception message — [todo file](.planning/todos/pending/2026-08-18-500-problemdetail-detail-carries-raw-exception-message.md)
+- [2026-08-19] [ci] deploy.yml has no path filter, so docs-only pushes trigger a full production+nonprod deploy — [todo file](.planning/todos/pending/2026-08-19-deploy-yml-has-no-path-filter-so-docs-only-pushes-trigger-a-full-deploy.md)
+- [2026-08-20] [security] "No rate limiting / volumetric brute-force guard on POST /signin" — [todo file](.planning/todos/pending/2026-08-20-add-rate-limiting-to-signin-to-bound-brute-force-volume.md)
+- [2026-08-20] [security] "Container runs as root — no USER directive in the Dockerfile" — [todo file](.planning/todos/pending/2026-08-20-dockerfile-runs-as-root-no-user-directive.md)
+- [2026-08-20] [security] "IDOR chain consistency: nested path segments (boardId, columnId) are never cross-checked against the le… — [todo file](.planning/todos/pending/2026-08-20-idor-same-user-chain-consistency-boardid-columnid-not-c.md)
+- [2026-08-20] [security] "Internal Kafka / schema-registry hop has neither SASL auth nor TLS" — [todo file](.planning/todos/pending/2026-08-20-internal-kafka-hop-has-no-sasl-auth-or-tls.md)
+- [2026-08-20] [ci] "No branch protection on master" — [todo file](.planning/todos/pending/2026-08-20-no-branch-protection-on-master.md) — Needs Enable GitHub branch protection on `master` (require PR review and/or the existing test/build/.
+- [2026-08-20] [security] "No breached-password check or strength meter on signup" — [todo file](.planning/todos/pending/2026-08-20-no-breached-password-check-or-strength-meter-on-signup.md)
+- [2026-08-20] [tooling] No CI check for stale Gradle dependency-verification metadata — [todo file](.planning/todos/pending/2026-08-20-no-ci-check-for-stale-gradle-verification-metadata.md)
+- [2026-08-20] [backend] "No explicit Content-Type validation on REST endpoints" — [todo file](.planning/todos/pending/2026-08-20-no-content-type-validation-on-rest-endpoints.md)
+- [2026-08-20] [security] "No formal data classification; no self-service data export/delete/consent capture" — [todo file](.planning/todos/pending/2026-08-20-no-data-classification-or-self-service-export-delete.md)
+- [2026-08-20] [infra] "No documented backup / restore runbook for the production database" — [todo file](.planning/todos/pending/2026-08-20-no-documented-backup-restore-runbook-for-prod-db.md)
+- [2026-08-20] [security] "No MFA / second-factor enrollment path" — [todo file](.planning/todos/pending/2026-08-20-no-mfa-second-factor-enrollment-path.md)
+- [2026-08-20] [security] "No notification on auth-detail changes (credential reset, new-device login)" — [todo file](.planning/todos/pending/2026-08-20-no-notification-on-auth-detail-changes-credential-rese.md)
+- [2026-08-20] [security] "No password-change capability exists anywhere in the API" — [todo file](.planning/todos/pending/2026-08-20-no-password-change-capability-exists-anywhere-in-api.md)
+- [2026-08-20] [ci] "Production deploys get no automated post-deploy health verification (nonprod does)" — [todo file](.planning/todos/pending/2026-08-20-no-prod-post-deploy-health-verification.md)
+- [2026-08-20] [infra] "No remote log shipping, no structured/UTC logging standard, no alerting on unusual activity" — [todo file](.planning/todos/pending/2026-08-20-no-remote-log-shipping-structured-logging-or-alerting.md)
+- [2026-08-20] [security] "No secret pepper on top of BCrypt's own per-hash salt" — [todo file](.planning/todos/pending/2026-08-20-no-secret-pepper-on-top-of-bcrypt-salt.md)
+- [2026-08-20] [security] "No secrets-vault for runtime production secrets; no stated key/secret rotation cadence" — [todo file](.planning/todos/pending/2026-08-20-no-secrets-vault-for-runtime-prod-secrets-no-rotation.md)
+- [2026-08-20] [security] "No security-relevant event logging on the authentication / access-control paths" — [todo file](.planning/todos/pending/2026-08-20-no-security-event-logging-on-auth-and-access-control.md)
+- [2026-08-20] [security] "No self-service session revocation, and no re-authentication before destructive actions" — [todo file](.planning/todos/pending/2026-08-20-no-session-revocation-or-reauth-before-destructive-act.md)
+- [2026-08-20] [security] "Password composition regex blocks Unicode-only passwords and violates ASVS's no-composition-rules guidance" — [todo file](.planning/todos/pending/2026-08-20-password-composition-regex-blocks-unicode-only-pass.md)
+- [2026-08-20] [security] "Password minimum/maximum length undersized against ASVS's bar" — [todo file](.planning/todos/pending/2026-08-20-password-min-max-length-undersized-against-asvs.md)
+- [2026-08-20] [security] "No CSP anywhere; HSTS likely never emitted behind Caddy (no forwarded-headers-strategy); baseline head… — [todo file](.planning/todos/pending/2026-08-20-security-response-headers-csp-and-unreliable-hsts-behind.md)
+- [2026-08-20] [security] "Swagger / OpenAPI docs are reachable in production with no profile gate" — [todo file](.planning/todos/pending/2026-08-20-swagger-openapi-docs-reachable-in-prod-no-profile-gate.md)
+- [2026-08-20] [security] "CSRF defense reasoning is sound but only half-verified: no test proves an actual cross-origin request … — [todo file](.planning/todos/pending/2026-08-20-verify-csrf-defense-with-a-real-cross-origin-rejection-t.md)
+- [2026-08-26] [tooling] Add mutation testing with PITest — [todo file](.planning/todos/pending/2026-08-26-add-mutation-testing-with-pitest.md) — Needs TBD — likely: add the `info.solidsoft.pitest` Gradle plugin to `build.gradle`,.
+- [2026-09-03] [api] "A 429 from the edge rate limiter does not carry the RFC 7807 ProblemDetail envelope" — [todo file](.planning/todos/pending/2026-09-03-429-response-is-not-an-rfc-7807-problemdetail.md)
+- [2026-09-04] [api] Allow editing a column's color after creation — [todo file](.planning/todos/pending/2026-09-04-allow-editing-a-columns-color-after-creation.md)
+- [2026-09-04] [testing] Audit the codebase for places property-based testing (jqwik) would pay off — [todo file](.planning/todos/pending/2026-09-04-audit-codebase-for-property-based-testing-with-jqwik.md)
+- [2026-09-05] [api] ecmaEquivalentOf does not fail closed on Java-only regex constructs — [todo file](.planning/todos/pending/2026-09-05-ecmaequivalentof-does-not-fail-closed-on-java-only-regex-constructs.md)
+- [2026-09-06] [security] "IPv6 published ports have no host-level firewall — DOCKER-USER's new policy cannot reach this path" — [todo file](.planning/todos/pending/2026-09-06-ipv6-published-ports-have-no-host-level-firewall.md)
+- [2026-09-07] [api] "Fix direct-@Pattern bypass and UTF-16 length-oracle blind spot in constraint customizer" — [todo file](.planning/todos/pending/2026-09-07-fix-direct-pattern-bypass-and-utf-16-length-oracle-blind-spo.md)
+- [2026-09-07] [infra] "Groom the three phase-12 Grafana dashboards and expose selected ones as public links" — [todo file](.planning/todos/pending/2026-09-07-groom-grafana-dashboards-and-expose-public-links.md)
+- [2026-09-08] [infra] "SCP'd config changes do not reach the running container without a restart (Grafana datas… — [todo file](.planning/todos/pending/2026-09-08-scp-d-config-changes-do-not-reach-the-running-container-without-a-restart.md)
+- [2026-09-24] [infra] "Netcup VPS shows intermittent TCP retransmits and a bitrate dip under sustained iperf3 throughp… — [todo file](.planning/todos/pending/2026-09-24-netcup-vps-intermittent-tcp-retransmits-under-sustained-throughput.md)
+- [unknown] [general] Untitled — [todo file](.planning/todos/pending/2026-09-30-no-backups-of-current-production-data.md)
+- [unknown] [general] Untitled — [todo file](.planning/todos/pending/2026-09-30-phase-13-review-warnings-wr01-wr06.md)
+- [unknown] [general] Untitled — [todo file](.planning/todos/pending/2026-09-30-prove-kanban-ingress-drop-counter-after-docker-stop.md)
+- [unknown] [general] Untitled — [todo file](.planning/todos/pending/2026-09-30-reproduce-two-source-ip-rate-limit-proof.md)
+- [2026-10-06] [docs] "Learning chapters 00, 05, 06, 07, 08, 09, 10 and 11 still describe the Docker Compose / Caddy / Promtail deploy… — [todo file](.planning/todos/pending/2026-10-05-learning-guide-describes-the-compose-era-deployment.md)
+- [2026-10-06] [api] "A multipart/form-data Content-Type with no boundary returns 500 INTERNAL_ERROR" — [todo file](.planning/todos/pending/2026-10-06-malformed-multipart-content-type-returns-500.md)
+- [2026-10-06] [api-documentation] "ColumnResponseDTO.color is documented as a non-null string, but a column can come back with… — [todo file](.planning/todos/pending/2026-10-06-openapi-column-color-documented-non-null-but-returned-null.md)
+- [2026-10-06] [api-documentation] "OpenAPI documents 200 for create operations that return 201" — [todo file](.planning/todos/pending/2026-10-06-openapi-does-not-list-the-201-created-responses.md)
+- [2026-10-06] [api-documentation] "OpenAPI declares ProblemDetail.instance as format: uri, but the app returns a path" — [todo file](.planning/todos/pending/2026-10-06-openapi-error-instance-declared-format-uri-but-app-returns-a-path.md)
+- [2026-10-06] [api-documentation] "OpenAPI request schemas omit the Password, AppEmail and name/title constraints, so schema-vali… — [todo file](.planning/todos/pending/2026-10-06-openapi-request-schemas-omit-the-validation-constraints.md)
+- [2026-10-27] [docs] Build the Kruchten views the LikeC4 standard describes — [todo file](.planning/todos/pending/2026-10-27-build-the-kruchten-views-the-likec4-standard-describes.md)
 
 ### Blockers/Concerns
 
