@@ -102,7 +102,7 @@ the `verify/` folder.
 | Logical | plain `view` over `table` elements | tables and the FK ownership chain | columns, entity classes, DTOs | tables and `fk` edges generated from the migrations by a statement-level regex (see V4 and note (a)); the two Spring Session tables authored |
 | Process | `view ... of kanban` | request threads, named executors, topics, consumer groups, DB writes | method calls, class names | topics checked; executors and groups authored |
 | Development | `view ... of kanban`, packages as `component` | top-level packages and their dependency direction | classes, third-party libraries | components and `imports` edges generated from import lines (see V5 and note (d)); cycles printed by the check, not gated |
-| Physical | `deployment` model and `deployment view` | servers (arch in title), cluster, namespaces, workloads | pods, replicas, secrets, the monitoring stack (excluded, as in `production-host.mmd`) | workloads checked against `k8s/base` and `k8s/data`; nodes authored |
+| Physical | `deployment` model and `deployment view` | servers (arch in title), cluster, namespaces, workloads | pods, replicas, secrets, the monitoring stack (excluded, as in `production-host.mmd`) | workloads checked against `k8s/base`, `k8s/data` and `k8s/platform`; namespace nodes and instance placement checked against the manifests under `k8s`; the server and cluster nodes authored |
 | Scenarios | `dynamic view`, one per outcome | client-visible facts: method and path, status and `code`, cookie, SQL action, topic | internal calls | authored |
 
 Three notes on the table.
@@ -159,7 +159,7 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
 
 - **Proven in spike 007:** validate; the generated file is up to date; the topic set matches
   `KafkaTopics.java`; the workload set matches `k8s/base` and `k8s/data`; every `metadata.source`
-  path exists.
+  path exists. The workload reader was widened to `k8s/platform` in the bullet below.
 - **Built in 261027-if9:**
   - the viewpoint-tag rule: every view except `index` carries exactly one of the five tags;
   - the coverage rule: every viewpoint has at least one view;
@@ -167,24 +167,60 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
     a migration that adds or drops an FK, or a Java import that adds or removes a cross-package
     edge, makes it stale;
   - the cycle report: `sync.mjs check` prints the package cycles and never gates on them.
+- **Built in the architecture-views workstream, Phase 1:**
+  - the namespace rule: every namespace a manifest under `k8s` defines, from a `Namespace` object or
+    any string `namespace` or `targetNamespace` value, is a namespace node, and every namespace node
+    is defined by a manifest;
+  - the placement rule: each element with instances sits in exactly the namespaces its manifests
+    land in, following a kustomization's namespace through its `resources`. A Flux `HelmRelease`
+    places in its `spec.targetNamespace` when set, else its `metadata.namespace`, and Flux source
+    objects such as a `HelmRepository` place nothing, proven on the real cert-manager manifest by
+    D16 and D16b. Three limits are accepted rather than checked:
+    - Flux Kustomization spec.targetNamespace is not modelled: the rule follows only a kustomize
+      kustomization's namespace through its resources, so a directory that a Flux Kustomization
+      applies with spec.targetNamespace is placed by its own kustomization and `metadata.namespace`
+      values. Measured on 2026-10-27, 9 Flux Kustomizations sit under `k8s/flux-system`
+      (`rg -l "^apiVersion: kustomize.toolkit.fluxcd.io/" k8s/flux-system`) and none sets a
+      string-valued one (`rg -n "^\s+targetNamespace:\s*\S" k8s/flux-system` prints nothing). Before
+      an element is anchored on a directory applied by one that sets it, `sync.mjs` models the field
+      or the element is recorded in this section as not placement-checked.
+    - A HelmRelease is placed by its declared targetNamespace and the check never renders the chart,
+      so it checks the declared targetNamespace, not the rendered chart
+      (an object a chart creates outside its targetNamespace is invisible to the check).
+    - An element with no `workload` metadata and no `source` under `k8s` has no anchor document and is
+      skipped, so a moved instance of it passes. Every element added to the Physical view, starting
+      with the architecture-views Phase 2 elements, must carry a workload or k8s source anchor,
+      or be recorded here as not placement-checked. The Phase 1 model has no such element;
+  - the metadata-key rule: `METADATA_KEYS` in `sync.mjs` (`source` and `workload`) is checked on
+    elements, deployment nodes, instances and relationships;
+  - the view-membership rule: every deployment instance is drawn in at least one deployment view
+    (namespace nodes with no instances are not required to be drawn);
+  - workloads are read with the `yaml` parser, not a regex;
+  - fail-closed fact sources: a missing tree among `k8s/base`, `k8s/data`, `k8s/platform`,
+    `k8s/overlays`, `k8s/monitoring` and `k8s/flux-system`, or a manifest that does not parse, exits
+    4, which the hook reports as not run to completion and never as drift.
 - **Drills:** `docs/architecture/drill.fish` runs on a scratch copy (`--model DIR`), never on the
-  real model. 12 of 12 drills that introduce drift are caught (D1 to D4, D6, D6b, D7, D7b, D7c, D8,
-  D8b and D9). D6 to D9 were each seen not caught before their rule existed
-  (`261027-if9-T1-red.txt` to `261027-if9-T4-red.txt`). D5, a renamed controller class, is the negative control: it is not
-  caught, by design. The result is `docs/architecture/drill-output.txt`. The hook's self-test
-  `scripts/pre-commit-likec4-selftest.py` runs 15 cases, 9 of them drift refusals, and passes 15/15.
+  real model. It records 27 sections: the baseline, 23 drills that introduce a break and are caught
+  (exit 1 for drift in 20, exit 4 for a fact source in D14, D14b and D14c), and the controls D5,
+  D13b and D16b, which stay clean. D6 to D9 were each seen not caught before their rule existed
+  (`261027-if9-T1-red.txt` to `261027-if9-T4-red.txt`). Each drill from D10 on was recorded not caught
+  by the pre-phase `sync.mjs` in
+  `.planning/workstreams/architecture-views/phases/01-foundations-edge-fix-and-honesty-gates/01-drills-before.txt`
+  (all 13 sections, D10 to D16b, show `exit=0` there). D5, a renamed controller class, is the
+  negative control: it is not caught, by design. The result is `docs/architecture/drill-output.txt`.
+  The hook's self-test `scripts/pre-commit-likec4-selftest.py` runs 16 cases, 10 of them drift
+  refusals, and passes 16/16.
 - **Wired:** the pre-commit hook runs `node docs/architecture/sync.mjs check` when a staged path is
-  under `src/main/resources/db/migration`, `k8s/base`, `k8s/data` or `docs/architecture`, or is
-  `KafkaTopics.java`, and refuses the commit when Node or the install is missing. The
+  under `src/main/resources/db/migration`, `k8s` or `docs/architecture`, or is `KafkaTopics.java`,
+  and refuses the commit when Node or the install is missing. The
   `likec4-model-drift` job in `.github/workflows/invariant-checks.yml` runs the hook's self-test and the
-  check. A changed metadata source outside those paths is caught in CI only. So is a Java change that
+  check. A changed metadata source under `src/main/java` is caught in CI only. So is a Java change that
   adds or removes a cross-package import: `src/main/java` is not a trigger path, because a trigger
   would make Node and a per-worktree install a prerequisite of every Java commit. Such a commit
   passes the hook and fails CI.
 - **Key vocabulary:** the DSL cannot declare allowed metadata keys (V2 below), so the drift script
-  owns the key vocabulary.
+  owns the key vocabulary: `METADATA_KEYS` in `sync.mjs`.
 - **Proposed by this standard, not built:**
-  - an unknown-metadata-key check;
   - an "every `server` node title names an architecture" check.
 
 ### Verification outcomes (2026-10-27)
