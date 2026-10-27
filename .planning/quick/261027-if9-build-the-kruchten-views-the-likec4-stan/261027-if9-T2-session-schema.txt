@@ -1,0 +1,21 @@
+Spring Session JDBC schema, verified from the jar (task 261027-if9 T2, step 1)
+
+Jar: ~/.gradle/caches/modules-2/files-2.1/org.springframework.session/spring-session-jdbc/3.5.7/2d894eb8c91741d19f2efda4a5095dd353b977d3/spring-session-jdbc-3.5.7.jar
+Entry: org/springframework/session/jdbc/schema-postgresql.sql (read with unzip -p)
+
+Tables (unquoted, so Postgres folds them to lower case):
+  SPRING_SESSION             -> spring_session
+  SPRING_SESSION_ATTRIBUTES  -> spring_session_attributes
+
+FK clause (verbatim):
+  CONSTRAINT SPRING_SESSION_ATTRIBUTES_FK FOREIGN KEY (SESSION_PRIMARY_ID)
+    REFERENCES SPRING_SESSION(PRIMARY_ID) ON DELETE CASCADE
+
+So the authored edge is spring_session_attributes -> spring_session, labelled session_primary_id.
+
+Properties (src/main/resources/application.properties):
+  line 175: spring.session.store-type=jdbc
+  line 187: spring.session.jdbc.initialize-schema=always
+  No spring.session.jdbc.table-name override anywhere under src/main/resources or src/main/java
+  (rg for table-name, tableName and spring.session.jdbc found only the initialize-schema lines
+  and comments; ResetTruncateService.java:20 also names spring_session_attributes).

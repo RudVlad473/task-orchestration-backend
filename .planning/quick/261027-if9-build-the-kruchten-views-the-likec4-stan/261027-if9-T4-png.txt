@@ -1,0 +1,35 @@
+/home/andre/dev/kanban-board-backend/docs/architecture/out/data.png:                   PNG image data, 2028 x 2604, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/development.png:            PNG image data, 8950 x 5272, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/index.png:                  PNG image data, 1708 x 2408, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/process.png:                PNG image data, 2466 x 3072, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/production.png:             PNG image data, 4082 x 2482, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/signin-bad-credentials.png: PNG image data, 3000 x 1148, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/signin-ceiling.png:         PNG image data, 3676 x 1760, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/signin-ok.png:              PNG image data, 3676 x 1928, 8-bit/color RGBA, non-interlaced
+
+== T4 sizes against T3 (261027-if9-T3-png.txt)
+data 2028x2604, development 8950x5272, index 1708x2408, process 2466x3072, production 4082x2482: all identical to T3.
+signin.png is gone (the single-trace view was deleted). Three new files: signin-ok, signin-bad-credentials, signin-ceiling.
+
+== natural widths (PNG size / 2, deviceScaleFactor 2, V6)
+signin-ok.png               3676 x 1928  -> natural 1838 x 964
+signin-bad-credentials.png  3000 x 1148  -> natural 1500 x 574
+signin-ceiling.png          3676 x 1760  -> natural 1838 x 880
+Recorded without a verdict against the 1117 px Mermaid bound, per the todo's defaulted decision.
+
+== what I saw (each PNG opened with the Read tool, downscaled to 2000 px wide; I had no crop tool)
+signin-ok: five lifelines left to right: Browser / API client, Traefik, REST API, users (cylinder), spring_session (cylinder,
+  its box reads "Authored. Spring Session creates this table at startup (initialize-schema=always), outside Flyway.").
+  Nine numbered steps: 1 POST /api/signin {email, password} client to Traefik; 2 forward Traefik to REST API; 3 SELECT user
+  by email REST API to users; 4 row, users back to REST API; 5 SELECT user by id to users; 6 read live sessions for the
+  user to spring_session; 7 rotate session id, save security context to spring_session; 8 200 Set-Cookie JSESSIONID REST
+  API back to Traefik; 9 200 {id, email, displayName, theme} Traefik back to the client. Matches step 4 of the plan.
+signin-bad-credentials: four lifelines (client, Traefik, REST API, users). Six steps: POST, forward, SELECT user by email,
+  no row (users back to REST API), 401 BAD_CREDENTIALS (REST API to Traefik), 401 ProblemDetail, code BAD_CREDENTIALS
+  (Traefik to client). Matches the plan.
+signin-ceiling: the five lifelines of signin-ok. Steps 1 to 6 as signin-ok, then 7 ceiling reached (spring_session back
+  to REST API), 8 401 BAD_CREDENTIALS, 9 401 ProblemDetail, code BAD_CREDENTIALS. Matches the plan.
+All three draw as UML sequence diagrams (lifelines, activation bars, numbered step labels), not the ordinary layout, so
+--seq took effect. Not established: the rendering at natural size (I saw only the downscaled image), so whether the 12 px
+label text floor holds is not verified. Request arrows from REST API to the tables draw dashed, like the responses; the HTTP
+arrows (steps 1 and 2) draw solid. I did not establish why.

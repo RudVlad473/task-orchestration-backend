@@ -1,0 +1,5 @@
+/home/andre/dev/kanban-board-backend/docs/architecture/out/data.png:       PNG image data, 1292 x 1912, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/index.png:      PNG image data, 1708 x 2408, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/process.png:    PNG image data, 2466 x 3072, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/production.png: PNG image data, 4082 x 2482, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/signin.png:     PNG image data, 4970 x 524, 8-bit/color RGBA, non-interlaced

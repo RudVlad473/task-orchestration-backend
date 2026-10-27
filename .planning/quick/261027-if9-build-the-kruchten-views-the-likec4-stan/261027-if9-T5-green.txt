@@ -1,0 +1,40 @@
+== check
+OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+check-exit=0
+== drill
+drill-exit=0
+== selftest
+PASS: test_01_new_migration_without_regenerating_is_refused
+PASS: test_02_new_topic_constant_pathspec_commit_is_refused
+PASS: test_03_new_deployment_commit_all_is_refused
+PASS: test_04_deleting_a_cited_manifest_is_refused
+PASS: test_05_model_only_edit_is_refused
+PASS: test_06_migration_with_regenerated_model_passes_the_check
+PASS: test_07_topic_constant_with_model_topic_passes_the_check
+PASS: test_08_deployment_with_modelled_workload_passes_the_check
+PROBE ok stale-no-tooling: likec4 is not resolvable from the scratch repo
+PASS: test_09_stale_model_without_tooling_prints_the_install_command
+PASS: test_10_no_node_on_path_is_refused_with_the_install_command
+PROBE ok unrelated-path: likec4 is not resolvable from the scratch repo
+PASS: test_11_unrelated_path_runs_no_drift_step
+PASS: test_12_untagged_view_is_refused
+PASS: test_13_added_foreign_key_is_refused
+PASS: test_14_added_package_import_is_refused
+PASS: test_15_viewpoint_without_a_view_is_refused
+15/15 passed
+selftest-exit=0
+== validate
+[2m13:12:39.764[0m [1m[32mINFO [0m [1m[36mlikec4.lang[0m [2mlayout[22m wasm[0m
+[2m13:12:39.779[0m [1m[32mINFO [0m [1m[36mlikec4.lang[0m [2mworkspace:[22m /home/andre/dev/kanban-board-backend/docs/architecture/model[0m
+[2m13:12:40.455[0m [1m[32mINFO [0m [1m[36mlikec4.lang[0m [2mworkspace:[22m found 5 source files[0m
+[2m13:12:40.836[0m [1m[32mINFO [0m [1m[36mlikec4.c4:validate[0m [32m✓ Valid[39m[2m (5 files)[22m[0m
+[2m13:12:40.837[0m [1m[32mINFO [0m [1m[36mlikec4.c4:validate[0m [32mvalidate 1s[39m[0m
+validate-exit=0
+== comments
+OK: 330 files, 1280 comment blocks
+comments-exit=0
+GATE PASS
+               total        used        free      shared  buff/cache   available
+Mem:           8.7Gi       3.9Gi       1.6Gi        96Mi       3.5Gi       4.9Gi
+Swap:          2.0Gi       2.0Gi       4.0Ki

@@ -1,0 +1,102 @@
+== cross-check: generated import edges against pkg-now.txt, and the cycle line
+generated edges: 38; pkg.fish edges: 38
+edge-diff-exit=0 (0 = the two sets are equal)
+package components in generated.c4: 14
+folders under the app root: 14
+-[imports]-> lines: 38
+== side by side (generated | pkg.fish)
+activitylog constant|activitylog constant
+activitylog entity|activitylog entity
+activitylog event|activitylog event
+activitylog repository|activitylog repository
+base entity|base entity
+config constant|config constant
+config dto|config dto
+config event|config event
+config security|config security
+controller constant|controller constant
+controller dto|controller dto
+controller exception|controller exception
+controller security|controller security
+controller service|controller service
+dto base|dto base
+dto constant|dto constant
+dto entity|dto entity
+entity base|entity base
+entity config|entity config
+entity constant|entity constant
+handler constant|handler constant
+handler exception|handler exception
+mapper dto|mapper dto
+mapper entity|mapper entity
+repository entity|repository entity
+security constant|security constant
+security dto|security dto
+security entity|security entity
+security exception|security exception
+security service|security service
+service config|service config
+service constant|service constant
+service dto|service dto
+service entity|service entity
+service event|service event
+service exception|service exception
+service mapper|service mapper
+service repository|service repository
+== check
+OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+check-exit=0
+== check timing before (T2 tree, step 1, scratch/pkg-now.txt run): 925 935 927 ms, median 927
+== check timing after (this tree, scratch/pkg-after.txt run): 910 958 1039 ms, median 958 (ratio 1.03)
+== free -h
+               total        used        free      shared  buff/cache   available
+Mem:           8.7Gi       3.7Gi       1.7Gi        96Mi       3.6Gi       5.1Gi
+Swap:          2.0Gi       2.0Gi       1.3Mi
+== gate
+== check
+OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+check-exit=0
+== drill
+drill-exit=0
+== selftest
+PASS: test_01_new_migration_without_regenerating_is_refused
+PASS: test_02_new_topic_constant_pathspec_commit_is_refused
+PASS: test_03_new_deployment_commit_all_is_refused
+PASS: test_04_deleting_a_cited_manifest_is_refused
+PASS: test_05_model_only_edit_is_refused
+PASS: test_06_migration_with_regenerated_model_passes_the_check
+PASS: test_07_topic_constant_with_model_topic_passes_the_check
+PASS: test_08_deployment_with_modelled_workload_passes_the_check
+PROBE ok stale-no-tooling: likec4 is not resolvable from the scratch repo
+PASS: test_09_stale_model_without_tooling_prints_the_install_command
+PASS: test_10_no_node_on_path_is_refused_with_the_install_command
+PROBE ok unrelated-path: likec4 is not resolvable from the scratch repo
+PASS: test_11_unrelated_path_runs_no_drift_step
+PASS: test_12_untagged_view_is_refused
+PASS: test_13_added_foreign_key_is_refused
+PASS: test_14_added_package_import_is_refused
+14/14 passed
+selftest-exit=0
+== validate
+[2m13:01:26.284[0m [1m[32mINFO [0m [1m[36mlikec4.lang[0m [2mlayout[22m wasm[0m
+[2m13:01:26.304[0m [1m[32mINFO [0m [1m[36mlikec4.lang[0m [2mworkspace:[22m /home/andre/dev/kanban-board-backend/docs/architecture/model[0m
+[2m13:01:26.831[0m [1m[32mINFO [0m [1m[36mlikec4.lang[0m [2mworkspace:[22m found 5 source files[0m
+[2m13:01:27.168[0m [1m[32mINFO [0m [1m[36mlikec4.c4:validate[0m [32m✓ Valid[39m[2m (5 files)[22m[0m
+[2m13:01:27.178[0m [1m[32mINFO [0m [1m[36mlikec4.c4:validate[0m [32mvalidate 895ms[39m[0m
+validate-exit=0
+== comments
+OK: 330 files, 1280 comment blocks
+comments-exit=0
+GATE PASS
+gate-exit=0
+== notes: git diff docs/architecture/drill-output.txt, line by line
+- Every tally line gains `14 packages, 38 package edges` (33 elements instead of 19: 14 package components). Predicted.
+- Every DRIFT or OK section gains the cycle line `package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service`. Predicted.
+- The stale message gains `or the package imports`. Predicted; the STALE_TEXT prefix is unchanged.
+- New section D8: exit=1, stale, 39 package edges, cycle group `base, config, constant, dto, entity, mapper, repository, security, service` (constant joins the cycle through mapper).
+- New section D8b: exit=1, stale, 39 package edges, cycle line `base, config, dto, entity, mapper, repository, security, service | exception, handler`.
+- D5 (negative control) still exit=0.
+- Nothing else changed.
+== notes: P5 png dimensions, see 261027-if9-T3-png.txt (the other four views and signin are identical to T2)

@@ -1,0 +1,95 @@
+Task 5 claims file. Every cited line was re-read at HEAD 68b8f3a before the row was written.
+Paths: the Java classes are under src/main/java/com/vrudenko/kanban_board/ (abbreviated J/ below).
+The plan's cited paths for the AFTER_COMMIT listener and the executor held (config/), line numbers held too.
+
+1. api technology "Spring MVC, Tomcat request threads"
+   VERIFIED. build.gradle:173 spring-boot-starter-web (default container Tomcat); build.gradle:138 pins
+   ext['tomcat.version'] and :516 pins org.apache.tomcat.embed:tomcat-embed-core. The build.gradle excludes
+   (lines 304-305) name only kafka-clients and swagger-annotations; rg for undertow|jetty in build.gradle
+   matches nothing. rg for "threads.virtual|virtual" over src/main/resources, k8s/ and build.gradle finds
+   only node-exporter dashboard JSON text about virtual memory, so virtual threads are not enabled.
+   Text kept.
+
+1b. api description "Signin/signup, boards, columns, tasks, subtasks. 401/403/400/409 answered by distinct layers."
+   (not in the todo's list; checked because it is a process-view element)
+   VERIFIED for the layers claim against an authored doc, not re-derived from Java: docs/ARCHITECTURE.md:20-24
+   (401 from the filter chain, 403 from MVC) and :135-136 (which layer raises 403, 400, 409).
+   Signin and signup paths: J/constant/ApiPaths.java:29-30. Text kept.
+
+2. publisher
+   a. technology: the listener is J/config/KafkaEventPublisher.java:102-105; it only calls
+      kafkaPublishExecutor.execute(...) at :105. The pool is J/config/AsyncConfig.java:19-29, a
+      ThreadPoolTaskExecutor, thread prefix "kafka-publish-" at :25. Rationale and the rule that a rejected
+      submit never runs on the caller's thread: KafkaEventPublisher.java:35-45.
+      SOFTENED: technology is now "Spring ThreadPoolTaskExecutor, bounded pool" (it described the listener
+      before; the pool sizes at AsyncConfig.java:22-24 are numbers and stay out of the model).
+   b. metadata source: moved from J/event (the event records) to J/config/AsyncConfig.java (the pool).
+   c. api-to-publisher label "AFTER_COMMIT hand-off": VERIFIED, KafkaEventPublisher.java:102.
+   d. "Publishes one Avro event per committed mutation": COULD NOT VERIFY as stated.
+      Searched: rg -n "publishEvent" over J/service, J/base, J/security, J/controller. 14 publishEvent calls:
+      SubtaskService.java:58,124,156; ColumnService.java:98,157,211,267; BoardService.java:84,178,238;
+      TaskService.java:122,194,292,333. They match the 14 ActivityEvent records under J/event (created,
+      updated, deleted per board, column, task, subtask, plus ColumnReordered and TaskMoved). UserService
+      (signup, updateTheme, deleteById), ResetService and the bulk deletes publish nothing of their own:
+      BoardService.java:70-73 says cascaded children publish nothing and deleteAllByUserId emits one event
+      per board (:90-96 calls deleteById). So "one per committed mutation" is false for user mutations.
+      SOFTENED: "Publishes the Avro events of committed board, column, task and subtask mutations."
+   e. "The HTTP response never waits on it": VERIFIED, KafkaEventPublisher.java:29-31 and :35-45. The new
+      description says "the request thread does not wait on Kafka" (the claim the code comments make).
+      Not run: I did not test it under a broker outage; SchemaRegistryOutageE2ETest is named at :55-56 but
+      I did not run it.
+
+3. consumer technology "Spring Kafka listener, group activity-log"
+   VERIFIED. J/activitylog/ActivityLogConsumer.java:45 GROUP_ID = "activity-log", :51 @KafkaListener with
+   groupId = ActivityLogConsumer.GROUP_ID. Text kept.
+
+4. consumer description, dlt description, consumer-to-dlt label
+   REMOVED the count and spacing ("3 retries 1 s apart", "failed 3 retries", "after 3 retries"). The
+   values are real (J/config/KafkaConsumerConfig.java:203 new FixedBackOff(1000L, 3L); recoverer :199-201)
+   but they are numbers in labels with no check. New texts: "retries, then the dead-letter topic";
+   "Dead-letter topic for events the consumer still failed to process after its retries"; "after retries".
+   "Idempotent on event_id": VERIFIED. src/main/resources/db/migration/V3__add_activity_log.sql:11 (UNIQUE
+   constraint uk_activity_log_event_id); J/activitylog/ActivityLogRecorder.java:42 (existsByEventId fast
+   path) and :48-51 (DataIntegrityViolationException catch re-checks existsByEventId).
+
+5. activity topic description
+   REMOVED "1 partition" (KafkaConsumerConfig.java:56, .partitions(1); a number with no check). Now
+   "Avro, keyed by event id". "keyed by event id": VERIFIED, KafkaEventPublisher.java:121-124 (key is
+   event.eventId().toString(), value is the Avro mapping). The topic is KafkaTopics.ACTIVITY.
+
+6. api-to-postgres JDBC label "session tables"
+   VERIFIED then SOFTENED to names. spring.session.store-type=jdbc at src/main/resources/application.properties:175,
+   initialize-schema=always at :187. The phrase is replaced by the two table names modelled in T2:
+   "JDBC: users, boards, columns, tasks, subtasks, spring_session, spring_session_attributes".
+
+7. postgres description and title
+   VERIFIED. Single instance: k8s/data/postgres/postgres.yaml:43 replicas: 1. Namespace kanban-data:
+   k8s/data/postgres/kustomization.yaml:3. Prod and nonprod databases:
+   k8s/data/postgres/init/01-create-databases-and-roles.sh:59 (CREATE DATABASE prod) and :64 (CREATE DATABASE
+   nonprod). Title "Postgres 16": postgres.yaml:56 image: postgres:16.
+   Reworded "shared by prod and nonprod databases" to "holding the prod and nonprod databases": the script
+   creates both databases on this one instance, which "holding" says directly; "shared by" implied the
+   environments share a database.
+
+8. backup
+   REMOVED "daily 02:17" from the description and the relationship label (schedule at
+   k8s/data/postgres/backup-cronjob.yaml:29 is "17 2 * * *"; a schedule is a number with no check).
+   Kept: "runs postgres-backup.sh as the prod DB role" (backup-cronjob.yaml:61 command
+   /scripts/postgres-backup.sh; PGUSER from secret key PROD_DB_USER at :69-73). PGHOST: VERIFIED at :63-64,
+   the value is postgres.kanban-data.svc.cluster.local; the label's "postgres.kanban-data" is the same
+   service name without the cluster suffix, kept as written.
+   Not verified: what postgres-backup.sh itself does (not read); the description claims no more than the
+   command and the role.
+
+9. process view description "The request thread never waits on Kafka."
+   VERIFIED, KafkaEventPublisher.java:35-45 (a rejected submit is never run on the caller's thread) and
+   AsyncConfig.java:10-11. Left unchanged.
+
+10. job kind
+   DONE. spec.c4 declares element job (notation 'Scheduled job', color secondary). backup is now
+   `backup = job 'Postgres backup'`; its metadata is unchanged, so the workload check holds (check OK).
+   The standard's closed kind set lists job at docs/DIAGRAM_CONVENTIONS.md:67.
+
+Tally: VERIFIED rows 1, 1b, 2c, 2e, 3, 4 (idempotent), 5 (keyed), 7, 9; SOFTENED rows 2a, 2d, 6, 7 (wording);
+REMOVED rows 4, 5, 8; COULD NOT VERIFY: 1 row (2d "one Avro event per committed mutation", false as stated,
+so softened). 0 further.

@@ -1,0 +1,22 @@
+/home/andre/dev/kanban-board-backend/docs/architecture/out/data.png:                   PNG image data, 2028 x 2604, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/development.png:            PNG image data, 8950 x 5272, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/index.png:                  PNG image data, 1672 x 2408, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/process.png:                PNG image data, 2472 x 3072, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/production.png:             PNG image data, 3930 x 2482, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/signin-bad-credentials.png: PNG image data, 3000 x 1148, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/signin-ceiling.png:         PNG image data, 3676 x 1760, 8-bit/color RGBA, non-interlaced
+/home/andre/dev/kanban-board-backend/docs/architecture/out/signin-ok.png:              PNG image data, 3676 x 1928, 8-bit/color RGBA, non-interlaced
+
+Compared with T4: data, development, signin-ok, signin-bad-credentials and signin-ceiling are unchanged.
+index 1708 x 2408 -> 1672 x 2408, process 2466 -> 2472 wide (height 3072 same), production 4082 -> 3930 wide
+(height 2482 same). Cause: the shorter backup labels and descriptions and the changed publisher, consumer and
+dlt texts alter node and label widths. Explained, not a defect.
+
+Seen (opened with the Read tool, downscaled to about 1610 px):
+- process.png: client, REST API, kafka-publish executor, kanban.activity, activity-log consumer, kanban.activity.dlt and
+  Postgres 16. The publisher reads "Spring ThreadPoolTaskExecutor, bounded pool". Labels: "AFTER_COMMIT hand-off", "Avro, keyed by
+  event id", "poll, group activity-log", "after retries", "INSERT activity_log, idempotent on event_id", and the JDBC label
+  naming spring_session and spring_session_attributes. No retry count, partition count or schedule is visible. Matches the done criteria.
+- production.png: Postgres backup sits in KANBAN-DATA in a new sky-blue style (the job kind), with "CronJob that runs
+  postgres-backup.sh as the prod DB role" and the arrow label "PGHOST postgres.kanban-data". No "daily 02:17". Matches.
+- I did not open the other six PNGs: their dimensions equal T4's or are explained above.

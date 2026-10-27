@@ -1,0 +1,51 @@
+== P5 render at the T3 tree (fish docs/architecture/likec4.fish png, out/ trashed first)
+data.png:        2028 x 2604
+development.png: 8950 x 5272   (new view; natural size 4475 x 2636)
+index.png:       1708 x 2408
+process.png:     2466 x 3072
+production.png:  4082 x 2482
+signin.png:      4970 x 524
+
+== other views against T2 (261027-if9-T2-png.txt)
+data 2028x2604, index 1708x2408, process 2466x3072, production 4082x2482, signin 4970x524: all identical to T2.
+The process view now includes kanban.api, kanban.publisher and kanban.consumer by name, and its size did not change, so the
+package components did not leak into it. production did not change, so the deployment view's include needed no fix.
+
+== readability judgement for the development view (I opened each PNG with the Read tool)
+Limit of this judgement: the Read tool shows the image downscaled (the first one 8950x5272 shown at 2000x1178). I did not view
+any of them at natural size, and I had no tool to crop one (no PIL, no ImageMagick on this host). Labels and arrows were judged
+from the downscaled image.
+
+The five traces, from generated.c4's edge list (sorted):
+1. first edge, activitylog -> constant. From the right side of activitylog a long arc sweeps right and down to the right side of
+   constant, arrow at constant. Traceable, but it runs next to two other long arcs into constant (controller -> constant and
+   handler -> constant), so the target is identified by following the arc, not by reading its end. PASS with care.
+2. last edge, service -> repository. A near-vertical line from the top of service to the bottom of repository, arrow at
+   repository. PASS, unambiguous.
+3. service -> config. A short diagonal from the upper left of service to the lower right of config, arrow at config. PASS.
+4. service -> mapper. A short diagonal from the lower left of service to the top right of mapper, arrow at mapper. PASS.
+5. service -> exception. A direct line from the right side of service to the left side of exception, arrow at exception. PASS.
+   (service -> entity, -> event, -> dto and -> constant were also followed and are distinguishable.)
+
+Not unambiguous, and not one of the five traces: the three arcs that meet at the left side of entity (base -> entity, dto -> entity
+and entity -> base run as near-parallel curves, and only the tiny arrowheads say which way each points), and the eight arrows that
+arrive at constant. Edges carry no label by design, so direction rests on the arrowhead alone.
+
+Verdict for the default layout (TopBottom, no autoLayout rule): all 14 package labels are legible in the downscaled image and all
+five traces are unambiguous, so it meets the plan's rule for readable. It is readable as a graph of 14 boxes and 38 arrows only in
+the sense that single edges can be followed; reading the whole dependency structure from it, for example seeing that eight
+packages form one cycle, is not possible from the picture (the cycle line printed by sync.mjs check says it). The 8-package
+cycle is visible as arrows pointing both ways between entity, config, dto, base, service and security, not as a grouping.
+
+== layouts tried (the real model keeps the default; the two others were rendered from scratch copies via scratch/layout.fish)
+A. default (TopBottom, spacing chosen by LikeC4): 8950 x 5272, natural 4475 x 2636. Five traces as above. KEPT.
+B. autoLayout LeftRight 120 110: 7792 x 8938, natural 3896 x 4469. Verdict: worse. Edges run as large arcs around the whole
+   graph (handler and controller edges to constant loop across the top), eight arrows converge on constant, and the entity/base
+   pair becomes two long parallel arcs along the bottom. Trace 1 (activitylog -> constant) goes round the left and top of the
+   graph and is hard to follow; traces 2 to 5 stay short and clear. Rejected.
+C. autoLayout TopBottom 200 160: 12500 x 6552, natural 6250 x 3276. Same topology as A (same box order and the same arcs),
+   only farther apart, so nothing became clearer and the picture grew 1.4 times wider. Edges drew dotted here (the spec gives
+   kind imports `line dotted`); in A they looked solid at the downscale I viewed, and I did not establish why. Rejected.
+
+Not tried: grouping the packages into layers. The standard calls that a possibility, not a result, and the plan says not to invent
+a grouping.

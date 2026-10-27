@@ -1,0 +1,61 @@
+== drill (fish docs/architecture/drill.fish)
+== baseline: untouched scratch copy
+  exit=0
+  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+== D1: a new migration adds table attachments
+  exit=1
+  DRIFT (17 elements, 7 tables, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (tables changed in the migrations)
+== D2: a new Kafka topic constant
+  exit=1
+  DRIFT (17 elements, 6 tables, 3 topics, 4 workloads):
+  - topic kanban.audit is in KafkaTopics.java but not in the model
+== D3: a new k8s Deployment named worker
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 5 workloads):
+  - k8s Deployment/worker has no element carrying metadata workload 'Deployment/worker'
+== D4: a manifest the model cites as its source is deleted
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 3 workloads):
+  - model claims workload StatefulSet/postgres but k8s/ has no such manifest
+  - postgres: metadata source 'k8s/data/postgres/postgres.yaml' does not exist
+== D5 (negative control): a controller class is renamed
+  exit=0
+  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+== D6: a view loses its viewpoint tag
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 4 workloads):
+  - view process carries no viewpoint tag
+== D6b: a view carries two viewpoint tags
+  exit=1
+  DRIFT (17 elements, 6 tables, 2 topics, 4 workloads):
+  - view process carries 2 viewpoint tags
+== D7: a migration adds a foreign key by ALTER TABLE
+  exit=0
+  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+== D7b: a migration drops a named foreign key
+  exit=0
+  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+== D7c: a migration drops a foreign-key column
+  exit=0
+  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+drill-exit=0
+== git status --short docs/architecture/model (must print nothing)
+== selftest
+PASS: test_01_new_migration_without_regenerating_is_refused
+PASS: test_02_new_topic_constant_pathspec_commit_is_refused
+PASS: test_03_new_deployment_commit_all_is_refused
+PASS: test_04_deleting_a_cited_manifest_is_refused
+PASS: test_05_model_only_edit_is_refused
+PASS: test_06_migration_with_regenerated_model_passes_the_check
+PASS: test_07_topic_constant_with_model_topic_passes_the_check
+PASS: test_08_deployment_with_modelled_workload_passes_the_check
+PROBE ok stale-no-tooling: likec4 is not resolvable from the scratch repo
+PASS: test_09_stale_model_without_tooling_prints_the_install_command
+PASS: test_10_no_node_on_path_is_refused_with_the_install_command
+PROBE ok unrelated-path: likec4 is not resolvable from the scratch repo
+PASS: test_11_unrelated_path_runs_no_drift_step
+PASS: test_12_untagged_view_is_refused
+FAIL: test_13_added_foreign_key_is_refused: the commit succeeded; expected a refusal. Output: Scanning staged diff for secrets... | No secrets found in staged diff. | Checking code-comment policy... | Checking always-loaded instruction-file budget... | Checking the LikeC4 model against the code it describes... | OK (17 elements, 6 tables, 2 topics, 4 workloads) | Checking formatting... | Compiling and running fast tests... | [master 2a5f7af] x |  1 file changed, 1 insertion(+) |  create mode 100644 src/main/resources/db/migration/V9998__selftest_fk.sql | 
+12/13 passed
+selftest-exit=1
