@@ -119,6 +119,38 @@ curl -s http://localhost:8080/api/docs | python3 -m json.tool
 docker compose down   # stop bootRun's process separately (it's not part of the compose stack)
 ```
 
+## Viewing the architecture diagrams
+
+The architecture model lives in `docs/architecture/` as LikeC4 files (`model/*.c4`), driven by one
+wrapper. GitHub does not render `.c4` files, so the views are seen through the live viewer, PNGs or a
+static site:
+
+```bash
+fish docs/architecture/likec4.fish start   # live viewer
+fish docs/architecture/likec4.fish png     # one PNG per view
+fish docs/architecture/likec4.fish site    # static site
+```
+
+- `start` serves the views at `http://localhost:5173/` (usually; it prints the address it chose) and
+  reloads when you save a `.c4` file under `docs/architecture/model/`. Click an element for its
+  description and its `source` and `workload` metadata. Ctrl+C stops it.
+- `png` writes `docs/architecture/out/<view>.png`. `out/` is gitignored, so regenerate when you need
+  them.
+- `site` writes `docs/architecture/out/site`. Serve it with any static file server: opening
+  `index.html` directly does not work.
+
+Run `pnpm --dir docs/architecture install` once per checkout and once per git worktree. The wrapper
+prints that command and exits 3 when the install is missing. `png` also needs Playwright's headless
+Chromium, revision 1248, a one-time download into `~/.cache/ms-playwright`:
+
+```bash
+pnpm --dir docs/architecture dlx playwright@1.64.0 install chromium-headless-shell
+```
+
+The Playwright version pairs with likec4 1.60.0. If the `likec4` pin in
+`docs/architecture/package.json` changes, the browser revision it needs can change with it, and `png`
+fails with a Playwright "download new browsers" message until the matching one is installed.
+
 ## Why the app waits for Kafka
 
 The `kafka` service carries a `healthcheck:` (a bare TCP-connect probe — see below) and the `app`

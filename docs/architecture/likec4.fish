@@ -1,6 +1,6 @@
 #!/usr/bin/env fish
 # Usage: likec4.fish start|validate|png|site|check|sync
-#   start     live-reloading viewer on http://localhost:61000 (edit a .c4 file, the diagram moves)
+#   start     live-reloading viewer, usually on http://localhost:5173/ (it prints the address it chose)
 #   validate  parse and type-check the model
 #   png       render every view to out/*.png
 #   site      build a static site to out/site
