@@ -2,7 +2,7 @@
 # Drift drills for sync.mjs. Each drill edits a scratch copy of the code facts and of the model,
 # then runs `sync.mjs check --root --model` and reports whether the check caught it. Every drill
 # is expected to be caught except D5, a negative control that is documented as not caught, and
-# D13b and D16b, controls that must stay clean.
+# D13b and D16b, controls that must stay clean. A drill on a k8s fact source is caught with exit 4.
 # The real model is never edited: a drill that changes a view changes the scratch copy.
 # SYNC names another sync.mjs to run. Running the harness once with the script from before a
 # rule existed and once with the current one records the drill as not caught and then caught.
@@ -168,6 +168,21 @@ run
 echo "== D13b (control): the same instance with a relationship"
 fresh
 lonely_into linked
+run
+
+echo "== D14: a k8s fact source directory is missing (k8s/overlays)"
+fresh
+trash-put $scratch/k8s/overlays
+run
+
+echo "== D14b: a k8s fact source directory is missing (k8s/monitoring)"
+fresh
+trash-put $scratch/k8s/monitoring
+run
+
+echo "== D14c: a k8s manifest does not parse"
+fresh
+printf '%s\n' 'a: [1, 2' 'b: 3' >$scratch/k8s/platform/broken.yaml
 run
 
 trash-put $scratch

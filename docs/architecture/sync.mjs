@@ -242,6 +242,12 @@ function workloads(docs) {
   return out
 }
 
+// The k8s trees the readers depend on. The namespace reader walks the whole k8s tree, so a
+// missing subtree does not fail by itself: removing k8s/monitoring or k8s/flux-system changes no
+// finding, because k8s/platform alone defines all seven namespaces. A check that reads less than
+// it should must not report clean, so each tree is required to exist before any manifest is read.
+const K8S_DIRS = ['k8s/base', 'k8s/data', 'k8s/platform', 'k8s/overlays', 'k8s/monitoring', 'k8s/flux-system']
+
 // Every non-empty YAML document under k8s/, parsed once per check, in sorted name order. A
 // document with parse errors stops the check with exit 4: the parser reports errors on the
 // document instead of throwing, so a reader that skipped them would half-read a broken manifest.
@@ -487,6 +493,11 @@ function render() {
 async function check() {
   // Load likec4 first, so missing tooling wins over drift and always prints the install command.
   const { LikeC4, parseAllDocuments } = await loadTooling()
+  // Exit 4 keeps a missing fact source out of the hook's drift branch, whose advice to update the
+  // model would be wrong for a missing directory.
+  const missing = K8S_DIRS.filter((dir) => !existsSync(join(root, dir)))
+  for (const dir of missing) console.error(`k8s fact source missing: ${dir}`)
+  if (missing.length) process.exit(4)
   const docs = k8sDocs(parseAllDocuments)
   const problems = []
 

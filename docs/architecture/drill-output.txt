@@ -120,3 +120,12 @@
   exit=0
   OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D14: a k8s fact source directory is missing (k8s/overlays)
+  exit=4
+  k8s fact source missing: k8s/overlays
+== D14b: a k8s fact source directory is missing (k8s/monitoring)
+  exit=4
+  k8s fact source missing: k8s/monitoring
+== D14c: a k8s manifest does not parse
+  exit=4
+  k8s fact source unreadable: k8s/platform/broken.yaml: BAD_INDENT Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:
