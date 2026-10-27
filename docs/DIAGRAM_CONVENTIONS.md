@@ -153,9 +153,10 @@ above. Every pixel size is recorded as text in `verify/png-dimensions.txt`, beca
 V6, natural width against the Legibility test section's bounds (width 1117, displayed height 1600):
 
 - `index`: 854 wide, passes.
-- `process`: 1233 wide, fails. That is spike 006's render. The verify workspace's re-render of the
-  same view is 2508 divided by 2, which is 1254, and fails too. Why the two renders differ was not
-  established.
+- `process`: 1233 wide, fails. That is spike 006's render and the figure to use. The verify
+  workspace's `process.png` is 2508 divided by 2, which is 1254, only because its experiment file adds
+  a `sub-el` component to `kanban` and the view includes `kanban.*`. It is a different view, not a
+  re-render.
 - `production`: 2041 wide, fails.
 - `signin` horizontal: 2485 wide, fails.
 - `signin-ok` and `signin-bad-credentials` as sequence: 1599 wide each, fail.
