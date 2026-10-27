@@ -1,0 +1,8 @@
+{
+  "name": "spike-005-likec4",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "likec4": "1.60.0"
+  }
+}

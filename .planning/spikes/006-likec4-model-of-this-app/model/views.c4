@@ -1,0 +1,42 @@
+views {
+  view index {
+    title 'System context'
+    description 'Who talks to the backend, and what it depends on.'
+    include client, traefik, kanban, postgres, redpanda
+  }
+
+  view process of kanban {
+    title 'Process view: how a committed mutation becomes an activity_log row'
+    description 'Thread and messaging boundaries. The request thread never waits on Kafka.'
+    include
+      client,
+      kanban.*,
+      postgres,
+      redpanda.*
+  }
+
+  view data of postgres {
+    title 'Data: tables, generated from the Flyway migrations'
+    description 'Every box here is written by sync.mjs from a CREATE TABLE statement.'
+    include postgres.*
+  }
+
+  deployment view production {
+    title 'Physical view: what runs where'
+    description 'Mapping of software to nodes. The VPS is x86_64.'
+    include netcup, netcup.k3s, netcup.**
+  }
+
+  dynamic view signin {
+    title 'Scenario: signin'
+    description 'POST /api/signin through to a session cookie.'
+
+    client -> traefik 'POST /api/signin {email, password}'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres 'SELECT user by email'
+    kanban.api -> postgres 'count live sessions (ceiling 2)'
+    kanban.api -> postgres 'rotate session id, save security context'
+    kanban.api -> traefik '200 Set-Cookie JSESSIONID'
+    traefik -> client '200 {id, email, displayName, theme}'
+  }
+}

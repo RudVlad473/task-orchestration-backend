@@ -1,0 +1,18 @@
+specification {
+  element system
+  element container
+}
+
+model {
+  app = system 'Kanban app' {
+    api = container 'REST API'
+  }
+  db = container 'Postgres'
+  app.api -> db 'JDBC'
+}
+
+views {
+  view index {
+    include *, app.*
+  }
+}

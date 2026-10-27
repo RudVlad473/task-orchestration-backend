@@ -1,0 +1,29 @@
+deployment {
+  netcup = server 'Netcup VPS (x86_64)' {
+    description 'x86_64. KANBAN-INGRESS filter behind the Netcup Cloud Firewall.'
+    technology 'x86_64'
+
+    k3s = cluster 'k3s (single node)' {
+      description 'Reconciled by Flux from k8s/'
+
+      edge = namespace 'edge' {
+        instanceOf traefik
+      }
+
+      prod = namespace 'kanban-prod' {
+        instanceOf kanban
+        instanceOf redpanda
+      }
+
+      nonprod = namespace 'kanban-nonprod' {
+        instanceOf kanban
+        instanceOf redpanda
+      }
+
+      data = namespace 'kanban-data' {
+        instanceOf postgres
+        instanceOf backup
+      }
+    }
+  }
+}
