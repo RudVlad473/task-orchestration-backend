@@ -111,3 +111,12 @@
   - instance netcup.k3s.kube-system.traefik carries metadata key 'instkey', not in the allowlist (source, workload)
   - relationship client -> traefik carries metadata key 'relkey', not in the allowlist (source, workload)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D13: an instance with no relationship (lonely)
+  exit=1
+  DRIFT (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - instance netcup.k3s.data.lonely appears in no deployment view
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D13b (control): the same instance with a relationship
+  exit=0
+  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service

@@ -37,6 +37,15 @@ function certmgr_into --inherit-variable scratch
     sed -i "s|^\(      $argv[1] = namespace .*{\)\$|\1\n        instanceOf certmgr|" $scratch/model/deployment.c4
 end
 
+# Adds the element lonely and one instance of it in the data namespace. With the argument
+# `linked` it also gets a relationship, which is what keeps an instance drawn in the view.
+function lonely_into --inherit-variable scratch
+    set body "  lonely = system 'Lonely'"
+    test "$argv[1]" = linked; and set body $body "  traefik -[sync]-> lonely 'probe'"
+    printf '%s\n' 'model {' $body '}' >$scratch/model/lonely.c4
+    sed -i "s|^\(        instanceOf backup\)\$|\1\n        instanceOf lonely|" $scratch/model/deployment.c4
+end
+
 echo "== baseline: untouched scratch copy"
 fresh
 run
@@ -149,6 +158,16 @@ fresh
 sed -i "s|^\(      kube-system = namespace .*{\)\$|\1\n        metadata { nodekey 'x' }|" $scratch/model/deployment.c4
 sed -i "s|^        instanceOf traefik\$|        instanceOf traefik {\n          metadata { instkey 'y' }\n        }|" $scratch/model/deployment.c4
 sed -i "s|^  client -\[sync\]-> traefik 'HTTPS :443'\$|  client -[sync]-> traefik 'HTTPS :443' {\n    metadata { relkey 'z' }\n  }|" $scratch/model/model.c4
+run
+
+echo "== D13: an instance with no relationship (lonely)"
+fresh
+lonely_into
+run
+
+echo "== D13b (control): the same instance with a relationship"
+fresh
+lonely_into linked
 run
 
 trash-put $scratch

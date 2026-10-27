@@ -403,6 +403,19 @@ function checkMetadataKeys(computed, problems) {
   }
 }
 
+// Every deployment instance must be drawn in some deployment view. LikeC4 leaves an instance
+// with no relationship out of a view that includes it, and the model still validates. Only
+// instances are required: the empty namespace nodes are undrawn by design.
+function checkViewMembership(computed, problems) {
+  const drawn = new Set()
+  for (const view of computed.views()) {
+    if (!view.isDeploymentView?.()) continue
+    for (const n of view.nodes()) if (n.kind === 'instance') drawn.add(n.id)
+  }
+  const ids = [...computed.deployment.instances()].map((i) => i.id).sort()
+  for (const id of ids) if (!drawn.has(id)) problems.push(`instance ${id} appears in no deployment view`)
+}
+
 // --- generation -----------------------------------------------------------------------
 
 // One function per fact source, each returning the lines it contributes, so a source added
@@ -530,6 +543,7 @@ async function check() {
 
   checkMetadataKeys(computed, problems)
   checkPlacement(computed, docs, problems)
+  checkViewMembership(computed, problems)
 
   const pkgs = packages()
   const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${manifestWorkloads.size} workloads`

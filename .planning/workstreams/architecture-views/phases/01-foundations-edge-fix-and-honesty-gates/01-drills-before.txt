@@ -100,3 +100,11 @@
   exit=0
   OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D13: an instance with no relationship (lonely)
+  exit=0
+  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D13b (control): the same instance with a relationship
+  exit=0
+  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
