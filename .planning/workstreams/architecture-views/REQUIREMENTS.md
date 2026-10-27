@@ -9,7 +9,7 @@ Research: `.planning/workstreams/architecture-views/research/SUMMARY.md`. Phase 
 
 ### Physical view (PHYS)
 
-- [ ] **PHYS-01**: The Physical view places Traefik in `kube-system` (not the nonexistent `edge` namespace) and every namespace the manifests define exists in the model.
+- [x] **PHYS-01**: The Physical view places Traefik in `kube-system` (not the nonexistent `edge` namespace) and every namespace the manifests define exists in the model.
 - [ ] **PHYS-02**: A delivery view shows GitHub, the CI runner, Docker Hub and Flux, and how an image reaches the cluster.
 - [ ] **PHYS-03**: A monitoring view shows the monitoring nodes and what they scrape.
 - [ ] **PHYS-04**: The Physical view shows cert-manager, its issuers and the edge routing, with the host filter as an external element.
@@ -78,7 +78,7 @@ Populated by the roadmapper.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PHYS-01 | Phase 1 | Pending |
+| PHYS-01 | Phase 1 | Complete |
 | PHYS-02 | Phase 2 | Pending |
 | PHYS-03 | Phase 2 | Pending |
 | PHYS-04 | Phase 2 | Pending |

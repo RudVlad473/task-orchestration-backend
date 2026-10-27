@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 milestone: v1.5
 milestone_name: Architecture Views
-current_phase: 1
+current_phase: 01
 current_phase_name: Foundations, Edge Fix and Honesty Gates
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-10-27T16:03:53.145Z"
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-10-27T17:57:33.908Z"
 last_activity: 2026-10-27
-last_activity_desc: Roadmap created (4 phases, 25/25 v1 requirements mapped)
-state_head: dc6ca3988f3815ccae91e1ebbe7910370b3c7401
+last_activity_desc: Phase 01 execution started
+state_head: ecf78b35a54c1bb17d2e6729eb264f4706a08361
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # Project State
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md (updated 2026-09-30; v1.5 is not yet recorded there)
 Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, ROADMAP.md, research/)
 
 **Core value:** A reader of the public repository can see how the system is built from a model that cannot drift from the code, not from screenshots.
-**Current focus:** Phase 1: Foundations, Edge Fix and Honesty Gates
+**Current focus:** Phase 01 — Foundations, Edge Fix and Honesty Gates
 
 ## Current Position
 
-Phase: 1 of 4 (Foundations, Edge Fix and Honesty Gates)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-10-27 — Roadmap created (4 phases, 25/25 v1 requirements mapped)
+Phase: 01 (Foundations, Edge Fix and Honesty Gates) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-10-27 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -54,6 +54,11 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+**Per-Plan Metrics:**
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
+| Phase 01 P01 | 25min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -66,6 +71,7 @@ Recent decisions affecting current work:
 - [Roadmap]: SCEN-08 is in Phase 3 so the publish scenario is drawn as built. GATE-01 is in Phase 2 so each reader lands with the elements it forces. PUB-03, PUB-04 and PUB-06 are in Phase 4 because each completes only after the production flip.
 - [Scope]: Mermaid migration and the retirement of `docs/diagrams/` are out of scope. Docker Hub tag cleanup for the site repository is deferred to v2 (V2-05).
 - [Defaults accepted]: Monitoring, cert-manager and Flux appear in the Physical view. The error-status scenario shows client-visible discriminators only. URLs are history-style. `robots.txt` keeps `Disallow: /`.
+- [Phase 01]: Accepted the pnpm yaml peer re-key in the lockfile (option A); verified by suffix-only pairing instead of zero deletions
 
 ### Pending Todos
 
@@ -87,6 +93,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-27T16:03:53.118Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/workstreams/architecture-views/phases/01-foundations-edge-fix-and-honesty-gates/01-CONTEXT.md
+Last session: 2026-10-27T17:57:33.871Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None

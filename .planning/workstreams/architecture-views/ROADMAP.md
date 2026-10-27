@@ -30,6 +30,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Foundations, Edge Fix and Honesty Gates
+
 **Goal**: The published Physical view stops naming a namespace that does not exist. The drift check fails loudly when a namespace, a placement, a metadata key or an instance's view membership drifts, so every element Phase 2 adds is checked from the commit that adds it.
 **Depends on**: Nothing (first phase)
 **Requirements**: PHYS-01, GATE-02, GATE-03, GATE-04
@@ -39,15 +40,18 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. On a scratch copy, a misspelled metadata key (for example `sourc` for `source`) makes `check` exit 1 and name the key and its element. The unmodified model exits 0.
   4. On a scratch copy, a deployment instance with no relationship makes `check` exit 1 and name the instance. Such an instance appears in no computed deployment view (Pitfall 2, measured). Adding a relationship or removing the instance returns exit 0.
   5. Each new rule has a numbered drill in `docs/architecture/drill.fish`. The recorded output shows the break not caught before the rule exists and caught after it. `fresh()` copies every directory the new readers read, and a reader pointed at a missing directory exits non-zero instead of reporting clean. The pre-commit hook triggers on `k8s/platform`, and `scripts/pre-commit-likec4-selftest.py` passes with more than the 15 cases it had at research time.
-**Plans**: 3 plans
+
+**Plans**: 1/3 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — yaml@2.9.1 behind a human legitimacy gate; namespace rule red on the real `edge` defect and landed with the Traefik-to-kube-system fix; `workloads()` port and `render()` split, byte-identical
+- [x] 01-01-PLAN.md — yaml@2.9.1 behind a human legitimacy gate; namespace rule red on the real `edge` defect and landed with the Traefik-to-kube-system fix; `workloads()` port and `render()` split, byte-identical
 - [ ] 01-02-PLAN.md — placement, metadata-key allowlist and instance view-membership rules, each with drills recorded not caught before and caught after
 - [ ] 01-03-PLAN.md — fail-closed k8s fact sources (exit 4), hook trigger widened to `k8s` with selftest case 16, standard and README updated
+
 **Planning notes**: Add the `yaml` parser dependency and split `render()` here (ARCHITECTURE build order, M-A). See Open Question 6 on namespace nodes that have no instances until Phase 2.
 
 ### Phase 2: Model Completion
+
 **Goal**: Every runtime, delivery and physical fact that matters appears in the Physical, Process, Logical and Scenarios views. Each new fact is tied to a check or labelled as authored, and the LikeC4 standard describes what is drawn.
 **Depends on**: Phase 1
 **Requirements**: PHYS-02, PHYS-03, PHYS-04, PROC-01, LOGI-01, SCEN-01, SCEN-02, SCEN-03, SCEN-04, SCEN-05, SCEN-06, SCEN-07, GATE-01, STD-01
@@ -57,10 +61,12 @@ Plans:
   3. Scenario views tagged `#scenarios` exist for signup; for error status, as one view per outcome with client-visible discriminators only (401 with no SQL step, 403 after the ownership SELECTs, 409 on the version check); for push-to-image; for image-to-rollout; for inbound-packet-path and ingress-to-pod; for a mutation reaching an `activity_log` row; and for the nightly backup. Every step has its own title, and no view has more than 5 participants. The phase evidence file cites the code or manifest line behind each step.
   4. `sync.mjs` reads the workloads, namespaces and hosts that the new elements claim from the k8s YAML, including `k8s/platform`, `k8s/monitoring` and `k8s/flux-system`. `check` exits 0 on the completed model. On a scratch copy, three breaks each make `check` exit 1, and each is recorded by a drill: renaming a claimed workload (a HelmRelease or Flux controller included), changing a claimed host, and changing a claimed namespace. The unmodified copy exits 0.
   5. In `docs/DIAGRAM_CONVENTIONS.md`, the Physical row names the deployment views as built and no longer says the monitoring stack is excluded. The Scenarios row describes the scenarios as built, including the internal steps of the activity-log and delivery scenarios. Searching that file for "excluded, as in `production-host.mmd`" finds nothing.
+
 **Plans**: TBD
 **Planning notes**: Build elements and their checks first and scenarios after, because the scenarios use the elements. Write each description fresh, in one sentence, with no runbook text pasted in (Pitfall 11). The Phase 4 scan catches anything that slips through. Before SCEN-05 is planned, run the render spike in Open Question 5. Put metadata on elements, not relationships: whether LikeC4 1.60 supports metadata on relationships is unverified.
 
 ### Phase 3: Build and Serve on a Staging Certificate
+
 **Goal**: Every model change on `main` rebuilds the static site. Flux serves the static build at the architecture hostname over HTTPS on a Let's Encrypt staging certificate. The publish path is drawn in the model as it was built, not as planned.
 **Depends on**: Phase 2
 **Requirements**: PUB-01, PUB-02, SCEN-08
@@ -70,10 +76,12 @@ Plans:
   3. Only static build output is reachable. `curl -k https://<host>/@fs/etc/hostname` does not return the file's bytes. A gate fails on a planted line that runs `likec4 start`, `preview` or `--listen` from a manifest, a Dockerfile or a workflow (red) and passes once the line is removed (green). A cold deep link to `/view/<id>/` renders that view in a headless browser. The response to a missing `/assets/*.js` is measured and recorded, which settles Open Question 1 before Phase 4.
   4. `scripts/verify-k8s-invariants.py --no-provisional` is green in CI for the new manifests. The memory value carries a MEASURED comment from a ladder run on the VPS (I4). I5 applies to the site overlay, failing with the setter marker removed (red) and passing once it is restored (green). The route has the I10 shape, and the site objects have one owner under I11: the live IngressRoute's `kustomize.toolkit.fluxcd.io/name` label names a single Kustomization.
   5. The model contains the site as built: a namespace node for it, the site instance with a `traefik ->` edge, and a publish-the-site scenario whose steps cite the workflow and manifest lines. The Phase 1 and Phase 2 checks are green and cover the site's workload.
+
 **Plans**: TBD
 **Planning notes**: Open Questions 1, 2 and 3 block planning. Bootstrap order: run the workflow once with `workflow_dispatch` so the first tag exists before the overlay that names it is committed. Before this Certificate is committed, decide on `serviceType: ClusterIP` for the HTTP-01 solver (Pitfall 10, Open Question 8). No uptime probe yet, because a staging certificate fails its TLS check. Live checks over SSH are read-only unless the plan says otherwise (PROJECT.md key decision).
 
 ### Phase 4: Leak Review and Production Go-Live
+
 **Goal**: The built artifact passes a leak scan and the user's review. Only after that does the site move to a production certificate, get an uptime probe and get linked from the docs and the README.
 **Depends on**: Phase 3
 **Requirements**: PUB-03, PUB-04, PUB-05, PUB-06
@@ -82,6 +90,7 @@ Plans:
   2. The user's approval of the scan report and the built artifact is recorded in the phase evidence before the flip. `git log` shows the Certificate first committed on `letsencrypt-staging` and flipped to `letsencrypt-production` in a separate, later commit. After the flip the Certificate is `Ready=True` on the production issuer, and `curl https://<host>/` succeeds without `-k`.
   3. `uptime-check.yml` probes the site for a body marker, and `timeout-minutes` is raised to cover the extra URL (ARCHITECTURE 3.4 arithmetic). A drill against a wrong marker or URL fails the probe (red), and the restored entry passes (green). The runbook's list of probed URLs includes the site.
   4. On the production hostname, a cold deep link to `/view/<id>/` and a refresh of it both render the view in a headless browser. `curl -I` of a missing `/assets/*.js` does not answer 200 with `text/html`. The README and `docs/INFRA_ARCHITECTURE.md` link the public address, which `rg` finds in both files.
+
 **Plans**: TBD
 **Planning notes**: The "review gate" in PUB-05 is read as a human checkpoint, because only the repo owner can judge what counts as sensitive (PITFALLS 11). Let's Encrypt allows 5 certificates per exact name per 7 days with no override, so the flip happens once, after staging is `Ready`.
 
@@ -136,7 +145,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundations, Edge Fix and Honesty Gates | 0/TBD | Not started | - |
+| 1. Foundations, Edge Fix and Honesty Gates | 1/3 | In Progress | - |
 | 2. Model Completion | 0/TBD | Not started | - |
 | 3. Build and Serve on a Staging Certificate | 0/TBD | Not started | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |

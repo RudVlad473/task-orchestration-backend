@@ -1,12 +1,33 @@
 {
   "contract": "1.0.0",
   "flavor": "core",
-  "milestone": null,
-  "phases": [],
+  "milestone": "v1.5 — Architecture Views",
+  "phases": [
+    {
+      "number": "1",
+      "name": "Foundations, Edge Fix and Honesty Gates",
+      "status": "pending"
+    },
+    {
+      "number": "2",
+      "name": "Model Completion",
+      "status": "pending"
+    },
+    {
+      "number": "3",
+      "name": "Build and Serve on a Staging Certificate",
+      "status": "pending"
+    },
+    {
+      "number": "4",
+      "name": "Leak Review and Production Go-Live",
+      "status": "pending"
+    }
+  ],
   "next": {
-    "command": "/gsd-discuss-phase",
-    "label": "Discuss the first phase",
-    "reason": "Project initialized — plan your first phase"
+    "command": "/gsd-progress --next",
+    "label": "Advance to the next step",
+    "reason": "Phase 1 of 4 · executing"
   },
-  "updated_at": "2026-10-27T13:57:49.061Z"
+  "updated_at": "2026-10-27T17:57:23.663Z"
 }
