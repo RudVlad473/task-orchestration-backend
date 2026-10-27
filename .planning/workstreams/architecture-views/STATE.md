@@ -5,16 +5,16 @@ milestone_name: Architecture Views
 current_phase: 01
 current_phase_name: Foundations, Edge Fix and Honesty Gates
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-10-27T17:57:33.908Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-10-27T18:07:48.948Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 01 execution started
-state_head: ecf78b35a54c1bb17d2e6729eb264f4706a08361
+state_head: 4af2f0b7b812f45e7803101d8ef4a5c59fd4e045
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 ## Current Position
 
 Phase: 01 (Foundations, Edge Fix and Honesty Gates) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-10-27 — Phase 01 execution started
 
@@ -59,6 +59,7 @@ Progress: [░░░░░░░░░░] 0%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 25min | 3 tasks | 8 files |
+| Phase 01 P02 | 30 min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,7 @@ Recent decisions affecting current work:
 - [Scope]: Mermaid migration and the retirement of `docs/diagrams/` are out of scope. Docker Hub tag cleanup for the site repository is deferred to v2 (V2-05).
 - [Defaults accepted]: Monitoring, cert-manager and Flux appear in the Physical view. The error-status scenario shows client-visible discriminators only. URLs are history-style. `robots.txt` keeps `Disallow: /`.
 - [Phase 01]: Accepted the pnpm yaml peer re-key in the lockfile (option A); verified by suffix-only pairing instead of zero deletions
+- [Phase 01]: Placement: HelmRelease lands in spec.targetNamespace, Flux source objects land nowhere, outer namespaced kustomization wins over a nested one
 
 ### Pending Todos
 
@@ -93,6 +95,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-27T17:57:33.871Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-10-27T18:07:48.913Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
