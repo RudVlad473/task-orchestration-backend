@@ -1,0 +1,18 @@
+// V2b: with no declaration possible, is a typo'd metadata key accepted silently?
+specification {
+  element thing
+}
+
+model {
+  a = thing 'A' {
+    metadata {
+      sorce 'typo-key'
+    }
+  }
+}
+
+views {
+  view index {
+    include *
+  }
+}

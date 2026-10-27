@@ -1,0 +1,54 @@
+// Verification experiments V1 (sequence variant), V3 (hyphenated ids), V6 (TopBottom layout).
+
+model {
+  extend kanban {
+    sub-el = component 'hyphenated element id' {
+      description 'V3: element id contains a hyphen'
+    }
+  }
+}
+
+views {
+  // V3: hyphenated view id, scoped view
+  view process-activity of kanban {
+    title 'V3 hyphenated view id'
+    include *
+  }
+
+  // V1: sequence variant, with a second outcome as its own view (the "one view per outcome" idiom)
+  dynamic view signin-ok {
+    variant sequence
+    title 'V1 signin, 200'
+    client -> traefik 'POST /api/signin'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres 'SELECT user by email'
+    kanban.api -> postgres 'count live sessions'
+    kanban.api <- postgres 'rows'
+    traefik <- kanban.api '200 Set-Cookie JSESSIONID'
+    client <- traefik '200 body'
+  }
+
+  dynamic view signin-bad-credentials {
+    variant sequence
+    title 'V1 signin, 401 BAD_CREDENTIALS'
+    client -> traefik 'POST /api/signin'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres 'SELECT user by email'
+    kanban.api <- postgres 'no row'
+    traefik <- kanban.api '401 BAD_CREDENTIALS'
+    client <- traefik '401 body'
+  }
+
+  // V6: the diagram variant of the same scenario, top to bottom
+  dynamic view signin-tb {
+    title 'V6 signin diagram variant, TopBottom'
+    autoLayout TopBottom
+    client -> traefik 'POST /api/signin'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres 'SELECT user by email'
+    kanban.api -> postgres 'count live sessions'
+    kanban.api -> postgres 'rotate session id'
+    kanban.api -> traefik '200 Set-Cookie JSESSIONID'
+    traefik -> client '200 body'
+  }
+}

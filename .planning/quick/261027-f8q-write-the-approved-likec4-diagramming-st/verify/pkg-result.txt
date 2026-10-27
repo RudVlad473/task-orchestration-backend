@@ -1,0 +1,57 @@
+== edges (importer imported), 38 total
+activitylog constant
+activitylog entity
+activitylog event
+activitylog repository
+base entity
+config constant
+config dto
+config event
+config security
+controller constant
+controller dto
+controller exception
+controller security
+controller service
+dto base
+dto constant
+dto entity
+entity base
+entity config
+entity constant
+handler constant
+handler exception
+mapper dto
+mapper entity
+repository entity
+security constant
+security dto
+security entity
+security exception
+security service
+service config
+service constant
+service dto
+service entity
+service event
+service exception
+service mapper
+service repository
+== tsort verdict
+CYCLIC (tsort exit 1)
+tsort: -: input contains a loop:
+tsort: base
+tsort: entity
+tsort: -: input contains a loop:
+tsort: base
+tsort: entity
+tsort: config
+tsort: dto
+tsort: -: input contains a loop:
+tsort: config
+tsort: dto
+tsort: entity
+tsort: -: input contains a loop:
+tsort: config
+tsort: security
+tsort: service

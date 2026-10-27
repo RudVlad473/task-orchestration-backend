@@ -1,0 +1,12 @@
+== tables (information_schema, base tables in public)
+activity_log
+boards
+columns
+subtasks
+tasks
+users
+== foreign keys (child -> parent)
+boards -> users
+columns -> boards
+subtasks -> tasks
+tasks -> columns

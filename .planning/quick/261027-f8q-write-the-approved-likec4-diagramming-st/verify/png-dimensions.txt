@@ -1,0 +1,16 @@
+.planning/spikes/006-likec4-model-of-this-app/out/data.png:                                                    PNG image data, 1292 x 1912, 8-bit/color RGBA, non-interlaced
+.planning/spikes/006-likec4-model-of-this-app/out/index.png:                                                   PNG image data, 1708 x 2408, 8-bit/color RGBA, non-interlaced
+.planning/spikes/006-likec4-model-of-this-app/out/process.png:                                                 PNG image data, 2466 x 3072, 8-bit/color RGBA, non-interlaced
+.planning/spikes/006-likec4-model-of-this-app/out/production.png:                                              PNG image data, 4082 x 2482, 8-bit/color RGBA, non-interlaced
+.planning/spikes/006-likec4-model-of-this-app/out/signin.png:                                                  PNG image data, 4970 x 524, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/data.png:                       PNG image data, 1292 x 1912, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/index.png:                      PNG image data, 1708 x 2408, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/process-activity.png:           PNG image data, 4324 x 1954, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/process.png:                    PNG image data, 2508 x 3072, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/production.png:                 PNG image data, 4082 x 2482, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/signin-bad-credentials.png:     PNG image data, 4492 x 472, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/signin-ok.png:                  PNG image data, 4534 x 506, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/signin-tb.png:                  PNG image data, 1384 x 2504, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out/signin.png:                     PNG image data, 4970 x 524, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out-seq/signin-bad-credentials.png: PNG image data, 3198 x 1148, 8-bit/color RGBA, non-interlaced
+.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/verify/out-seq/signin-ok.png:              PNG image data, 3198 x 1354, 8-bit/color RGBA, non-interlaced

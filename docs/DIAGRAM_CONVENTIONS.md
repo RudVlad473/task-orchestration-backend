@@ -43,6 +43,23 @@ class names in the embedding doc's prose, and let the messages carry protocol fa
 path, status and `ProblemDetail` `code`, cookie or header, SQL-level action, topic, consumer group.
 A fact a dropped class-level diagram carried moves into the prose that embedded it.
 
+## LikeC4 standard
+
+Approved 2026-10-27. The target is one LikeC4 model with one viewpoint per Kruchten view, in place of
+a set of separate Mermaid files. Today that model is spike 006, at
+`.planning/spikes/006-likec4-model-of-this-app/model/`. No diagram under `docs/` uses it yet.
+
+The survives-a-refactor test in "What earns a diagram" stays the inclusion test, so nothing
+class-level is drawn in LikeC4 either.
+
+Scope of the sections that follow. The sections from "Layout and naming" through "Inventory check"
+govern the seven current Mermaid diagrams. They stay in force until those diagrams migrate, and this
+change does not migrate any. This section governs new LikeC4 work and the model itself.
+
+The approved design and the outcomes of its verification are in
+`.planning/quick/261027-f8q-write-the-approved-likec4-diagramming-st/`, as `261027-f8q-BRIEF.md` and
+the `verify/` folder.
+
 ## Layout and naming
 
 Every diagram is `docs/diagrams/<view>/<subject>.mmd` plus a rendered `<subject>.png` twin in the

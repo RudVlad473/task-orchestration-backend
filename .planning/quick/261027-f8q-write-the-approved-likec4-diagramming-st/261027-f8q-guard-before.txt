@@ -1,0 +1,3 @@
+FAIL flowchart-rules docs/learning/kafka-architecture-overview.md:11 inline diagram must open with the shared init line
+1 violation(s); 11 diagram(s), 68 doc(s) scanned
+exit=1

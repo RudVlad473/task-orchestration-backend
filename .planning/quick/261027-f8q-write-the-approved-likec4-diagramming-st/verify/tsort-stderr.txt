@@ -1,0 +1,16 @@
+tsort: -: input contains a loop:
+tsort: base
+tsort: entity
+tsort: -: input contains a loop:
+tsort: base
+tsort: entity
+tsort: config
+tsort: dto
+tsort: -: input contains a loop:
+tsort: config
+tsort: dto
+tsort: entity
+tsort: -: input contains a loop:
+tsort: config
+tsort: security
+tsort: service

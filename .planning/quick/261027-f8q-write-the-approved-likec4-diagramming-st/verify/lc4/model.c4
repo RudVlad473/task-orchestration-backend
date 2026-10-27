@@ -1,0 +1,85 @@
+model {
+  client = actor 'Browser / API client' {
+    description 'Holds a JSESSIONID cookie after signin'
+  }
+
+  traefik = system 'Traefik' {
+    description 'Public edge: TLS termination, routes to the app by host'
+    metadata {
+      source 'k8s/platform/traefik'
+    }
+  }
+
+  kanban = system 'Kanban backend' {
+    description 'Spring Boot REST API with session auth and per-user ownership checks'
+    metadata {
+      workload 'Deployment/app'
+    }
+
+    api = container 'REST API' {
+      technology 'Spring MVC, Tomcat request threads'
+      description 'Signin/signup, boards, columns, tasks, subtasks. 401/403/400/409 answered by distinct layers.'
+      metadata {
+        source 'src/main/java/com/vrudenko/kanban_board/controller'
+      }
+    }
+
+    publisher = thread 'kafka-publish executor' {
+      technology 'Spring @TransactionalEventListener(AFTER_COMMIT)'
+      description 'Publishes one Avro event per committed mutation. The HTTP response never waits on it.'
+      metadata {
+        source 'src/main/java/com/vrudenko/kanban_board/event'
+      }
+    }
+
+    consumer = thread 'activity-log consumer' {
+      technology 'Spring Kafka listener, group activity-log'
+      description 'Idempotent insert into activity_log; 3 retries 1 s apart, then the dead-letter topic.'
+      metadata {
+        source 'src/main/java/com/vrudenko/kanban_board/activitylog'
+      }
+    }
+  }
+
+  postgres = datastore 'Postgres 16' {
+    description 'Single instance in ns kanban-data, shared by prod and nonprod databases'
+    metadata {
+      source 'k8s/data/postgres/postgres.yaml'
+      workload 'StatefulSet/postgres'
+    }
+  }
+
+  backup = system 'Postgres backup' {
+    description 'CronJob, daily 02:17, runs postgres-backup.sh as the prod DB role'
+    metadata {
+      source 'k8s/data/postgres/backup-cronjob.yaml'
+      workload 'CronJob/postgres-backup'
+    }
+  }
+
+  redpanda = system 'Redpanda' {
+    description 'Kafka-compatible broker, one per environment'
+    metadata {
+      source 'k8s/base/redpanda/redpanda.yaml'
+      workload 'StatefulSet/redpanda'
+    }
+
+    activity = topic 'kanban.activity' {
+      description '1 partition, Avro, keyed by event id'
+    }
+    dlt = topic 'kanban.activity.dlt' {
+      description 'Dead-letter topic for events that failed 3 retries'
+    }
+  }
+
+  // --- relationships: runtime facts, not class calls ---
+  backup -[sync]-> postgres 'daily 02:17, PGHOST postgres.kanban-data'
+  client -[sync]-> traefik 'HTTPS :443'
+  traefik -[sync]-> kanban.api 'HTTP :8080'
+  kanban.api -[sync]-> postgres 'JDBC: users, boards, columns, tasks, subtasks, session tables'
+  kanban.api -[async]-> kanban.publisher 'AFTER_COMMIT hand-off'
+  kanban.publisher -[async]-> redpanda.activity 'Avro, keyed by event id'
+  redpanda.activity -[async]-> kanban.consumer 'poll, group activity-log'
+  kanban.consumer -[sync]-> postgres 'INSERT activity_log, idempotent on event_id'
+  kanban.consumer -[async]-> redpanda.dlt 'after 3 retries'
+}

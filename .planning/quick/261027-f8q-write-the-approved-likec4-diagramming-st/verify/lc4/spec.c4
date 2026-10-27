@@ -1,0 +1,51 @@
+specification {
+  element actor {
+    style {
+      shape person
+      color muted
+    }
+  }
+  element system
+  element container
+  element component
+  element thread {
+    notation 'Thread / executor'
+    style {
+      color amber
+    }
+  }
+  element datastore {
+    style {
+      shape cylinder
+      color green
+    }
+  }
+  element table {
+    style {
+      shape storage
+      color green
+      size small
+    }
+  }
+  element topic {
+    style {
+      shape queue
+      color indigo
+    }
+  }
+
+  deploymentNode server
+  deploymentNode cluster
+  deploymentNode namespace
+
+  relationship sync {
+    line solid
+  }
+  relationship async {
+    line dashed
+    head open
+  }
+
+  tag generated
+  tag planned
+}
