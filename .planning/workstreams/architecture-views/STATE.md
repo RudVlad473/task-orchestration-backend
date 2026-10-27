@@ -4,17 +4,17 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: 01
 current_phase_name: Foundations, Edge Fix and Honesty Gates
-status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-10-27T18:07:48.948Z"
+status: verifying
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-10-27T18:19:26.146Z"
 last_activity: 2026-10-27
 last_activity_desc: Phase 01 execution started
-state_head: 4af2f0b7b812f45e7803101d8ef4a5c59fd4e045
+state_head: 0dbb556c1d7a19fa8e730c02d8168f67fb982130
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -31,7 +31,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 
 Phase: 01 (Foundations, Edge Fix and Honesty Gates) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-27 — Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
@@ -60,6 +60,7 @@ Progress: [░░░░░░░░░░] 0%
 |------|----------|-------|-------|
 | Phase 01 P01 | 25min | 3 tasks | 8 files |
 | Phase 01 P02 | 30 min | 3 tasks | 4 files |
+| Phase 01 P03 | 40min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Defaults accepted]: Monitoring, cert-manager and Flux appear in the Physical view. The error-status scenario shows client-visible discriminators only. URLs are history-style. `robots.txt` keeps `Disallow: /`.
 - [Phase 01]: Accepted the pnpm yaml peer re-key in the lockfile (option A); verified by suffix-only pairing instead of zero deletions
 - [Phase 01]: Placement: HelmRelease lands in spec.targetNamespace, Flux source objects land nowhere, outer namespaced kustomization wins over a nested one
+- [Phase 01]: Hook trigger is the single pathspec k8s so overlays and monitoring typos are refused locally (A2)
+- [Phase 01]: K8S_DIRS guard exits 4 for any of six missing k8s trees (A3)
 
 ### Pending Todos
 
@@ -95,6 +98,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-27T18:07:48.913Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-10-27T18:19:26.106Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

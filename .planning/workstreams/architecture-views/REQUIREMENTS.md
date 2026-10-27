@@ -37,7 +37,7 @@ Every gate is proven red on a deliberate break, then green, before it counts.
 - [ ] **GATE-01**: `sync.mjs` reads the k8s yaml facts the new elements claim (namespaces, workloads, hosts) and fails on drift.
 - [x] **GATE-02**: An unknown metadata key fails the check.
 - [x] **GATE-03**: A view-membership check catches an element that silently vanishes from its view (an instance with no relationship).
-- [ ] **GATE-04**: A namespace and placement check covers `k8s/platform`, not only `k8s/base` and `k8s/data`.
+- [x] **GATE-04**: A namespace and placement check covers `k8s/platform`, not only `k8s/base` and `k8s/data`.
 
 ### Standard (STD)
 
@@ -95,7 +95,7 @@ Populated by the roadmapper.
 | GATE-01 | Phase 2 | Pending |
 | GATE-02 | Phase 1 | Complete |
 | GATE-03 | Phase 1 | Complete |
-| GATE-04 | Phase 1 | Pending |
+| GATE-04 | Phase 1 | Complete |
 | STD-01 | Phase 2 | Pending |
 | PUB-01 | Phase 3 | Pending |
 | PUB-02 | Phase 3 | Pending |
