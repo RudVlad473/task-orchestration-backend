@@ -14,7 +14,7 @@ The published Physical view stops naming the nonexistent `edge` namespace: Traef
 ## Implementation Decisions
 
 ### Namespace source rule (GATE-04)
-- **D-01:** A namespace is "defined" if it is a `Namespace` kind or appears in any `namespace:` field under `k8s/**` (including `k8s/platform`, `k8s/monitoring`, `k8s/flux-system`). This covers the four in `k8s/platform/namespaces.yaml` plus `kube-system`, `flux-system` and `cert-manager`.
+- **D-01:** A namespace is "defined" if it is a `Namespace` kind or appears in any string `namespace:` or `spec.targetNamespace` value under `k8s/**` (clarified during planning: `cert-manager` appears only as a `targetNamespace`, at `k8s/platform/cert-manager/cert-manager.yaml:38`; same intent; including `k8s/platform`, `k8s/monitoring`, `k8s/flux-system`). This covers the four in `k8s/platform/namespaces.yaml` plus `kube-system`, `flux-system` and `cert-manager`.
 - **D-02:** The check runs both ways: a manifest namespace with no model node fails, and a model namespace node with no manifest fails. A typo'd `namespace:` in a manifest reads as an undefined namespace and fails; that is the intended catch. No hand-kept allowlist.
 - **D-03:** The placement check reads `k8s/platform` as well as `k8s/base` and `k8s/data`.
 

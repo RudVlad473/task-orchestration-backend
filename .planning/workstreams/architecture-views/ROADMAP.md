@@ -39,7 +39,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. On a scratch copy, a misspelled metadata key (for example `sourc` for `source`) makes `check` exit 1 and name the key and its element. The unmodified model exits 0.
   4. On a scratch copy, a deployment instance with no relationship makes `check` exit 1 and name the instance. Such an instance appears in no computed deployment view (Pitfall 2, measured). Adding a relationship or removing the instance returns exit 0.
   5. Each new rule has a numbered drill in `docs/architecture/drill.fish`. The recorded output shows the break not caught before the rule exists and caught after it. `fresh()` copies every directory the new readers read, and a reader pointed at a missing directory exits non-zero instead of reporting clean. The pre-commit hook triggers on `k8s/platform`, and `scripts/pre-commit-likec4-selftest.py` passes with more than the 15 cases it had at research time.
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — yaml@2.9.1 behind a human legitimacy gate; namespace rule red on the real `edge` defect and landed with the Traefik-to-kube-system fix; `workloads()` port and `render()` split, byte-identical
+- [ ] 01-02-PLAN.md — placement, metadata-key allowlist and instance view-membership rules, each with drills recorded not caught before and caught after
+- [ ] 01-03-PLAN.md — fail-closed k8s fact sources (exit 4), hook trigger widened to `k8s` with selftest case 16, standard and README updated
 **Planning notes**: Add the `yaml` parser dependency and split `render()` here (ARCHITECTURE build order, M-A). See Open Question 6 on namespace nodes that have no instances until Phase 2.
 
 ### Phase 2: Model Completion

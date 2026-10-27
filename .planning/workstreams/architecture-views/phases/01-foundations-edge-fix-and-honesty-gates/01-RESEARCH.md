@@ -609,19 +609,19 @@ Real-defect red (D-13 / criterion 1): not a drill; the evidence file is the outp
 | A6 | The "weekly downloads" figure for `yaml` is from `api.npmjs.org` for a window ending 2026-07-01, not the current week. | Package Legitimacy Audit | None for the decision; recency of the number only. |
 | A7 | Whether the user wants the red-state evidence in a separate (`--no-verify`) commit rather than only as an evidence file. | Pitfall 3 | A separate red commit fails CI; the evidence-file route avoids it. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Hook trigger breadth (A2).**
+1. **Hook trigger breadth (A2). RESOLVED:** 01-03-PLAN.md Task 2 widens the trigger to `k8s`.
    - What we know: D-12 names `k8s/platform`; the readers read all of `k8s/**`; CI already covers every path.
    - What's unclear: whether the user wants non-platform k8s commits to stay free of the Node prerequisite.
    - Recommendation: use `k8s`; if the user prefers the literal path, record the remaining hole in the hook comment and the Checks section (caught in CI only for `k8s/monitoring`, `k8s/flux-system`, `k8s/overlays`).
 
-2. **HelmRelease placement semantics (Phase 2).**
+2. **HelmRelease placement semantics (Phase 2). RESOLVED, overriding the recommendation below:** the orchestrator decided in Phase 1 that a HelmRelease is placed by `spec.targetNamespace` (assumptions A8 and A9 in 01-02-PLAN.md Task 1; limits A10 to A12 recorded there and in 01-03-PLAN.md Task 3).
    - What we know: a HelmRelease lives in `flux-system` and installs into `targetNamespace`; Phase 1 elements have no HelmRelease anchors.
    - What's unclear: which namespace the model's element for cert-manager/Prometheus should be placed under for GATE-01.
    - Recommendation: do not decide in Phase 1; leave the HelmRelease branch in `placements()` returning no own namespace and note it for Phase 2 planning.
 
-3. **Does the Physical row need a Phase 1 touch?** Lines `:105` and `:230` of `docs/DIAGRAM_CONVENTIONS.md` say "nodes authored", false once namespaces are checked. STD-01 (Phase 2) owns the row. Recommendation: update the Checks section now and leave the rows, with a one-line pointer to STD-01.
+3. **Does the Physical row need a Phase 1 touch? RESOLVED:** 01-03-PLAN.md Task 3 edits only the statements Phase 1 makes false, including the Physical provenance cell. Lines `:105` and `:230` of `docs/DIAGRAM_CONVENTIONS.md` say "nodes authored", false once namespaces are checked. STD-01 (Phase 2) owns the row. Recommendation: update the Checks section now and leave the rows, with a one-line pointer to STD-01.
 
 ## Sources
 
