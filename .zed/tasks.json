@@ -40,5 +40,41 @@
     "label": "gradle: jacocoTestReport",
     "command": "./gradlew.bat",
     "args": ["jacocoTestReport"]
+  },
+  // LikeC4 architecture model in docs/architecture. These call fish and Node, so they run where the
+  // repo is checked out (WSL), unlike the Gradle tasks above. Run "architecture: install tooling"
+  // once per checkout. The viewer prints its address, usually http://localhost:5173/.
+  {
+    "label": "architecture: install tooling (once per checkout)",
+    "command": "pnpm",
+    "args": ["--dir", "docs/architecture", "install"]
+  },
+  {
+    "label": "architecture: view diagrams (live viewer)",
+    "command": "fish",
+    "args": ["docs/architecture/likec4.fish", "start"],
+    "use_new_terminal": true,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "architecture: export PNGs",
+    "command": "fish",
+    "args": ["docs/architecture/likec4.fish", "png"]
+  },
+  {
+    "label": "architecture: build static site",
+    "command": "fish",
+    "args": ["docs/architecture/likec4.fish", "site"]
+  },
+  {
+    "label": "architecture: check model against code",
+    "command": "fish",
+    "args": ["docs/architecture/likec4.fish", "check"]
+  },
+  {
+    "label": "architecture: regenerate tables from migrations",
+    "command": "fish",
+    "args": ["docs/architecture/likec4.fish", "sync"]
   }
 ]
