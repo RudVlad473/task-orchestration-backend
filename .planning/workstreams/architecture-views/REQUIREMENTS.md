@@ -78,11 +78,36 @@ Populated by the roadmapper.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| PHYS-01 | Phase 1 | Pending |
+| PHYS-02 | Phase 2 | Pending |
+| PHYS-03 | Phase 2 | Pending |
+| PHYS-04 | Phase 2 | Pending |
+| PROC-01 | Phase 2 | Pending |
+| LOGI-01 | Phase 2 | Pending |
+| SCEN-01 | Phase 2 | Pending |
+| SCEN-02 | Phase 2 | Pending |
+| SCEN-03 | Phase 2 | Pending |
+| SCEN-04 | Phase 2 | Pending |
+| SCEN-05 | Phase 2 | Pending |
+| SCEN-06 | Phase 2 | Pending |
+| SCEN-07 | Phase 2 | Pending |
+| SCEN-08 | Phase 3 | Pending |
+| GATE-01 | Phase 2 | Pending |
+| GATE-02 | Phase 1 | Pending |
+| GATE-03 | Phase 1 | Pending |
+| GATE-04 | Phase 1 | Pending |
+| STD-01 | Phase 2 | Pending |
+| PUB-01 | Phase 3 | Pending |
+| PUB-02 | Phase 3 | Pending |
+| PUB-03 | Phase 4 | Pending |
+| PUB-04 | Phase 4 | Pending |
+| PUB-05 | Phase 4 | Pending |
+| PUB-06 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25 ⚠️
+- Mapped to phases: 25
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-10-27*
