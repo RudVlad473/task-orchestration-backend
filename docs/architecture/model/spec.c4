@@ -50,6 +50,12 @@ specification {
     line dotted
     head diamond
   }
+  relationship imports {
+    notation 'Package imports another package'
+    line dotted
+    head vee
+    color slate
+  }
 
   tag generated
   tag planned

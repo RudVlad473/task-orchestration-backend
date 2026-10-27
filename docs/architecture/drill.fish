@@ -14,10 +14,7 @@ function fresh --inherit-variable repo --inherit-variable scratch --inherit-vari
     mkdir -p $scratch/src/main/resources/db $scratch/src/main/java/com/vrudenko/kanban_board $scratch/k8s
     cp -r $repo/src/main/resources/db/migration $scratch/src/main/resources/db/
     cp $repo/src/main/resources/application.properties $scratch/src/main/resources/
-    cp -r $repo/src/main/java/com/vrudenko/kanban_board/constant $scratch/src/main/java/com/vrudenko/kanban_board/
-    cp -r $repo/src/main/java/com/vrudenko/kanban_board/controller $scratch/src/main/java/com/vrudenko/kanban_board/
-    cp -r $repo/src/main/java/com/vrudenko/kanban_board/event $scratch/src/main/java/com/vrudenko/kanban_board/
-    cp -r $repo/src/main/java/com/vrudenko/kanban_board/activitylog $scratch/src/main/java/com/vrudenko/kanban_board/
+    cp -r $repo/src/main/java/com/vrudenko/kanban_board/. $scratch/src/main/java/com/vrudenko/kanban_board/
     cp -r $repo/k8s/base $repo/k8s/data $repo/k8s/platform $scratch/k8s/
     cp -r $here/model $scratch/model
 end
@@ -82,6 +79,17 @@ run
 echo "== D7c: a migration drops a foreign-key column"
 fresh
 printf 'ALTER TABLE tasks DROP COLUMN column_id;\n' >$scratch/src/main/resources/db/migration/V11__drop_col.sql
+run
+
+echo "== D8: a new cross-package import"
+fresh
+sed -i '1a import com.vrudenko.kanban_board.mapper.Unused;' $scratch/src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java
+run
+
+echo "== D8b: a two-package cycle appears"
+fresh
+set j (find $scratch/src/main/java/com/vrudenko/kanban_board/exception -name '*.java' | sort | head -1)
+sed -i '1a import com.vrudenko.kanban_board.handler.Unused;' $j
 run
 
 trash-put $scratch

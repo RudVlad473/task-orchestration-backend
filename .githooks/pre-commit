@@ -197,6 +197,9 @@ fi
 # commit carries the stale one. CI checks the committed tree.
 # Metadata sources outside the trigger paths (k8s/platform and the cited Java packages) are caught in CI
 # only.
+# A Java change that adds or removes a cross-package import makes generated.c4 stale, but src/main/java is
+# not a trigger path, so CI's likec4-model-drift job catches it. A trigger would make Node and a
+# per-worktree install a prerequisite of every Java commit.
 #
 # Falsified if scripts/pre-commit-likec4-selftest.py passes with --hook pointed at a copy without this step.
 LIKEC4_TRIGGERS=$(git diff --cached --name-only --no-renames -- \
@@ -217,7 +220,7 @@ if [ -n "$LIKEC4_TRIGGERS" ]; then
   LIKEC4_STATUS=$?
   if [ "$LIKEC4_STATUS" -eq 1 ]; then
     echo "LikeC4 model drift (see the DRIFT list above). Update docs/architecture/model, or run"
-    echo "node docs/architecture/sync.mjs generate when a migration changed the tables, then re-stage."
+    echo "node docs/architecture/sync.mjs generate when a migration or a package import changed, then re-stage."
     echo "Commit refused."
     exit 1
   elif [ "$LIKEC4_STATUS" -ne 0 ]; then

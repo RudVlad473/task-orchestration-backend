@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Self-test for .githooks/pre-commit's LikeC4 drift step: the real hook runs in scratch repos against every commit shape that touches, or avoids, the model's fact sources.
 
-The cases cover seven refusals for drift, three matching commits that pass the check, two refusals
+The cases cover eight refusals for drift, three matching commits that pass the check, two refusals
 for missing tooling and one commit of an unrelated path that must not run the step at all.
 
 Exit codes: 0 when every case passes, 1 when any fails, 2 when the environment is unusable (no hook,
@@ -413,6 +413,14 @@ def test_13_added_foreign_key_is_refused():
     git(repo, "add", fk_migration)
     before = head_of(repo)
     code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, STALE_TEXT)
+
+
+def test_14_added_package_import_is_refused():
+    case_dir, repo = make_repo("added-package-import", True)
+    replace_in(repo, KAFKA_TOPICS, "package com.vrudenko.kanban_board.constant;\n", "package com.vrudenko.kanban_board.constant;\nimport com.vrudenko.kanban_board.mapper.Unused;\n")
+    before = head_of(repo)
+    code, out = commit(case_dir, repo, "--", KAFKA_TOPICS)
     refused_for_drift(code, out, repo, before, STALE_TEXT)
 
 

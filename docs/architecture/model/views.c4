@@ -11,7 +11,7 @@ views {
     description 'Thread and messaging boundaries. The request thread never waits on Kafka.'
     include
       client,
-      kanban.*,
+      kanban.api, kanban.publisher, kanban.consumer,
       postgres,
       redpanda.*
   }
@@ -21,6 +21,13 @@ views {
     title 'Logical view: tables and the foreign keys that own them'
     description 'The tables tagged generated and every fk edge between them come from the Flyway migrations through sync.mjs. The two spring_session tables are authored: Spring Session creates them outside Flyway.'
     include postgres.*
+  }
+
+  view development of kanban {
+    #development
+    title 'Development view: top-level packages and the direction they import'
+    description 'The components and the edges between them are generated from import statements by sync.mjs. Package cycles are reported by sync.mjs check and are never gated.'
+    include kanban.* where kind is component
   }
 
   deployment view production {
