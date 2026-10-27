@@ -31,6 +31,7 @@
   exit=1
   DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
   - view process carries no viewpoint tag
+  - viewpoint process has no view
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D6b: a view carries two viewpoint tags
   exit=1
@@ -62,3 +63,8 @@
   DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 39 package edges, 2 topics, 4 workloads):
   - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service | exception, handler
+== D9: the only development view is retagged
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - viewpoint development has no view
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service

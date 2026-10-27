@@ -92,4 +92,9 @@ set j (find $scratch/src/main/java/com/vrudenko/kanban_board/exception -name '*.
 sed -i '1a import com.vrudenko.kanban_board.handler.Unused;' $j
 run
 
+echo "== D9: the only development view is retagged"
+fresh
+sed -i 's|^    #development$|    #logical|' $scratch/model/views.c4
+run
+
 trash-put $scratch

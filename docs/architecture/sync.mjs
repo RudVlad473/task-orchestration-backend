@@ -300,6 +300,11 @@ async function check() {
     else if (own.length > 1) problems.push(`view ${view.id} carries ${own.length} viewpoint tags`)
   }
 
+  // Each of the five viewpoints must have at least one view, so retagging or deleting the
+  // last view of a viewpoint leaves a hole in the 4+1 set that the check reports.
+  const covered = new Set([...computed.views()].flatMap((v) => [...v.tags]))
+  for (const vp of VIEWPOINTS) if (!covered.has(vp)) problems.push(`viewpoint ${vp} has no view`)
+
   const modelTopics = new Set(elements.filter((e) => e.kind === 'topic').map((e) => e.title))
   for (const t of topics()) if (!modelTopics.has(t)) problems.push(`topic ${t} is in KafkaTopics.java but not in the model`)
   for (const t of modelTopics) if (!topics().has(t)) problems.push(`topic ${t} is in the model but not in KafkaTopics.java`)

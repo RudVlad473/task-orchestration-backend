@@ -37,17 +37,51 @@ views {
     include netcup, netcup.k3s, netcup.**
   }
 
-  dynamic view signin {
+  dynamic view signin-ok {
     #scenarios
-    title 'Scenario: signin'
-    description 'POST /api/signin through to a session cookie.'
+    variant sequence
+    title 'Scenario: signin succeeds'
+    description 'POST /api/signin through to a session cookie. The signin reads the user by email, reads it again by id while the credentials are checked, reads the live sessions for the user, then rotates the session id and saves the security context.'
 
     client -> traefik 'POST /api/signin {email, password}'
     traefik -> kanban.api 'forward'
-    kanban.api -> postgres 'SELECT user by email'
-    kanban.api -> postgres 'count live sessions (ceiling 2)'
-    kanban.api -> postgres 'rotate session id, save security context'
-    kanban.api -> traefik '200 Set-Cookie JSESSIONID'
-    traefik -> client '200 {id, email, displayName, theme}'
+    kanban.api -> postgres.table_users 'SELECT user by email'
+    kanban.api <- postgres.table_users 'row'
+    kanban.api -> postgres.table_users 'SELECT user by id'
+    kanban.api -> postgres.spring_session 'read live sessions for the user'
+    kanban.api -> postgres.spring_session 'rotate session id, save security context'
+    traefik <- kanban.api '200 Set-Cookie JSESSIONID'
+    client <- traefik '200 {id, email, displayName, theme}'
+  }
+
+  dynamic view signin-bad-credentials {
+    #scenarios
+    variant sequence
+    title 'Scenario: signin with bad credentials'
+    description 'The unknown-email branch: no row for the email, so a 401 with code BAD_CREDENTIALS. A wrong password for a known email returns the identical body right after the SELECT user by id drawn in signin-ceiling, so its SQL is a prefix of that view and has no view of its own.'
+
+    client -> traefik 'POST /api/signin {email, password}'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres.table_users 'SELECT user by email'
+    kanban.api <- postgres.table_users 'no row'
+    traefik <- kanban.api '401 BAD_CREDENTIALS'
+    client <- traefik '401 ProblemDetail, code BAD_CREDENTIALS'
+  }
+
+  dynamic view signin-ceiling {
+    #scenarios
+    variant sequence
+    title 'Scenario: signin refused at the live-session ceiling'
+    description 'The credentials are right, but the user already holds the maximum number of live sessions. The response is the same 401 body as bad credentials, on purpose, so a client cannot tell a valid password from a wrong one.'
+
+    client -> traefik 'POST /api/signin {email, password}'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres.table_users 'SELECT user by email'
+    kanban.api <- postgres.table_users 'row'
+    kanban.api -> postgres.table_users 'SELECT user by id'
+    kanban.api -> postgres.spring_session 'read live sessions for the user'
+    kanban.api <- postgres.spring_session 'ceiling reached'
+    traefik <- kanban.api '401 BAD_CREDENTIALS'
+    client <- traefik '401 ProblemDetail, code BAD_CREDENTIALS'
   }
 }

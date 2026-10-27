@@ -2,7 +2,7 @@
 # Usage: likec4.fish start|validate|png|site|check|sync
 #   start     live-reloading viewer, usually on http://localhost:5173/ (it prints the address it chose)
 #   validate  parse and type-check the model
-#   png       render every view to out/*.png
+#   png       render every view to out/*.png; dynamic views draw as sequence diagrams (--seq)
 #   site      build a static site to out/site
 #   check     fail when the model and the code disagree
 #   sync      regenerate model/generated.c4 from the code
@@ -25,7 +25,7 @@ switch $argv[1]
     case validate
         $bin validate $here/model
     case png
-        $bin export png -o $here/out $here/model
+        $bin export png --seq -o $here/out $here/model
     case site
         $bin build -o $here/out/site $here/model
     case check

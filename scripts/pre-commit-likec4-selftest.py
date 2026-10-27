@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Self-test for .githooks/pre-commit's LikeC4 drift step: the real hook runs in scratch repos against every commit shape that touches, or avoids, the model's fact sources.
 
-The cases cover eight refusals for drift, three matching commits that pass the check, two refusals
+The cases cover nine refusals for drift, three matching commits that pass the check, two refusals
 for missing tooling and one commit of an unrelated path that must not run the step at all.
 
 Exit codes: 0 when every case passes, 1 when any fails, 2 when the environment is unusable (no hook,
@@ -422,6 +422,15 @@ def test_14_added_package_import_is_refused():
     before = head_of(repo)
     code, out = commit(case_dir, repo, "--", KAFKA_TOPICS)
     refused_for_drift(code, out, repo, before, STALE_TEXT)
+
+
+def test_15_viewpoint_without_a_view_is_refused():
+    case_dir, repo = make_repo("viewpoint-without-view", True)
+    replace_in(repo, VIEWS, "    #development\n", "    #logical\n")
+    git(repo, "add", VIEWS)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, "viewpoint development has no view")
 
 
 def preflight(hook):
