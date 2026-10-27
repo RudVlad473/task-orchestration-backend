@@ -45,6 +45,11 @@ specification {
     line dashed
     head open
   }
+  relationship fk {
+    notation 'Foreign key, child to parent'
+    line dotted
+    head diamond
+  }
 
   tag generated
   tag planned

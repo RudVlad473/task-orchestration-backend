@@ -1,31 +1,43 @@
 == baseline: untouched scratch copy
   exit=0
-  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+  OK (19 elements, 6 tables, 4 foreign keys, 2 topics, 4 workloads)
 == D1: a new migration adds table attachments
   exit=1
-  DRIFT (17 elements, 7 tables, 2 topics, 4 workloads):
-  - generated.c4 is stale: run `sync.mjs generate` (tables changed in the migrations)
+  DRIFT (19 elements, 7 tables, 4 foreign keys, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations changed)
 == D2: a new Kafka topic constant
   exit=1
-  DRIFT (17 elements, 6 tables, 3 topics, 4 workloads):
+  DRIFT (19 elements, 6 tables, 4 foreign keys, 3 topics, 4 workloads):
   - topic kanban.audit is in KafkaTopics.java but not in the model
 == D3: a new k8s Deployment named worker
   exit=1
-  DRIFT (17 elements, 6 tables, 2 topics, 5 workloads):
+  DRIFT (19 elements, 6 tables, 4 foreign keys, 2 topics, 5 workloads):
   - k8s Deployment/worker has no element carrying metadata workload 'Deployment/worker'
 == D4: a manifest the model cites as its source is deleted
   exit=1
-  DRIFT (17 elements, 6 tables, 2 topics, 3 workloads):
+  DRIFT (19 elements, 6 tables, 4 foreign keys, 2 topics, 3 workloads):
   - model claims workload StatefulSet/postgres but k8s/ has no such manifest
   - postgres: metadata source 'k8s/data/postgres/postgres.yaml' does not exist
 == D5 (negative control): a controller class is renamed
   exit=0
-  OK (17 elements, 6 tables, 2 topics, 4 workloads)
+  OK (19 elements, 6 tables, 4 foreign keys, 2 topics, 4 workloads)
 == D6: a view loses its viewpoint tag
   exit=1
-  DRIFT (17 elements, 6 tables, 2 topics, 4 workloads):
+  DRIFT (19 elements, 6 tables, 4 foreign keys, 2 topics, 4 workloads):
   - view process carries no viewpoint tag
 == D6b: a view carries two viewpoint tags
   exit=1
-  DRIFT (17 elements, 6 tables, 2 topics, 4 workloads):
+  DRIFT (19 elements, 6 tables, 4 foreign keys, 2 topics, 4 workloads):
   - view process carries 2 viewpoint tags
+== D7: a migration adds a foreign key by ALTER TABLE
+  exit=1
+  DRIFT (19 elements, 6 tables, 5 foreign keys, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations changed)
+== D7b: a migration drops a named foreign key
+  exit=1
+  DRIFT (19 elements, 6 tables, 3 foreign keys, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations changed)
+== D7c: a migration drops a foreign-key column
+  exit=1
+  DRIFT (19 elements, 6 tables, 3 foreign keys, 2 topics, 4 workloads):
+  - generated.c4 is stale: run `sync.mjs generate` (the migrations changed)

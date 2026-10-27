@@ -47,6 +47,21 @@ model {
       source 'k8s/data/postgres/postgres.yaml'
       workload 'StatefulSet/postgres'
     }
+
+    spring_session = table 'spring_session' {
+      technology 'Spring Session JDBC'
+      description 'Authored. Spring Session creates this table at startup (initialize-schema=always), outside Flyway.'
+      metadata {
+        source 'src/main/resources/application.properties'
+      }
+    }
+    spring_session_attributes = table 'spring_session_attributes' {
+      technology 'Spring Session JDBC'
+      description 'Authored. Spring Session creates this table at startup (initialize-schema=always), outside Flyway.'
+      metadata {
+        source 'src/main/resources/application.properties'
+      }
+    }
   }
 
   backup = system 'Postgres backup' {
@@ -82,4 +97,7 @@ model {
   redpanda.activity -[async]-> kanban.consumer 'poll, group activity-log'
   kanban.consumer -[sync]-> postgres 'INSERT activity_log, idempotent on event_id'
   kanban.consumer -[async]-> redpanda.dlt 'after 3 retries'
+
+  // Authored foreign key: Spring Session's own schema (schema-postgresql.sql in spring-session-jdbc 3.5.7).
+  postgres.spring_session_attributes -[fk]-> postgres.spring_session 'session_primary_id'
 }

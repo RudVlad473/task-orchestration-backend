@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Self-test for .githooks/pre-commit's LikeC4 drift step: the real hook runs in scratch repos against every commit shape that touches, or avoids, the model's fact sources.
 
-The cases cover six refusals for drift, three matching commits that pass the check, two refusals
+The cases cover seven refusals for drift, three matching commits that pass the check, two refusals
 for missing tooling and one commit of an unrelated path that must not run the step at all.
 
 Exit codes: 0 when every case passes, 1 when any fails, 2 when the environment is unusable (no hook,
@@ -404,6 +404,16 @@ def test_12_untagged_view_is_refused():
     before = head_of(repo)
     code, out = commit(case_dir, repo)
     refused_for_drift(code, out, repo, before, "view process carries no viewpoint tag")
+
+
+def test_13_added_foreign_key_is_refused():
+    case_dir, repo = make_repo("added-foreign-key", True)
+    fk_migration = "src/main/resources/db/migration/V9998__selftest_fk.sql"
+    write_new(repo, fk_migration, "ALTER TABLE subtasks ADD COLUMN owner_id VARCHAR(20) REFERENCES users (id);\n")
+    git(repo, "add", fk_migration)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, STALE_TEXT)
 
 
 def preflight(hook):

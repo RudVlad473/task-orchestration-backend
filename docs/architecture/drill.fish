@@ -13,6 +13,7 @@ function fresh --inherit-variable repo --inherit-variable scratch --inherit-vari
     test -e $scratch; and trash-put $scratch
     mkdir -p $scratch/src/main/resources/db $scratch/src/main/java/com/vrudenko/kanban_board $scratch/k8s
     cp -r $repo/src/main/resources/db/migration $scratch/src/main/resources/db/
+    cp $repo/src/main/resources/application.properties $scratch/src/main/resources/
     cp -r $repo/src/main/java/com/vrudenko/kanban_board/constant $scratch/src/main/java/com/vrudenko/kanban_board/
     cp -r $repo/src/main/java/com/vrudenko/kanban_board/controller $scratch/src/main/java/com/vrudenko/kanban_board/
     cp -r $repo/src/main/java/com/vrudenko/kanban_board/event $scratch/src/main/java/com/vrudenko/kanban_board/
@@ -66,6 +67,21 @@ run
 echo "== D6b: a view carries two viewpoint tags"
 fresh
 sed -i 's|^    #process$|    #process\n    #logical|' $scratch/model/views.c4
+run
+
+echo "== D7: a migration adds a foreign key by ALTER TABLE"
+fresh
+printf 'ALTER TABLE subtasks ADD COLUMN owner_id VARCHAR(20) REFERENCES users (id);\n' >$scratch/src/main/resources/db/migration/V11__add_owner.sql
+run
+
+echo "== D7b: a migration drops a named foreign key"
+fresh
+printf 'ALTER TABLE boards DROP CONSTRAINT fk_boards_user;\n' >$scratch/src/main/resources/db/migration/V11__drop_fk.sql
+run
+
+echo "== D7c: a migration drops a foreign-key column"
+fresh
+printf 'ALTER TABLE tasks DROP COLUMN column_id;\n' >$scratch/src/main/resources/db/migration/V11__drop_col.sql
 run
 
 trash-put $scratch
