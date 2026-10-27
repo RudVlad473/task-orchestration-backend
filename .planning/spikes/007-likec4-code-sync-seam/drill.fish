@@ -9,7 +9,7 @@ set sync $here/sync.mjs
 set scratch $here/out/drill-root
 
 function fresh --inherit-variable repo --inherit-variable scratch
-    rm -rf $scratch
+    test -e $scratch; and trash-put $scratch
     mkdir -p $scratch/src/main/resources/db $scratch/src/main/java/com/vrudenko/kanban_board $scratch/k8s
     cp -r $repo/src/main/resources/db/migration $scratch/src/main/resources/db/
     cp -r $repo/src/main/java/com/vrudenko/kanban_board/constant $scratch/src/main/java/com/vrudenko/kanban_board/
@@ -47,7 +47,7 @@ run
 
 echo "== D4: a manifest the model cites as its source is deleted"
 fresh
-rm $scratch/k8s/data/postgres/postgres.yaml
+trash-put $scratch/k8s/data/postgres/postgres.yaml
 run
 
 echo "== D5 (negative control): a controller class is renamed"
@@ -56,4 +56,4 @@ set c (find $scratch/src/main/java -path '*controller*' -name '*.java' | head -1
 mv $c (dirname $c)/RenamedController.java
 run
 
-rm -rf $scratch
+trash-put $scratch
