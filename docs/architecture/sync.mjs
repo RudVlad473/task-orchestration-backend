@@ -3,7 +3,8 @@
 //   node docs/architecture/sync.mjs generate [--root DIR] [--model DIR]   rewrite generated.c4 from the code
 //   node docs/architecture/sync.mjs check    [--root DIR] [--model DIR]   exit 1 when the model and the code disagree
 //
-// Exit codes: 0 clean, 1 drift, 2 usage, 3 tooling missing (likec4 not installed).
+// Exit codes: 0 clean, 1 drift, 2 usage, 3 tooling missing (likec4 or yaml not installed),
+// 4 a k8s fact source is missing or unreadable.
 //
 // --root points at a directory laid out like the repo (used by the drift drills, which
 // run against a scratch copy so the real code is never edited).
@@ -12,7 +13,7 @@
 // view never edits the real model.
 
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -25,14 +26,22 @@ const modelIdx = args.indexOf('--model')
 const modelDir = modelIdx >= 0 ? resolve(args[modelIdx + 1] ?? '') : join(here, 'model')
 const generatedFile = join(modelDir, 'generated.c4')
 
-async function loadLikeC4() {
+// Both modules load by dynamic import inside the same guard. A static import would fail before
+// this guard runs, and a missing install would surface as a stack trace with exit 1, which the
+// pre-commit hook reports as model drift instead of missing tooling.
+async function loadTooling() {
+  let LikeC4
+  let parseAllDocuments
   try {
-    return await import('likec4')
+    ;({ LikeC4 } = await import('likec4'))
+    ;({ parseAllDocuments } = await import('yaml'))
   } catch (err) {
     if (err?.code !== 'ERR_MODULE_NOT_FOUND') throw err
-    console.error('likec4 is not installed for docs/architecture. Run: pnpm --dir docs/architecture install')
+    const missing = err.message.match(/Cannot find (?:package|module) '([^']+)'/)?.[1] ?? 'a required module'
+    console.error(`${missing} is not installed for docs/architecture. Run: pnpm --dir docs/architecture install`)
     process.exit(3)
   }
+  return { LikeC4, parseAllDocuments }
 }
 
 // The five Kruchten viewpoints. This list and the `tag` lines in model/spec.c4 are the same
@@ -233,6 +242,60 @@ function workloads() {
   return out
 }
 
+// Every non-empty YAML document under k8s/, parsed once per check, in sorted name order. A
+// document with parse errors stops the check with exit 4: the parser reports errors on the
+// document instead of throwing, so a reader that skipped them would half-read a broken manifest.
+function k8sDocs(parseAllDocuments) {
+  const docs = []
+  const walk = (dir) => {
+    const entries = readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+    for (const e of entries) {
+      const p = join(dir, e.name)
+      if (e.isDirectory()) walk(p)
+      else if (/\.ya?ml$/.test(e.name)) {
+        const file = relative(root, p).split(sep).join('/')
+        for (const doc of parseAllDocuments(readFileSync(p, 'utf8'))) {
+          if (doc.errors.length) {
+            const [first] = doc.errors
+            console.error(`k8s fact source unreadable: ${file}: ${first.code} ${first.message.split('\n')[0]}`)
+            process.exit(4)
+          }
+          const o = doc.toJS()
+          if (o && typeof o === 'object') docs.push({ file, o })
+        }
+      }
+    }
+  }
+  walk(join(root, 'k8s'))
+  return docs
+}
+
+// The namespaces the manifests define, each mapped to the first file that names it: the name of
+// every Namespace document, plus any string value under a `namespace` or `targetNamespace` key at
+// any depth. Only strings count, because CRD schemas hold `namespace` keys whose value is an
+// object. targetNamespace is needed because cert-manager appears under no other key.
+function manifestNamespaces(docs) {
+  const found = new Map()
+  const add = (ns, file) => {
+    if (!found.has(ns)) found.set(ns, file)
+  }
+  const visit = (node, file) => {
+    if (Array.isArray(node)) {
+      for (const v of node) visit(v, file)
+    } else if (node && typeof node === 'object') {
+      for (const [k, v] of Object.entries(node)) {
+        if ((k === 'namespace' || k === 'targetNamespace') && typeof v === 'string') add(v, file)
+        visit(v, file)
+      }
+    }
+  }
+  for (const { file, o } of docs) {
+    if (o.kind === 'Namespace' && typeof o.metadata?.name === 'string') add(o.metadata.name, file)
+    visit(o, file)
+  }
+  return found
+}
+
 // --- generation -----------------------------------------------------------------------
 
 function render() {
@@ -277,7 +340,8 @@ function render() {
 
 async function check() {
   // Load likec4 first, so missing tooling wins over drift and always prints the install command.
-  const { LikeC4 } = await loadLikeC4()
+  const { LikeC4, parseAllDocuments } = await loadTooling()
+  const docs = k8sDocs(parseAllDocuments)
   const problems = []
 
   const want = render()
@@ -318,8 +382,20 @@ async function check() {
     if (src && !existsSync(join(root, src))) problems.push(`${e.id}: metadata source '${src}' does not exist`)
   }
 
+  // A namespace the manifests define needs a namespace node in the deployment model, and a
+  // namespace node needs a manifest that defines its title.
+  const defined = manifestNamespaces(docs)
+  const nsNodes = [...computed.deployment.nodes()].filter((n) => n.kind === 'namespace')
+  const nodeTitles = new Set(nsNodes.map((n) => n.title))
+  for (const ns of [...defined.keys()].sort()) {
+    if (!nodeTitles.has(ns)) problems.push(`namespace ${ns} is defined in ${defined.get(ns)} but has no namespace node in the deployment model`)
+  }
+  for (const n of [...nsNodes].sort((a, b) => a.title.localeCompare(b.title))) {
+    if (!defined.has(n.title)) problems.push(`deployment node ${n.id} names namespace '${n.title}', which no manifest under k8s/ defines`)
+  }
+
   const pkgs = packages()
-  const tally = `${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${workloads().size} workloads`
+  const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${workloads().size} workloads`
   // Cycles are reported on both outcomes and never add a problem, so they cannot change the exit code.
   if (problems.length) {
     console.error(`DRIFT (${tally}):\n- ${problems.join('\n- ')}\n${cycleLine(pkgs)}`)

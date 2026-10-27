@@ -4,6 +4,7 @@
   "type": "module",
   "packageManager": "pnpm@11.20.0",
   "devDependencies": {
-    "likec4": "1.60.0"
+    "likec4": "1.60.0",
+    "yaml": "2.9.1"
   }
 }

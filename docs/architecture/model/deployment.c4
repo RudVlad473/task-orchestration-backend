@@ -6,7 +6,7 @@ deployment {
     k3s = cluster 'k3s (single node)' {
       description 'Reconciled by Flux from k8s/'
 
-      edge = namespace 'edge' {
+      kube-system = namespace 'kube-system' {
         instanceOf traefik
       }
 
@@ -23,6 +23,15 @@ deployment {
       data = namespace 'kanban-data' {
         instanceOf postgres
         instanceOf backup
+      }
+
+      flux-system = namespace 'flux-system' {
+      }
+
+      cert-manager = namespace 'cert-manager' {
+      }
+
+      monitoring = namespace 'monitoring' {
       }
     }
   }

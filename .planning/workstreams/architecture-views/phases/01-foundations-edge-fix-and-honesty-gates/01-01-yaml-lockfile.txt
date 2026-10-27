@@ -1,0 +1,117 @@
+NOTE: the user accepted the pnpm-generated peer re-key (option A). The plan's original check
+(zero deleted lines, only two new yaml@ keys) was relaxed because pnpm re-keys vite's optional
+peer (yaml) through the likec4 chain: vite, likec4, @vitejs/plugin-react and
+vite-plugin-singlefile get a (yaml@2.9.1) suffix. Relaxed mechanical check, verified below:
+(a) the packages entry yaml@2.9.1 carries the approved integrity; (b) exactly one new package
+and one new importer entry; (c) every other changed line differs from its counterpart only by
+the (yaml@2.9.1) suffix or the "yaml: 2.9.1" peer line under vite; (d) no dependency version moves.
+
+== npm view yaml@2.9.1 version dist.integrity repository.url dependencies ==
+version = '2.9.1'
+dist.integrity = 'sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw=='
+repository.url = 'git+https://github.com/eemeli/yaml.git'
+scripts = {
+  docs: 'cd docs-slate && bundle exec middleman server',
+  lint: 'eslint config/ src/',
+  test: 'jest --config config/jest.config.js',
+  build: 'npm run build:node && npm run build:browser',
+  clean: 'git clean -fdxe node_modules',
+  start: `node --enable-source-maps -i -e 'YAML=require("./dist/index.js");const{parse,parseDocument,parseAllDocuments}=YAML'`,
+  predocs: 'node docs/prepare-docs.mjs',
+  prestart: 'rollup --sourcemap -c config/rollup.node-config.mjs',
+  prettier: 'prettier --write .',
+  'test:all': 'npm test && npm run test:types && npm run test:dist && npm run test:dist:types',
+  'test:dist': 'npm run build:node && jest --config config/jest.config.js',
+  'build:node': 'rollup -c config/rollup.node-config.mjs',
+  preversion: 'npm test && npm run build',
+  'test:types': 'tsc --noEmit && tsc --noEmit -p tests/tsconfig.json',
+  'docs:deploy': 'cd docs-slate && ./deploy.sh',
+  'docs:install': 'cd docs-slate && bundle install',
+  'build:browser': 'rollup -c config/rollup.browser-config.mjs',
+  'test:browsers': 'cd playground && npm test',
+  'predocs:deploy': 'node docs/prepare-docs.mjs',
+  prepublishOnly: 'npm run clean && npm test && npm run build',
+  'test:dist:types': 'tsc --allowJs --moduleResolution node --noEmit --target es5 dist/index.js'
+}
+
+(dependencies: empty; scripts: no preinstall, install or postinstall key)
+
+== relaxed check: each added line, with the (yaml@2.9.1) suffix stripped, pairs with a deleted line ==
+deleted=10 added=21
+added lines with no suffix-only counterpart:
+  "      yaml:"
+  "        specifier: 2.9.1"
+  "        version: 2.9.1"
+  "  yaml@2.9.1:"
+  "    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}"
+  "    engines: {node: '>= 14.6'}"
+  "    hasBin: true"
+  ""
+  "      yaml: 2.9.1"
+  "  yaml@2.9.1: {}"
+  ""
+deleted lines with no counterpart: 0
+
+== approved integrity occurrences in pnpm-lock.yaml (expect 1) ==
+1
+
+== git diff --numstat ==
+2	1	docs/architecture/package.json
+21	10	docs/architecture/pnpm-lock.yaml
+
+== git diff -U0 ==
+diff --git a/docs/architecture/package.json b/docs/architecture/package.json
+index 1a5e51b..be1f9a8 100644
+--- a/docs/architecture/package.json
++++ b/docs/architecture/package.json
+@@ -7 +7,2 @@
+-    "likec4": "1.60.0"
++    "likec4": "1.60.0",
++    "yaml": "2.9.1"
+diff --git a/docs/architecture/pnpm-lock.yaml b/docs/architecture/pnpm-lock.yaml
+index a4d1abb..8b75b23 100644
+--- a/docs/architecture/pnpm-lock.yaml
++++ b/docs/architecture/pnpm-lock.yaml
+@@ -13 +13,4 @@ importers:
+-        version: 1.60.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
++        version: 1.60.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(yaml@2.9.1)
++      yaml:
++        specifier: 2.9.1
++        version: 2.9.1
+@@ -624,0 +628,5 @@ packages:
++  yaml@2.9.1:
++    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
++    engines: {node: '>= 14.6'}
++    hasBin: true
++
+@@ -778 +786 @@ snapshots:
+-  '@vitejs/plugin-react@6.1.2(vite@8.3.5(esbuild@0.28.2))':
++  '@vitejs/plugin-react@6.1.2(vite@8.3.5(esbuild@0.28.2)(yaml@2.9.1))':
+@@ -781 +789 @@ snapshots:
+-      vite: 8.3.5(esbuild@0.28.2)
++      vite: 8.3.5(esbuild@0.28.2)(yaml@2.9.1)
+@@ -911 +919 @@ snapshots:
+-  likec4@1.60.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1):
++  likec4@1.60.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(yaml@2.9.1):
+@@ -916 +924 @@ snapshots:
+-      '@vitejs/plugin-react': 6.1.2(vite@8.3.5(esbuild@0.28.2))
++      '@vitejs/plugin-react': 6.1.2(vite@8.3.5(esbuild@0.28.2)(yaml@2.9.1))
+@@ -929,2 +937,2 @@ snapshots:
+-      vite: 8.3.5(esbuild@0.28.2)
+-      vite-plugin-singlefile: 2.3.4(vite@8.3.5(esbuild@0.28.2))
++      vite: 8.3.5(esbuild@0.28.2)(yaml@2.9.1)
++      vite-plugin-singlefile: 2.3.4(vite@8.3.5(esbuild@0.28.2)(yaml@2.9.1))
+@@ -1027 +1035 @@ snapshots:
+-  vite-plugin-singlefile@2.3.4(vite@8.3.5(esbuild@0.28.2)):
++  vite-plugin-singlefile@2.3.4(vite@8.3.5(esbuild@0.28.2)(yaml@2.9.1)):
+@@ -1030 +1038 @@ snapshots:
+-      vite: 8.3.5(esbuild@0.28.2)
++      vite: 8.3.5(esbuild@0.28.2)(yaml@2.9.1)
+@@ -1032 +1040 @@ snapshots:
+-  vite@8.3.5(esbuild@0.28.2):
++  vite@8.3.5(esbuild@0.28.2)(yaml@2.9.1):
+@@ -1041,0 +1050 @@ snapshots:
++      yaml: 2.9.1
+@@ -1050,0 +1060,2 @@ snapshots:
++  yaml@2.9.1: {}
++
