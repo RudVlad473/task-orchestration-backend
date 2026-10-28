@@ -1,5 +1,7 @@
 02-04 Task 2: what SQL does a cookie-less request to a protected route issue?
 
+=== History: earlier attempt, superseded by the measurement below ===
+
 Checked at (UTC): 2026-10-28T13:41Z (host clock showed 14:41 +01:00)
 
 Method planned: bring up this repo's compose postgres and redpanda, run the app on the host
@@ -17,26 +19,116 @@ Precondition result:
   /home/andre/dev/custom-ai-skills/shared/datastore. `docker compose ps --all` in this repo lists
   no service.
 - The plan's precondition says: if 5433 is held by something other than this repo's compose
-  Postgres, record `VERDICT: not measured` with that reason and do not run the steps, and never
+  Postgres, record the verdict "not measured" with that reason and do not run the steps, and never
   stop a service this task did not start. Starting this repo's postgres would collide on the same
   host port, and the only way to free it is to stop the user's datastore. Nothing was started,
   changed or stopped. No statement logging was switched on, no request was sent, and no Java was
   changed.
 
-Not observed, therefore unknown: whether a request with no session cookie creates a spring_session
-row, receives a Set-Cookie header, or issues any SQL, for a JSON client or for a default-Accept
-client.
+Not observed, therefore unknown (at the time): whether a request with no session cookie creates a
+spring_session row, receives a Set-Cookie header, or issues any SQL, for a JSON client or for a
+default-Accept client.
 
-Why the claim could be false (unverified, from reading only): the main chain uses
+Why the claim could be false (unverified at the time, from reading only): the main chain uses
 SessionCreationPolicy.IF_REQUIRED with CSRF disabled and no request-cache setting
 (SecurityConfiguration.java:122-128 and :87), and Spring Security's default request cache saves an
 unauthenticated request in a new session unless the client asks for JSON (training knowledge, not
-checked against the Spring Security source here). The entry point itself writes no session and no
+checked against the Spring Security source then). The entry point itself writes no session and no
 SQL: ProblemDetailAuthenticationEntryPoint.java:56-88 only increments a counter, logs and writes
 the body.
 
-To measure later: free port 5433 (the user stops the datastore) or run the app against a Postgres
-on another port, then re-run this task from its method; the VERDICT line below is replaced by the
-measured one.
+Verdict recorded then (superseded; kept as history, not a live verdict line): not measured, port
+5433 is held by the datastore-postgres container of another compose project, which this task must
+not stop.
 
-VERDICT: not measured port 5433 is held by the datastore-postgres container of another compose project, which this task must not stop
+=== Measurement (2026-10-28, run on the user's go-ahead against this repo's own Postgres) ===
+
+Checked at (UTC): 2026-10-28T14:44:02Z to 14:44:06Z (host clock 15:44 +01:00)
+Host commit: 82775fa (main). No Java, no .c4 file and no tracked docker-compose.yml was changed.
+
+Method:
+- Postgres: this repo's compose `postgres` service (postgres:16), started under a private compose
+  project name (`kbmeasure`) with a temp override file outside the repo that published it on
+  127.0.0.1:15433 instead of 5433, so the user's `datastore-postgres` on 5433 was never touched.
+  Fresh volume, Flyway built the schema. Redpanda was NOT started: the app boots without a broker
+  (the activity-log consumer logs "could not be established" warnings, no SQL consequence here).
+- App: `./gradlew bootRun` on the host (docs/LOCAL_DEV.md "Inspecting live output"), DB_PORT=15433,
+  SPRING_JPA_HIBERNATE_DDL_AUTO=validate, local-only throwaway credentials (not recorded here).
+  Spring Boot 3.5.16, Spring Security 6.5.11.
+- Statement capture: `ALTER SYSTEM SET log_statement = 'all'` + `pg_reload_conf()` through
+  `docker exec ... psql` on that Postgres, then `docker logs -t` of the container. Reset with
+  `ALTER SYSTEM RESET log_statement` afterwards.
+- Per request: `select count(*) from spring_session` before and after, `curl -s -o /dev/null -D -`
+  to http://localhost:8080/api/..., no Cookie header, status line and Set-Cookie presence (cookie
+  NAME only; no value was recorded).
+- Excluded from the statement list: the measurement harness's own `select count(*) from
+  spring_session` queries. No periodic session-cleanup DELETE and no keepalive query appeared in
+  the capture window, so none had to be dropped. Parameter values are not recorded (the session id
+  and the serialized request are among them).
+
+Results (all requests had no session cookie; all answered 401 with content-type
+application/problem+json):
+
+| Req | Method and route | Accept | Status | Set-Cookie | spring_session rows before -> after | Statements Postgres logged for it |
+|-----|------------------|--------|--------|-----------|-------------------------------------|-----------------------------------|
+| A | GET /api/boards | application/json | 401 | no | 0 -> 0 | none |
+| B | GET /api/boards | */* (curl default) | 401 | yes, JSESSIONID | 0 -> 1 | BEGIN; INSERT INTO SPRING_SESSION (...) VALUES ($1..$7); INSERT INTO SPRING_SESSION_ATTRIBUTES (...) VALUES ($1,$2,$3) with $2 = SPRING_SECURITY_SAVED_REQUEST; COMMIT |
+| C | POST /api/boards, JSON body | application/json | 401 | no | 1 -> 1 | none |
+| D | POST /api/boards, JSON body | */* | 401 | yes, JSESSIONID | 1 -> 2 | same four statements as B |
+| E | GET /api/boards | text/html,application/xhtml+xml,*/*;q=0.8 (browser navigation) | 401 | yes, JSESSIONID | 2 -> 3 | same four statements as B |
+| F | GET /api/boards | application/json, text/plain, */* (axios default) | 401 | no | 3 -> 3 | none |
+
+Statement timing, from the Postgres log: B at 14:44:02.52, D at 14:44:05.65, E at 14:44:05.97; the
+four statements land within 30 ms of the request. No SELECT, UPDATE or DELETE was logged for any of
+the six requests, and the three JSON-accepting requests (A, C, F) logged nothing at all.
+
+The Set-Cookie header on B/D/E (value redacted): `JSESSIONID=<redacted>; Max-Age=600; Path=/;
+Secure; HttpOnly; SameSite=Strict`.
+
+Follow-ups on the same running app:
+- Burst: 10 further cookie-less `Accept: */*` GETs took the table from 4 to 14 rows (one row per
+  request). Statements for the burst were not captured; the row delta is the evidence.
+- Lifetime: all 14 rows have principal_name NULL, max_inactive_interval = 10800 s (180 minutes,
+  spring.session.timeout=180m, application.properties:174) and were still present, unexpired, about
+  3 minutes after the burst (checked 14:47:34Z). Each row has exactly one attribute,
+  SPRING_SECURITY_SAVED_REQUEST. So the cookie's Max-Age (600 s) is far shorter than the
+  server-side row lifetime (10800 s): anonymous rows outlive the cookie that names them.
+
+Mechanism (read from the Spring Security 6.5.11 sources the app resolves; not from memory):
+- SecurityConfiguration.java:87 disables CSRF, :127 sets SessionCreationPolicy.IF_REQUIRED, and no
+  requestCache is configured anywhere in src/main/java (`rg -i requestCache src/main/java` finds
+  nothing), so the default RequestCacheConfigurer applies.
+- ExceptionTranslationFilter.sendStartAuthentication (line 218) calls
+  `requestCache.saveRequest(request, response)` BEFORE the authentication entry point runs.
+- RequestCacheConfigurer.createDefaultSavedRequestMatcher (lines 144-160) saves a request unless
+  it is a favicon, `X-Requested-With: XMLHttpRequest`, or matches application/json,
+  multipart/form-data or text/event-stream. Its media-type check ignores MediaType.ALL (lines
+  167-168), so `Accept: */*` is NOT treated as JSON and the request is saved. The
+  "GET requests only" matcher is added only when CSRF is enabled (lines 148-153); CSRF is disabled
+  here, so POST/PUT/DELETE are saved too (request D).
+- HttpSessionRequestCache.saveRequest (lines 72-78): `request.getSession().setAttribute(...)`
+  with createSessionAllowed = true creates the HTTP session. Spring Session JDBC then persists it
+  at commit: INSERT SPRING_SESSION + INSERT SPRING_SESSION_ATTRIBUTES, and the container sends
+  Set-Cookie.
+- ProblemDetailAuthenticationEntryPoint itself writes no session and no SQL (unchanged from the
+  earlier reading); the SQL comes from the request cache that runs before it.
+
+What this means for the error-401 view (not acted on here; orchestrator decides with the user):
+the "401 with no SQL step" claim holds for a client that sends Accept containing application/json
+(or X-Requested-With: XMLHttpRequest), and is false for a client that sends */*, text/html or no
+Accept header, on any method. For that client the view would have to show, between traefik/kanban.api
+and the 401, a write to postgres.spring_session (INSERT SPRING_SESSION and INSERT
+SPRING_SESSION_ATTRIBUTES, attribute SPRING_SECURITY_SAVED_REQUEST) and the 401 carrying a
+Set-Cookie JSESSIONID. It is also a security-relevant finding: anonymous traffic writes one
+spring_session row per request, each living 180 minutes.
+
+Not measured / limits: only /api/boards (one protected route) was driven; other protected routes go
+through the same filter chain but were not each tried. Behind traefik/production the Accept header a
+real client sends is what decides; no proxy was in the path here. The app ran without Kafka. One run,
+one machine; not a regression check.
+
+Cleanup: bootRun stopped, `./gradlew --stop` run, the `kbmeasure` compose project removed with its
+volume, port 8080 and 15433 free again, `datastore-postgres` and all other containers untouched.
+
+WRITES: yes
+VERDICT: b a request with Accept: application/json gets a clean 401 (no SQL, no row, no cookie), but a default-Accept (*/*) request creates a spring_session row and a JSESSIONID Set-Cookie via Spring Security's default request cache
