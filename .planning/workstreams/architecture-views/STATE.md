@@ -4,17 +4,17 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: 02
 current_phase_name: Model Completion
-status: executing
-stopped_at: Completed 02-04-PLAN.md
-last_updated: "2026-10-28T13:46:03.276Z"
+status: verifying
+stopped_at: Completed 02-05-PLAN.md
+last_updated: "2026-10-28T14:15:35.218Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 execution started
-state_head: 226b45fd63d0663d6916bde6f598db92997c0002
+state_head: 24694bc1c848e721e188821bb4b47a2af527e1db
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -31,7 +31,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 
 Phase: 02 (Model Completion) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-28 — Phase 02 execution started
 
 Progress: [███░░░░░░░] 25%
@@ -65,6 +65,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 02 P02 | not measured | 3 tasks | 9 files |
 | Phase 02 P03 | not measured | 3 tasks | 9 files |
 | Phase 02 P04 | not measured | 3 tasks | 3 files |
+| Phase 02 P05 | not measured | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,7 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-02: encryption in the backup flow is the label of the edge to the bucket, not its own node
 - [Phase 02]: Flux controllers: read the single file gotk-components.yaml, not the directory, so a rename is not masked by the patch file
 - [Phase 02]: 02-04: error-401 follows the not-measured branch (port 5433 held by another project Postgres); no SQL step, claim stated as authored and unmeasured
+- [Phase 02]: Hook self-test scratch repos copy .github/workflows and infra/vm; test_08's injected element is placed and drawn instead of relaxing the workload-instance rule
 
 ### Pending Todos
 
@@ -112,6 +114,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T13:46:03.044Z
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-10-28T14:13:38.873Z
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None

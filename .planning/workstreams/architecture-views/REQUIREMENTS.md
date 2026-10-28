@@ -23,11 +23,11 @@ Research: `.planning/workstreams/architecture-views/research/SUMMARY.md`. Phase 
 
 - [x] **SCEN-01**: Signup scenario.
 - [x] **SCEN-02**: Error-status scenario with the client-visible discriminators only: 401 with no SQL, 403 after the ownership selects, 409 on the version check.
-- [ ] **SCEN-03**: Push-to-image scenario.
-- [ ] **SCEN-04**: Image-to-rollout scenario.
-- [ ] **SCEN-05**: Inbound-packet-path and ingress-to-pod scenarios.
+- [x] **SCEN-03**: Push-to-image scenario.
+- [x] **SCEN-04**: Image-to-rollout scenario.
+- [x] **SCEN-05**: Inbound-packet-path and ingress-to-pod scenarios.
 - [x] **SCEN-06**: A mutation to `activity_log` row scenario.
-- [ ] **SCEN-07**: Nightly backup scenario.
+- [x] **SCEN-07**: Nightly backup scenario.
 - [ ] **SCEN-08**: Publish-the-site scenario.
 
 ### Honesty gates (GATE)
@@ -41,7 +41,7 @@ Every gate is proven red on a deliberate break, then green, before it counts.
 
 ### Standard (STD)
 
-- [ ] **STD-01**: The Physical and Scenarios rows of `docs/DIAGRAM_CONVENTIONS.md` are amended to match what is built.
+- [x] **STD-01**: The Physical and Scenarios rows of `docs/DIAGRAM_CONVENTIONS.md` are amended to match what is built.
 
 ### Publish (PUB)
 
@@ -86,17 +86,17 @@ Populated by the roadmapper.
 | LOGI-01 | Phase 2 | Complete |
 | SCEN-01 | Phase 2 | Complete |
 | SCEN-02 | Phase 2 | Complete |
-| SCEN-03 | Phase 2 | Pending |
-| SCEN-04 | Phase 2 | Pending |
-| SCEN-05 | Phase 2 | Pending |
+| SCEN-03 | Phase 2 | Complete |
+| SCEN-04 | Phase 2 | Complete |
+| SCEN-05 | Phase 2 | Complete |
 | SCEN-06 | Phase 2 | Complete |
-| SCEN-07 | Phase 2 | Pending |
+| SCEN-07 | Phase 2 | Complete |
 | SCEN-08 | Phase 3 | Pending |
 | GATE-01 | Phase 2 | Complete |
 | GATE-02 | Phase 1 | Complete |
 | GATE-03 | Phase 1 | Complete |
 | GATE-04 | Phase 1 | Complete |
-| STD-01 | Phase 2 | Pending |
+| STD-01 | Phase 2 | Complete |
 | PUB-01 | Phase 3 | Pending |
 | PUB-02 | Phase 3 | Pending |
 | PUB-03 | Phase 4 | Pending |
