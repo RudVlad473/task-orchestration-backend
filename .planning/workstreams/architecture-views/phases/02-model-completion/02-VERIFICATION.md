@@ -1,8 +1,8 @@
 ---
 phase: 02-model-completion
-verified: 2026-10-28T17:05:00Z
-status: human_needed
-score: 4/5 must-haves verified
+verified: 2026-10-28T17:53:13Z
+status: passed
+score: 5/5 must-haves verified
 covered_files:
   - ".planning/workstreams/architecture-views/phases/02-model-completion/02-01-PLAN.md"
   - ".planning/workstreams/architecture-views/phases/02-model-completion/02-01-SUMMARY.md"
@@ -31,56 +31,60 @@ covered_files:
   - "scripts/pre-commit-likec4-selftest.py"
   - "src/main/java/com/vrudenko/kanban_board/security/SecurityConfiguration.java"
   - "src/test/java/com/vrudenko/kanban_board/security/AuthorizationGatingTest.java"
-covered_digest: "v3:sha256:9dfe9efef5448c7402c2bd100dd9ede26da6d1e8a294d8671b1ca0d1be8ca9ef"
+covered_digest: "v3:sha256:7d91df776530f4128b317a268d5ddc01c83a2f7e286d70e4f29e04b7bfe6bd2c"
 behavior_unverified: 0
 overrides_applied: 0
 re_verification:
-  previous_status: gaps_found
-  previous_score: 3/5
+  previous_status: human_needed
+  previous_score: 4/5
   gaps_closed:
-    - "Criterion 5 / STD-01: standard overclaimed evidence coverage and Mermaid parity (WR-04, WR-08)"
-    - "Criterion 3: inbound-packet-path step 3 and the hostfilter element omitted ICMP (WR-06)"
-    - "Phase goal: staging ClusterIssuer described as the issuer every certificate starts on (WR-05)"
-    - "Criterion 3: error-401 'no SQL' was unmeasured; the measured defect was fixed in 17a94cb and pinned by a test"
+    - "Criterion 1 / PHYS-03: monitoring view omitted the chart-default scrape targets (the user chose to draw them; six edges now exist and each rests on a values line I re-read)"
+    - "Criterion 3: 'no SQL statement after the 401 fix' was an inference; it is now an observation at 7bccf71, with its capture-window limits named"
   gaps_remaining: []
   regressions: []
-human_verification:
-  - test: "Decide whether the monitoring view may omit the kube-prometheus-stack chart-default scrape targets (kubelet with cAdvisor, kube-state-metrics, API server, operator)"
-    expected: "Either the user accepts the narrower scope and an override is recorded in this file's frontmatter, or the four targets get edges in the monitoring view (then criterion 1 is re-verified). The orchestrator's assumption that the narrower scope is acceptable is NOT yet a user decision."
-    why_human: "The criterion says 'an edge to each thing they scrape'. Only the user can accept a narrower reading (an override needs accepted_by), and the live target list cannot be read from the repo."
 ---
 
 # Phase 2: Model Completion Verification Report
 
 **Phase Goal:** Every runtime, delivery and physical fact that matters appears in the Physical, Process, Logical and Scenarios views. Each new fact is tied to a check or labelled as authored, and the LikeC4 standard describes what is drawn.
-**Verified:** 2026-10-28T17:05:00Z
-**Status:** human_needed
-**Re-verification:** Yes, second pass after gap closure (first pass: `gaps_found`, 3/5)
+**Verified:** 2026-10-28T17:53:13Z
+**Status:** passed
+**Re-verification:** Yes, third pass (pass 1 `gaps_found` 3/5, pass 2 `human_needed` 4/5, pass 3 `passed` 5/5)
 
 ## Verdict in one paragraph
 
-All four first-pass gaps are closed and each fix is visible in the files, not just in the SUMMARYs. The one thing that still stops a clean `passed` is a scope question on criterion 1: the monitoring view states plainly that it leaves out the chart-default scrape targets, but the criterion's words are "an edge to each thing they scrape", so only the user can accept that narrower reading (or order the edges). That is pending the user's confirmation; it is not decided. Criterion 3's 401 claim is satisfied with a stated caveat: the "no session row, no cookie" part is proven by a test I re-ran green, the "no SQL statement" part is inferred and is labelled as inferred everywhere it appears.
+`passed`, with two stated caveats that do not contradict any criterion. Criterion 1 now draws an edge to every scrape target that the repo's monitors and the pinned chart's values say Prometheus has; I re-read the chart values file myself and the lines behind each new edge say what the edge titles say. What remains undrawn is the Prometheus self-scrape (LikeC4 refuses a self-link) and monitors the repo turns off (not scraped, so nothing is owed), and the live target list is not read. Criterion 3's "401 with no SQL step" is drawn, pinned by a test I re-ran green, and observed live at 7bccf71 by a recorded run whose own capture-sanity check I read; I did not reproduce that live run, and its limits are listed below. No human item is needed to close the phase; two optional, non-gating live checks are given with their commands.
 
-## First-pass gaps (kept as history) and how each closed
+## History kept visible
 
-| First-pass gap | Fix commit | Check this run | Result |
-| -------------- | ---------- | -------------- | ------ |
-| Gap 1, criterion 5 / STD-01: Scenarios row said every step is cited in the evidence file, but `signin-ok`, `signin-bad-credentials`, `signin-ceiling` have no section; Mermaid parity claimed for `error-status-split` and `signup` | `ee9f9be`, `3ea3414` | Read `docs/DIAGRAM_CONVENTIONS.md` rows and "Outside this change". The Scenarios row now says "the ten Phase 2 scenario views" and points the three `signin-*` views at `261027-if9-T4-SUMMARY.md` at `8b7e379` (file exists, commit exists, 8 `signin` mentions). The Mermaid text now says no view draws the 400 `VALIDATION_FAILED` section and `signup-ok` draws only the success path. I read `docs/diagrams/scenarios/signup.mmd` and `rg` the model for `VALIDATION_FAILED`, `400`, `DELETE`, `rollback`: the Mermaid has the validation, taken-email, lost-race and `DELETE user (rollback)` branches, the model draws none | CLOSED |
-| Gap 2, criterion 3: `inbound-packet-path` step 3 and `hostfilter` said only TCP is admitted; `k3s-host-firewall.sh:63` is `-p icmp -j RETURN` | `4d13696` | Read `infra/vm/k3s-host-firewall.sh:61-66`. `scenarios-platform.c4:37` now says "established traffic, new TCP on an allow-listed port and ICMP return from the chain, any other new connection is dropped"; `edge.c4:31` says "only as TCP on an allow-listed port or as ICMP, and drops every other new connection"; evidence row 3 cites lines 61, 62, 63 and 64 with the ICMP quote | CLOSED |
-| Gap 3, phase goal: staging issuer "every certificate starts on" | `4d13696` | `rg issuerRef -A3 k8s/overlays k8s/platform/edge`: all three Certificates name `letsencrypt-production`; `rg letsencrypt-staging k8s` hits only `clusterissuers.yaml`. `edge.c4:10` now reads "defined in the repo but referenced by no Certificate today. The prod, nonprod and monitoring Certificates all name the production issuer" | CLOSED |
-| Unrun verify, criterion 3: "401 with no SQL step" unmeasured | `17a94cb` (app), `3ea3414` (text) | See "Criterion 3 and the 401 path" below | CLOSED with a stated caveat |
+### Pass 1 gaps (`gaps_found`, 3/5), all closed in pass 2 and still closed
+
+| First-pass gap | Fix commit | Still closed this run |
+| -------------- | ---------- | --------------------- |
+| Criterion 5 / STD-01: Scenarios row claimed every step cited in the evidence file and Mermaid parity for `error-status-split` and `signup` (WR-04, WR-08) | `ee9f9be`, `3ea3414` | Yes. Row 113 of `docs/DIAGRAM_CONVENTIONS.md` says "the ten Phase 2 scenario views" and points the three `signin-*` views at `261027-if9-T4-SUMMARY.md` at 8b7e379 |
+| Criterion 3: `inbound-packet-path` step 3 and `hostfilter` said only TCP is admitted (WR-06, ICMP) | `4d13696` | Yes. Untouched since; `git diff 7bccf71 HEAD --stat` lists no `edge.c4` or `scenarios-platform.c4` change |
+| Phase goal: staging ClusterIssuer described as the issuer every certificate starts on (WR-05) | `4d13696` | Yes. Untouched since |
+| Criterion 3: "401 with no SQL step" unmeasured | `17a94cb`, `3ea3414` | Yes, and strengthened below |
+
+### Pass 2 (`human_needed`, 4/5): what it left open and how it closed
+
+| Pass-2 open item | Closed by | This run |
+| ---------------- | --------- | -------- |
+| Human item 1: may the monitoring view omit kubelet, kube-state-metrics, API server, operator? The user answered "draw them" (addendum in the pass-2 report) | `1d6c40e`, `6b6385d`, `e7a3f91` | Drawn. See "Criterion 1" below. No override was written, none is needed |
+| "No SQL statement after the fix" inferred, not observed | `2fbe8ff`, `6b6385d` | Observed at 7bccf71 in the recorded run. See "Criterion 3" below |
+| Info: "Of those four defaults" ambiguous referent; "line 1735" off by one in a citation | `1d6c40e` | Both phrases are gone from `docs/DIAGRAM_CONVENTIONS.md` (`rg` for "those four" and "1735" finds nothing). The new text cites no values line numbers in the document; the line-by-line record is in `261028-opl-chart-values.txt` |
 
 ## Re-run evidence (this run, stdin redirected, nothing copied)
 
 | Command | Result |
 | ------- | ------ |
-| `node docs/architecture/sync.mjs check < /dev/null` | `OK (56 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)`, exit 0 |
-| `python3 scripts/pre-commit-likec4-selftest.py < /dev/null` | `16/16 passed`, exit 0 |
-| `fish docs/architecture/drill.fish < /dev/null 2>/dev/null \| cmp - docs/architecture/drill-output.txt` | `cmp` exit 0, byte-identical |
-| `likec4 export json` on `docs/architecture/model` (to a temp dir, inspected, then trashed) | 20 views; 3 `deployment` views, all tagged `physical`: `monitoring` (11 edges), `production` (17), `delivery` (8); 0 edges in any view with a `[...]` label; 13 views tagged `scenarios` with 3 to 5 nodes each (`signup-ok` 5, `error-401` 3, `error-403` 5, `error-409` 4, `activity-log-row` 5, `push-to-image` 4, `image-to-rollout` 5, `inbound-packet-path` 5, `ingress-to-pod` 3, `nightly-backup` 3, `signin-ok` 5, `signin-bad-credentials` 4, `signin-ceiling` 5); every scenario edge has a non-empty title |
-| `./gradlew test --tests 'com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep'` | Test report: `tests="30" skipped="0" failures="0" errors="0"`; the 8 `shouldCreateNoSessionAndSetNoCookie_whenNoSessionIsPresent` cases (GET and POST `/boards` x Accept `application/json`, `*/*`, browser navigation, none) all present and passing. The Gradle build exit was 1 only because `jacocoTestCoverageVerification` fails when one class runs alone (coverage 0.29 against 0.90), which is not a test failure. Docker containers started by the run were gone afterwards |
+| `node docs/architecture/sync.mjs check < /dev/null` | `OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)`, exit 0 |
+| `python3 scripts/pre-commit-likec4-selftest.py < /dev/null` | `16/16 passed`, exit 0 (exit read separately from the output) |
+| `fish docs/architecture/drill.fish < /dev/null 2>/dev/null \| cmp - docs/architecture/drill-output.txt` | `cmp` exit 0, byte-identical. `git diff 7bccf71 HEAD -- docs/architecture/drill-output.txt` changes only the element count (56 to 61, 57 to 62); no drill changed its exit code |
+| `likec4 export json` (temp dir under `/tmp`, trashed after) | 20 views. 3 `deployment` views, all tagged `physical`: `monitoring` 17 edges, `production` 17, `delivery` 8. 0 edge labels read `[...]`. 13 views tagged `scenarios`, 3 to 5 nodes each (`signup-ok` 5, `error-401` 3, `error-403` 5, `error-409` 4, `activity-log-row` 5, `push-to-image` 4, `image-to-rollout` 5, `inbound-packet-path` 5, `ingress-to-pod` 3, `nightly-backup` 3, `signin-ok` 5, `signin-bad-credentials` 4, `signin-ceiling` 5); every scenario edge has a non-empty label |
+| `./gradlew test --tests 'com.vrudenko.kanban_board.security.AuthorizationGatingTest$NoSessionSweep' < /dev/null` | Report `tests="30" skipped="0" failures="0" errors="0"`. The build exit was 1 only because `jacocoTestCoverageVerification` fails when one class runs alone (coverage 0.29 against 0.90), not a test failure. No Testcontainers or Ryuk container was left behind. `git diff --stat 7bccf71 HEAD` lists no file under `src/`, so this is the same code the live run used |
+| `rg 'excluded, as in' docs/DIAGRAM_CONVENTIONS.md` | no match |
 | Debt markers `TBD\|FIXME\|XXX\|TODO\|HACK\|PLACEHOLDER` over `sync.mjs`, `drill.fish`, `model/`, `DIAGRAM_CONVENTIONS.md`, the self-test | no hits |
-| `rg 'excluded, as in' docs/DIAGRAM_CONVENTIONS.md` | no match (exit 1) |
 
 ## Goal Achievement
 
@@ -88,91 +92,92 @@ All four first-pass gaps are closed and each fix is visible in the files, not ju
 
 | #   | Truth | Status | Evidence |
 | --- | ----- | ------ | -------- |
-| 1 | Three `#physical` deployment views; delivery view (GitHub, runner, Docker Hub, Flux, image path); monitoring view with an edge to each thing it scrapes; cert-manager with both ClusterIssuers, edge routing, host filter external; view-membership check green; no `[...]` label | VERIFIED for everything except the scrape-completeness clause; that clause is PENDING THE USER'S DECISION (human item 1) | Export: `monitoring`, `production`, `delivery`, all `physical`, 0 `[...]` labels; `check` exit 0. `production` has `issuer-staging`, `issuer-production`, `certmanager`, `hostfilter` (kind `external`). `monitoring.c4` draws `prometheus -> node-exporter, postgres-exporter, certmanager, kanban.management, redpanda`; `loki.yaml:102` has `serviceMonitor.enabled: false`, so no Loki scrape edge is owed. NOT drawn: the chart-default targets named in the view description. The criterion's literal words ("an edge to each thing they scrape") would require them, so this is not a clean pass |
-| 2 | `process` shows Schema Registry, `register-schemas` init job, management port, backup flow Postgres to encryption to off-cluster bucket; `data` has notes for `activity_log` and Avro subjects; each `metadata.source` is a file `check` confirms | VERIFIED | Unchanged since first pass; `sync.mjs`, `process`/`data` model files untouched by the four fix commits (`git show --stat` of `17a94cb`, `3ea3414`, `4d13696`, `ee9f9be` lists no such file); `check` exit 0 re-run this pass |
-| 3 | Scenario views for signup, error 401/403/409, push-to-image, image-to-rollout, inbound-packet-path, ingress-to-pod, activity-log row, nightly backup; every step titled; at most 5 participants; evidence file cites the line behind each step | VERIFIED, with one stated caveat on the 401 no-SQL claim | All ten Phase 2 views present, `scenarios`, 3 to 5 nodes, no untitled edge. Evidence row for `inbound-packet-path` step 3 now cites lines 61 to 64 including 63, and the quoted line matches the script I read. `error-401`: see below |
-| 4 | `sync.mjs` reads workloads, namespaces, hosts from the k8s YAML incl. `k8s/platform`, `k8s/monitoring`, `k8s/flux-system`; `check` exit 0; three breaks each exit 1 and are drilled; unmodified copy exits 0 | VERIFIED | `sync.mjs` and `drill.fish` untouched by the fix commits; `check` exit 0 and the drill replay is byte-identical to `drill-output.txt` this run |
-| 5 | Physical row names the deployment views as built and no longer says monitoring is excluded; Scenarios row describes scenarios as built incl. internal activity-log and delivery steps; "excluded, as in `production-host.mmd`" absent | VERIFIED | `rg 'excluded, as in'` exit 1. Physical row names `production`, `delivery`, `monitoring` and now also says the chart default scrape targets are not drawn. Scenarios row names the activity-log and delivery internal steps and is now scoped to "the ten Phase 2 scenario views". Both overclaims from the first pass are gone (see gap table) |
+| 1 | Three `#physical` deployment views; delivery view; monitoring view with an edge to each thing it scrapes; cert-manager with both ClusterIssuers, edge routing, host filter external; view-membership check green; no `[...]` label | VERIFIED, with stated scope limits (Info) | Export: `monitoring`, `production`, `delivery`, all `physical`, 0 `[...]` labels, `check` exit 0. `production` nodes include `issuer-staging`, `issuer-production`, `certmanager`, `hostfilter`, `traefik`, `svclb`. `delivery` nodes include `github`, `runner`, `ci`, `docker-hub`, `dockerhub`, `flux`, `repo`. `monitoring` edges listed below |
+| 2 | `process` shows Schema Registry, `register-schemas` init job, management port, backup flow Postgres to encryption to off-cluster bucket; `data` has notes for `activity_log` and Avro subjects; each `metadata.source` is a file `check` confirms | VERIFIED | `process` nodes include `registry`, `init: register-schemas`, `management`, `backup`, `b2: Off-cluster backup bucket`. `data` has `activity_log_note` (source `V3__add_activity_log.sql`) and `avro_subjects` (source `src/main/avro`); `check` exit 0 confirms sources exist |
+| 3 | Scenario views for signup, error 401/403/409, push-to-image, image-to-rollout, inbound-packet-path, ingress-to-pod, activity-log row, nightly backup; every step titled; at most 5 participants; evidence file cites the line behind each step | VERIFIED, with caveat on the extent of the 401 observation | All ten Phase 2 views present, tagged `scenarios`, 3 to 5 nodes, no untitled edge. Evidence file line citations into `02-04-401-measure.txt` (heading 161, rows 191-199, burst 207, signin 212, result 223, limits 230-243) match the file |
+| 4 | `sync.mjs` reads workloads, namespaces, hosts incl. `k8s/platform`, `k8s/monitoring`, `k8s/flux-system`; `check` exit 0; three breaks each exit 1 and are drilled; unmodified copy exits 0 | VERIFIED | `check` exit 0; drill replay byte-identical. Recorded in `drill-output.txt`: D20 HelmRelease rename exit 1, D22 Flux controller rename exit 1, D24 changed host exit 1, D21 changed namespace exit 1, D23 ClusterIssuer rename exit 1; baseline exit 0 |
+| 5 | Physical row names the deployment views as built and no longer says monitoring is excluded; Scenarios row describes scenarios as built incl. internal activity-log and delivery steps; "excluded, as in `production-host.mmd`" absent | VERIFIED | Row 112 names `production`, `delivery`, `monitoring` and lists the monitoring targets as now drawn, with the self-scrape stated as not drawn. Row 113 names the activity-log and delivery internal steps. `rg 'excluded, as in'` finds nothing |
 
-**Score:** 4/5 truths verified; criterion 1 verified except one clause awaiting the user's decision.
+**Score:** 5/5 truths verified. `behavior_unverified`: 0.
 
-### Criterion 3 and the 401 path: my judgment
+### Criterion 1: does the monitoring view now satisfy "an edge to each thing they scrape"?
 
-What the ROADMAP asks: a scenario view for error 401 as one outcome "with client-visible discriminators only (401 with no SQL step ...)". The view exists, is tagged `scenarios`, has 3 participants and 4 titled edges, and draws no SQL step. So the letter is met. The harder question is whether the drawn claim is true after the fix.
+What I checked rather than took from the record:
 
-What is measured, what is tested, what is inferred:
+- **Edges in the export** (`monitoring`, 17 edges). Prometheus to: Grafana, node-exporter, postgres-exporter, kube-state-metrics, the Prometheus Operator, cert-manager, `kanban` (prod and nonprod), Redpanda (prod and nonprod), the kubelet (with cAdvisor), the API server, CoreDNS. Query and push edges: Grafana to Prometheus and Loki, Alloy to Loki, postgres-exporter to Postgres. Compared with 7bccf71, exactly six scrape edges and six nodes (`kube-state-metrics`, `prometheus-operator`, `kubelet`, `kube-apiserver`, `kube-system`, `coredns`) were added; nothing was removed.
+- **Repo-declared monitors** (read `k8s/`): the `redpanda` and `app` PodMonitors (`k8s/monitoring/configs/podmonitors.yaml`), the cert-manager `servicemonitor` (`cert-manager.yaml:46`), postgres-exporter `serviceMonitor` (`postgres-exporter.yaml:62`), node-exporter via the chart, Loki `serviceMonitor` off (`loki.yaml:102`). Each drawn pre-existing edge has its monitor; the one disabled monitor has no edge. There is no `additionalScrapeConfigs` or `scrape_configs` anywhere under `k8s/`, so the `prometheus.io/scrape` annotations on the Flux controllers in `gotk-components.yaml` are not selected by anything and no Flux scrape edge is owed. (Prometheus Operator does not honour those annotations without such a config; that is my knowledge of the operator, not something I read in this repo.)
+- **Chart values, read by me** (`gh api` of `charts/kube-prometheus-stack/values.yaml` at tag `kube-prometheus-stack-91.5.2`; 218683 bytes, sha256 `7d089fcf...5081`, equal to the figures in `261028-opl-chart-values.txt`; pinned version equals `kube-prometheus-stack.yaml:25`). I read these lines: `kubernetesServiceMonitors.enabled: true` (1730-1731); `kubeApiServer.enabled: true` (1735-1736) and `serviceMonitor.enabled: true` (1748-1749); `kubelet.enabled: true` (1838-1839), `serviceMonitor.enabled` (1846-1847), `https: true` (1900), `probes: true` (1929), `resource: false` (1934), `cAdvisor: true` (1944); `coreDns.enabled: true` with `port: 9153` (2229-2233) and `serviceMonitor.enabled: true` (2242-2243); `kubeStateMetrics.enabled: true` (2835-2836) and `kube-state-metrics.prometheus.monitor.enabled: true` (2849-2853); `prometheusOperator.enabled: true` (2981-2982), `tls.enabled: true` (2997-2998) and `serviceMonitor.selfMonitor: true` (3525-3528); Grafana `serviceMonitor.enabled: true` (1696-1700, under the `grafana:` key at 1394); Prometheus `serviceMonitor.selfMonitor: true` (4341-4344, under `prometheus:` at 3783). Every cited line says what the record says. The repo's own `kube-prometheus-stack.yaml` lines 37-38 and 45-52 turn off Alertmanager, controller-manager, scheduler, etcd and kube-proxy, as the view and the standard state.
+- **Edge titles name a protocol or port only where a values line states it.** "over HTTPS" rests on 1900, "port 9153" on 2233, "probe metrics" on 1929. The API-server, operator, kube-state-metrics and Grafana titles name none, although 2998 shows operator TLS is on; that is an understatement, not an overclaim.
+- **Authored elements are labelled.** `kubelet`, `kube-apiserver` and `coredns` descriptions open with "Authored" and say no manifest declares them. Their `source` is `infra/vm/k3s/config.yaml`, which exists (`check` exit 0), and whose `disable:` list names only `metrics-server`, which is what keeps CoreDNS on. The standard (row 112, Checks paragraph at lines 244-261) lists them as "not placement-checked" and says a chart bump can leave the drawn set stale without failing.
 
-- **Measured live, before the fix** (`02-04-401-measure.txt`, host commit `82775fa`, verdict b): a cookie-less `GET`/`POST /api/boards` whose Accept named `application/json` (rows A, C, F) got a 401 with no cookie, no `spring_session` row and **no statement at all**; a bare wildcard, browser navigation or no Accept header (rows B, D, E) wrote `INSERT SPRING_SESSION` and `INSERT SPRING_SESSION_ATTRIBUTES` and set `JSESSIONID`.
-- **Fixed** (`17a94cb`): I read the diff. `SecurityConfiguration.java:129` is `http.requestCache(cache -> cache.requestCache(new NullRequestCache()));`, and `rg -n "requestCache|NullRequestCache" src/main/java` finds only that line and the import.
-- **Tested, observed this run**: `AuthorizationGatingTest$NoSessionSweep` passes all 8 sweep cases against the fixed code (0 failures in the report I just generated). The red direction is recorded in `261028-m6k-red.txt` (6 of the 8 cases fail on the unfixed code, each with `newSessionRows=1, setCookieNames=[JSESSIONID]`, and the two JSON cases pass as the control). I did not re-run the red direction myself because that needs the app code reverted, which this pass may not do; I read the recorded output and it matches the measurement rows B, D, E.
-- **Inferred, not observed**: that no SQL *statement* is sent after the fix. The test counts new `SPRING_SESSION` primary ids and `Set-Cookie` names in process (MockMvc), not statements, and no live re-measure followed the fix. The inference rests on three premises, each checked: (1) the only statements measured on the unfixed code were the session INSERTs, (2) the fix removes the cache that triggered them and the test shows no session is created for any of the 4 Accept variants, (3) the requests that never reached the saving path (A, C, F) issued zero statements live, so a refused anonymous request that creates no session follows that zero-statement path.
+My judgment on the remainder. The disabled monitors are not scraped, so omitting them is accurate, not a gap. Prometheus scraping itself is the one real literal gap: "an edge to each thing they scrape" includes it. It is stated in the view description, in the `prometheus` element description and in `DIAGRAM_CONVENTIONS.md`, together with the reason (LikeC4 1.60 rejects a self-relationship; the record says it was measured). A self-edge conveys nothing the sentence does not, and the phase goal accepts "labelled" facts. I treat it as an honest, stated scope (Info), not a gap, and not a reason for an override. The Alloy chart defaults and the live target list are also unread and stated as such. If the user reads the criterion as requiring even the self-scrape, the fix is one extra authored element (for example "Prometheus (self-scrape)") with an edge; I do not think the criterion's intent needs it.
 
-Does that satisfy criterion 3 as worded? Yes. The criterion requires a view with no SQL step and an evidence file that cites the line behind each step; both hold, and the claim behind the view is now backed by a green behavioral test of its observable consequence plus a live baseline, not by presence checks alone. I do not round the statement-level claim up to measured: `error-401`'s description, `DIAGRAM_CONVENTIONS.md` note (b2), the table row and `02-SCENARIO-EVIDENCE.md` all say "inferred from the code, not observed", and I checked that the wording is identical in substance in all four places. That labelling is what the phase goal ("tied to a check or labelled as authored") asks for.
+### Criterion 3: the 401 path
 
-**Caveat, stated:** the statement-level absence after the fix is an inference. It is not a human gate because the artifact says so itself and the criterion does not require a statement count. If you want it observed, the settling command is the same method as `02-04-401-measure.txt`: run this repo's own compose Postgres on a free host port (the earlier run used project name `kbmeasure` and port `15433`, with a temp override file outside the repo), `./gradlew bootRun` with `DB_PORT=15433`, `ALTER SYSTEM SET log_statement='all'` plus `pg_reload_conf()`, then `curl -s -o /dev/null -D - http://localhost:8080/api/boards` with no Cookie header once with `-H 'Accept: application/json'`, once with `-H 'Accept: */*'` and once with `-H 'Accept:'`; expect 401, no `Set-Cookie`, `select count(*) from spring_session` unchanged, and no statement in `docker logs`. Do not stop the user's `datastore-postgres` on 5433. If any request still writes a row, `error-401` and criterion 3 are contradicted for that client.
+- **View.** `error-401` has 3 participants and 4 titled edges, no SQL step. `SecurityConfiguration.java:129` is still `http.requestCache(cache -> cache.requestCache(new NullRequestCache()));`, the only `NullRequestCache` use under `src/main/java`.
+- **Test, re-run by me.** `NoSessionSweep`: 30 tests, 0 failures, including the GET and POST `/boards` sweep over four Accept variants. The red direction (6 of 8 failing on the unfixed code) is read from `261028-m6k-red.txt`, not re-run.
+- **Live observation, read not reproduced.** `02-04-401-measure.txt`, section "Post-fix re-measure (HEAD 7bccf71)": 9 request combinations (GET and POST `/api/boards` against `application/json`, `*/*`, a browser navigation header, the axios default, and no Accept header) plus a 10-request burst, each 401, no `Set-Cookie`, `spring_session` 0 to 0, no logged statement; a real signin created one row with a principal. The record includes a capture-sanity check (18 harness-tagged lines logged for the first 9 requests), which makes "empty statement list" a real "nothing logged" and not a dead capture. I did not start the app and database myself (that needs a server and a state-changing run, outside what this pass may do), so this is a recorded observation by an earlier executor that I judged for internal consistency, not one I reproduced.
+- **Limits, as the record names them.** One second of Postgres log per request plus one log-tail read; the whole log was not re-read; only `GET`/`POST /api/boards`; one machine, no proxy; no Redpanda; plain HTTP; cookie-less case only (no stale cookie).
 
-### Criterion 1 and the monitoring scope: my judgment
+Decision: **passed, with this caveat, not `human_needed`.** The criterion needs a view with no SQL step and a cited step list; both hold. The claim behind the view is now backed by three independent kinds of evidence: a pre-fix live measurement that reproduced the defect (rows B, D, E), a test I re-ran green whose red direction is recorded, and a post-fix live measurement. Every artifact that states the claim (view description, standard row 113 and note (b2), table row, evidence file) says "observed at 7bccf71" with the capture-window limits, and none says more. A residual risk remains outside what the criterion asks: a stale-cookie request, other methods or other routes, or a proxy-added header could still touch the database, and nothing in the artifacts claims otherwise.
 
-The criterion says the monitoring view shows "an edge to each thing they scrape". The view now says, in its own description and in `DIAGRAM_CONVENTIONS.md` (Physical row, Checks paragraph, `monitoring` row), exactly what it leaves out: the chart-default scrape targets, "among them the kubelet with cAdvisor, kube-state-metrics, the API server and the operator". I read `k8s/monitoring/controllers/kube-prometheus-stack.yaml`: lines 45 to 52 turn off only `kubeControllerManager`, `kubeScheduler`, `kubeEtcd`, `kubeProxy` (the "lines 45 to 52" citation is exact). `k8s/monitoring/configs/dashboards/cadvisor.json` exists in the repo, so cAdvisor metrics are at least consumed here.
+Optional, non-gating independent reproduction, if the user wants one: use this repo's compose Postgres under a private project name and a free host port (the record used project `kbmeasure2`, port `15433`, `SERVER_PORT=18080`, `MANAGEMENT_SERVER_PORT=19081`), set `log_statement=all`, run `./gradlew bootRun`, then `curl -s -o /dev/null -D - -H 'Accept: */*' http://localhost:18080/api/boards` with no Cookie header. Expect 401, no `Set-Cookie`, `select count(*) from spring_session` unchanged, and no statement in the Postgres log. Do not stop `datastore-postgres` on 5433. Any request that still writes a row would contradict `error-401` for that client.
 
-Is the criterion met by "repo-evidenced targets plus an honest statement"? By the literal words, no: a thing Prometheus scrapes is not drawn. The honest statement turns an inaccuracy into a labelled scope reduction, and that satisfies the phase goal's "labelled as authored". It does not turn the ROADMAP wording into something else, and a scope reduction of a ROADMAP criterion is what the override mechanism exists for, which needs a person's `accepted_by`. So I do not mark it VERIFIED and I do not mark it FAILED: it is pending the user's confirmation (human item 1). The orchestrator's assumption that the narrower reading is fine stays an assumption until then.
+### Four PNG sizes changed: does it matter?
 
-What the text says versus what is known (you asked me to check the text says exactly that and no more):
-
-- The model description and the standard claim only: these four are chart-default targets that the values file leaves on; "only the API server was confirmed enabled in the chart values at the pinned version"; the rest are the chart's documented defaults, not read from this repo; the live target list is not read. That is a deliberate understatement, not an overstatement. Pinned version `91.5.2` matches `kube-prometheus-stack.yaml:25`.
-- I did not re-read the upstream chart `values.yaml` myself (no network read this run). The quick task's own verifier (`261028-n5v-VERIFICATION.md` row 7) reports a fuller fetch at tag `kube-prometheus-stack-91.5.2` finding `kubelet.enabled`, `cAdvisor`, `kubeApiServer`, `kubeStateMetrics` and `prometheusOperator` all `true`, and that the cited line 1735 is the `kubeApiServer:` key with `enabled: true` at 1736 (off by one). Treat that as reported, not confirmed by me. If correct, the four omitted targets are real, which makes a "no" from the user a concrete four-edge task rather than an open-ended one.
-- Minor wording defect (Info): `DIAGRAM_CONVENTIONS.md` Checks paragraph says "turns off only the controller-manager, scheduler, etcd and kube-proxy monitors (lines 45 to 52). Of those four defaults only the API server was read ...". "Those four" reads as the four turned off, but means the four not drawn (kubelet with cAdvisor, kube-state-metrics, API server, operator). `monitoring.c4` says "Of the four named", which is unambiguous. Not a gap against any criterion or plan truth.
+No criterion mentions a PNG size, and the standard records the sizes "without a verdict against any bound". I compared the `likec4 export json` output at 7bccf71 with the working tree: `production` (24 nodes, 17 edges, bounds 3405 x 2510), `inbound-packet-path` (5 nodes, 5 edges, 3218 x 369), `delivery` and `data` have identical node sets, edge sets and bounds at both revisions; `process` has identical node and edge sets and a width that differs by 1 px (3224 vs 3225). So the model content of the three views the quick task did not edit did not change, and the recorded sizes (`monitoring` 6725 x 1276 is the export bounds 6669 x 1220 plus 56 each way, as is `production` 3461 x 2566) match the current export. Why the earlier-recorded sizes differed, I did not find; I did not compare PNG bytes. The one item worth noting for Phase 4's legibility rule: `monitoring` is now about 6.7k px wide against 1.2k high (5.5 : 1), which the standard records without a verdict.
 
 ### Code review findings weighed against the contract
 
-| Finding | Contradicts a contract item? | Disposition now |
-| ------- | ---------------------------- | --------------- |
-| WR-04, WR-08 | Was yes | Fixed in `ee9f9be`, rechecked above |
-| WR-06 | Was yes | Fixed in `4d13696`, rechecked above |
-| WR-05 | Was yes | Fixed in `4d13696`, rechecked above |
-| WR-01 (metadata-key allowlist not per surface) | No ROADMAP criterion or plan truth is contradicted | Warning, deliberately not fixed |
-| WR-02 (`drill.fish` has no machine oracle) | No: the recorded output is byte-identical and shows the expected exits this run | Warning, deliberately not fixed |
-| WR-07 (`routedHosts` reads only the first `Host(` argument) | No: criterion 4 holds on the real tree | Warning, latent vacuous pass |
-| WR-09 (public Grafana path not drawn) and IN-01 to IN-05 | Not in any criterion or must_have | Notes |
+| Finding | Contradicts a ROADMAP criterion or plan must_have? | Disposition |
+| ------- | -------------------------------------------------- | ----------- |
+| WR-04, WR-05, WR-06, WR-08 | Were yes | Fixed, rechecked above |
+| WR-01 (metadata-key allowlist not per surface) | No | Warning, not fixed |
+| WR-02 (`drill.fish` has no machine oracle) | No: replay byte-identical, expected exits present in the recorded output | Warning, not fixed |
+| WR-07 (`routedHosts` reads only the first `Host(` argument) | No: criterion 4 holds on the real tree (D24 caught) | Warning, latent |
+| WR-09 (public Grafana path not drawn) and IN-01 to IN-05 | No | Notes |
 
-None of WR-01, WR-02, WR-07, WR-09 contradicts a ROADMAP criterion or a plan must_have, so none is called a gap.
+None of these is called a gap.
 
 ### Required Artifacts
 
 | Artifact | Expected | Status | Details |
 | -------- | -------- | ------ | ------- |
-| `docs/architecture/sync.mjs` | edge-label, participant, workload, host and HelmRelease checks | VERIFIED | Unchanged since first pass; `check` exit 0 |
-| `docs/architecture/model/{delivery,edge,monitoring,scenarios-app,scenarios-platform}.c4` | new elements, views, scenarios | VERIFIED | Parse and export; text corrected as in the gap table |
+| `docs/architecture/sync.mjs` | edge-label, participant, workload, host and HelmRelease checks | VERIFIED | `check` exit 0; drills D17 to D24 record exit 1 |
+| `docs/architecture/model/monitoring.c4` | monitoring nodes and scrape edges, six added | VERIFIED | Parses, exports 17 edges |
+| `docs/architecture/model/{delivery,edge,scenarios-app,scenarios-platform}.c4` | delivery, issuers, scenarios | VERIFIED | Export checks above |
 | `docs/architecture/drill.fish`, `drill-output.txt` | drills D17 to D24, replay identical | VERIFIED | `cmp` exit 0 |
-| `02-SCENARIO-EVIDENCE.md` | section per Phase 2 view with file:line and quote | VERIFIED | Ten Phase 2 views; `inbound-packet-path` row 3 cites line 63; `error-401` section lists measured, fixed, pinned, not done, inferred |
-| `02-04-401-measure.txt` | measurement or reason | VERIFIED | Superseded "not measured" kept as history; live measurement with verdict b; dated fixed-in-`17a94cb` note that says no re-measure was run |
-| `docs/DIAGRAM_CONVENTIONS.md` | Physical and Scenarios rows amended to what is built | VERIFIED | Both rows and the "Outside this change" list match what is drawn |
-| `SecurityConfiguration.java`, `AuthorizationGatingTest.java` | `NullRequestCache` on the main chain; sweep test | VERIFIED | Line 129; test lines 354, 382, 412; green this run |
+| `02-SCENARIO-EVIDENCE.md` | a section per Phase 2 view with file:line and quote | VERIFIED | Line citations into the measure file match |
+| `02-04-401-measure.txt` | measurement or reason | VERIFIED | Pre-fix verdict b kept, superseded-in-part note, post-fix section with rows A to I |
+| `261028-opl-chart-values.txt` | row-by-row chart-value record | VERIFIED | Spot-read 17 of its cited line ranges against my own fetch; all match |
+| `docs/DIAGRAM_CONVENTIONS.md` | Physical and Scenarios rows amended to what is built | VERIFIED | Rows 112 and 113, Checks paragraph, size table |
+| `SecurityConfiguration.java`, `AuthorizationGatingTest.java` | `NullRequestCache`; sweep test | VERIFIED | Line 129; `NoSessionSweep` green |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | ---- | -- | --- | ------ | ------- |
-| `checkEdgeLabels` | LikeC4 computed deployment views | `view.edges()` label | WIRED | Untouched; `check` exit 0 |
+| `checkEdgeLabels` | LikeC4 computed deployment views | `view.edges()` label | WIRED | `check` exit 0; 0 `[...]` labels in the export |
 | `drill.fish fresh()` | scratch model copy | `MODEL` override | WIRED | Replay identical |
-| `sync.mjs` workload sets | `k8s/monitoring`, `k8s/platform`, `gotk-components.yaml` | `WORKLOAD_DIRS` | WIRED | Drills D20, D22, D23 recorded exit 1 |
-| `sync.mjs checkHosts` | `IngressRoute` matches | `routedHosts` | WIRED, with the WR-07 limit | D24 recorded exit 1 |
-| `securityFilterChain` | refused-request path | `http.requestCache(... NullRequestCache)` | WIRED | `ExceptionTranslationFilter` receives the configured cache; sweep test green |
+| `sync.mjs` workload sets | `k8s/monitoring`, `k8s/platform`, `gotk-components.yaml` | `WORKLOAD_DIRS` | WIRED | D20, D22, D23 exit 1 |
+| `sync.mjs checkHosts` | `IngressRoute` matches | `routedHosts` | WIRED, WR-07 limit | D24 exit 1 |
+| `securityFilterChain` | refused-request path | `http.requestCache(... NullRequestCache)` | WIRED | Sweep test green |
+| `monitoring.c4` new instances | `netcup.k3s`, `netcup.k3s.monitoring`, `netcup.k3s.kube-system` | `extend ... instanceOf` | WIRED | Appear as nodes in the `monitoring` export; `production` unchanged |
 
 ### Data-Flow Trace (Level 4)
 
-Not applicable to the model and the checker. For the app change: the request cache is configured on the only chain that returns the 401 for the protected routes, and the test drives the real filter chain against a Testcontainers Postgres built by the Flyway migrations, so `SPRING_SESSION` is the real table.
+Not applicable to the model and the checker. For the app change: the request cache is configured on the chain that returns the 401 for protected routes; the sweep test drives the real filter chain against a Testcontainers Postgres built by the Flyway migrations.
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | -------- | ------- | ------ | ------ |
-| Model matches code | `node docs/architecture/sync.mjs check` | exit 0, 17 workloads | PASS |
+| Model matches code | `node docs/architecture/sync.mjs check` | exit 0, 61 elements, 17 workloads | PASS |
 | Hook self-test | `python3 scripts/pre-commit-likec4-selftest.py` | 16/16 | PASS |
 | Drill replay | `drill.fish \| cmp` | identical | PASS |
 | Export checks | `likec4 export json` | 3 physical, 0 `[...]`, 13 scenarios | PASS |
-| Anonymous refusal leaves no session row and no cookie | the one named `NoSessionSweep` test class | 0 failures, 8 sweep cases present | PASS |
-| Anonymous refusal sends no SQL statement after the fix | live curl with `log_statement=all` | not run | inferred, labelled as such; command above |
+| Anonymous refusal leaves no session row and no cookie | `NoSessionSweep` class | 30 tests, 0 failures | PASS |
+| Anonymous refusal sends no SQL statement | live curl with `log_statement=all` | recorded run read, not reproduced | PASS (recorded), optional reproduction above |
 
 ### Probe Execution
 
@@ -180,38 +185,35 @@ SKIPPED: the plans declare no `probe-*.sh` scripts.
 
 ### Requirements Coverage
 
-All 14 IDs appear in a PLAN `requirements:` field and in REQUIREMENTS.md (lines 13 to 44 and the table at 82 to 99); none is orphaned. SCEN-08 maps to Phase 3 and is correctly absent.
+All 14 IDs appear in a PLAN `requirements:` field (02-01: PHYS-02, 03, 04; 02-02: PHYS-03, 04, PROC-01, LOGI-01, GATE-01; 02-03: PHYS-02, 04, GATE-01; 02-04: SCEN-01, 02, 06; 02-05: SCEN-03, 04, 05, 07, STD-01) and in `REQUIREMENTS.md` (lines 13 to 44 and the table at 82 to 99). The table holds exactly 14 `Phase 2` rows, so none is orphaned. SCEN-08 maps to Phase 3 and is correctly absent.
 
 | Requirement | Source Plan | Description | Status | Evidence |
 | ----------- | ----------- | ----------- | ------ | -------- |
-| PHYS-02 | 02-01, 02-03 | Delivery view | SATISFIED | `delivery` view, 8 edges |
-| PHYS-03 | 02-01, 02-02 | Monitoring nodes and what they scrape | PENDING USER DECISION | Repo-evidenced targets drawn, chart-default targets stated as not drawn (human item 1) |
-| PHYS-04 | 02-01, 02-02, 02-03 | cert-manager, issuers, edge routing, host filter external | SATISFIED | `production` nodes and edges; staging description now true |
-| PROC-01 | 02-02 | Schema Registry, init job, management port, backup flow | SATISFIED | `process` view |
+| PHYS-02 | 02-01, 02-03 | Delivery view | SATISFIED | `delivery`, 8 edges, 14 nodes |
+| PHYS-03 | 02-01, 02-02 | Monitoring nodes and what they scrape | SATISFIED, stated limits | 17 edges; six chart-default edges re-read against the values file; self-scrape stated, not drawn |
+| PHYS-04 | 02-01, 02-02, 02-03 | cert-manager, issuers, edge routing, host filter external | SATISFIED | `production` nodes and edges |
+| PROC-01 | 02-02 | Schema Registry, init job, management port, backup flow | SATISFIED | `process` nodes |
 | LOGI-01 | 02-02 | `activity_log` and Avro notes tied to sources | SATISFIED | `data` notes with `source` |
 | SCEN-01 | 02-04 | Signup | SATISFIED | `signup-ok` |
-| SCEN-02 | 02-04 | Error status: 401 no SQL, 403, 409 | SATISFIED, with the stated caveat on statement-level absence | `error-401/403/409`; sweep test; measurement file |
+| SCEN-02 | 02-04 | Error status: 401 no SQL, 403, 409 | SATISFIED, caveat above | `error-401/403/409`; sweep test; post-fix record |
 | SCEN-03 | 02-05 | Push-to-image | SATISFIED | `push-to-image` |
 | SCEN-04 | 02-05 | Image-to-rollout | SATISFIED | `image-to-rollout` |
-| SCEN-05 | 02-05 | Inbound packet path, ingress-to-pod | SATISFIED | step 3 now includes ICMP, line 63 cited |
+| SCEN-05 | 02-05 | Inbound packet path, ingress-to-pod | SATISFIED | both views present; ICMP in step 3 |
 | SCEN-06 | 02-04 | Mutation to `activity_log` row | SATISFIED | `activity-log-row` |
 | SCEN-07 | 02-05 | Nightly backup | SATISFIED | `nightly-backup` |
 | GATE-01 | 02-02, 02-03 | `sync.mjs` reads k8s facts and fails on drift | SATISFIED | D20 to D24 |
-| STD-01 | 02-05 | Physical and Scenarios rows match what is built | SATISFIED | overclaims removed |
-
-REQUIREMENTS.md marks all 14 `[x]`; PHYS-03 stays marked complete while its scope question is open.
+| STD-01 | 02-05 | Physical and Scenarios rows match what is built | SATISFIED | rows 112, 113 reflect the six new edges and the 401 observation |
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 | ---- | ---- | ------- | -------- | ------ |
-| `docs/DIAGRAM_CONVENTIONS.md` | Checks paragraph, "Of those four defaults" | ambiguous referent (reads as the four disabled monitors) | Info | Reader could misread which four; `monitoring.c4` is unambiguous |
-| `docs/DIAGRAM_CONVENTIONS.md` | Checks paragraph, "`values.yaml` line 1735" | per the quick-task verifier, 1735 is the `kubeApiServer:` key, `enabled` is 1736 | Info | Off by one in a citation |
-| `k8s/platform/edge/clusterissuers.yaml` | 1 | header comment still says every Certificate starts on staging; all three use production | Info (outside this phase's files) | The model no longer copies it, but the manifest comment is stale and is the source of the original WR-05 error |
-| `docs/architecture/sync.mjs` | 255 | first `Host(` argument only (WR-07) | Warning | Latent vacuous pass; criterion 4 holds on the real tree |
-| `docs/architecture/drill.fish` | 36-40 | no oracle for expected exit (WR-02) | Warning | Future drift in drill targets reads as "not caught" |
+| `k8s/platform/edge/clusterissuers.yaml` | 1-2 | header comment still says every Certificate starts on `letsencrypt-staging`; all three Certificates name production (checked in pass 2) | Info (outside this phase's files) | The model no longer copies it; the comment is stale and is the source of the original WR-05 error |
+| `docs/architecture/sync.mjs` | ~255 | first `Host(` argument only (WR-07) | Warning | Latent vacuous pass; criterion 4 holds on the real tree |
+| `docs/architecture/drill.fish` | 36-40 | no oracle for the expected exit (WR-02) | Warning | Future drift in drill targets reads as "not caught" |
+| `docs/architecture/model/monitoring.c4` | `kubelet`, `kube-apiserver`, `coredns` | authored, not placement-checked, not tied to a manifest | Info | Labelled "Authored" in three places; a live check would be needed to prove the targets are up |
 
-Debt-marker scan: no hits. No new-scope blocker was found, so the `advisory:` list is empty.
+Debt-marker scan: no hits. No new-scope blocker found, so the `advisory:` list is empty.
 
 ### Advisory (New Scope, Unevidenced)
 
@@ -219,39 +221,16 @@ None.
 
 ### Human Verification Required
 
-#### 1. Is "an edge to each thing they scrape" satisfied by repo-evidenced targets plus the stated omission?
+None. Two optional checks that need a live cluster or a live run, neither a gate:
 
-**Test:** Choose one.
-(a) Accept the narrower scope. Add this to the frontmatter of this file (or tell me to) and re-verify, which makes criterion 1 PASSED (override) and the status `passed`:
-
-```yaml
-overrides:
-  - must_have: "A monitoring view shows the monitoring nodes, with an edge to each thing they scrape"
-    reason: "The view draws the scrape targets the repo's monitor settings name and states in its description and in DIAGRAM_CONVENTIONS.md that the kube-prometheus-stack chart-default targets are not drawn"
-    accepted_by: "<your name>"
-    accepted_at: "<ISO timestamp>"
-```
-
-(b) Require the edges. Add prometheus edges to the kubelet with cAdvisor, kube-state-metrics, the API server and the operator in `monitoring.c4` (each needs an authored-or-checked label), then re-verify. To settle first whether all four are really enabled, either read the chart defaults at the pinned version (`helm show values prometheus-community/kube-prometheus-stack --version 91.5.2`) or, with cluster access, `kubectl -n monitoring get servicemonitors`.
-
-**Expected:** (a) an override entry with a real `accepted_by`, or (b) four more edges and `check` still exit 0.
-**Why human:** only the user can accept a narrower reading of a ROADMAP criterion, and the live target list is not in the repo. If the answer is (b), criterion 1 becomes a gap with a concrete fix (four edges) and the phase goes to `gaps_found` until they exist.
+1. **Live scrape target list against the 17 edges** (needs cluster access; not in the repo). With `kubectl -n monitoring port-forward svc/kps-prometheus 9090:9090`, then `curl -s localhost:9090/api/v1/targets` and compare the `scrapePool` names with the drawn set (node-exporter, postgres-exporter, cert-manager, app, Redpanda, kubelet incl. cAdvisor and probes, API server, CoreDNS, kube-state-metrics, operator, Grafana, plus Prometheus itself). A target present live and not drawn would be a new gap against criterion 1; a drawn target that is down does not contradict "an edge to each thing they scrape". The Service name `kps-prometheus` follows from `fullnameOverride: kps` at `kube-prometheus-stack.yaml:~33`; I did not confirm it against a rendered chart.
+2. **Independent reproduction of the post-fix 401 run** (command in the Criterion 3 section).
 
 ## Gaps Summary
 
-No open gaps against a ROADMAP criterion or a plan must_have. All four first-pass items are closed and rechecked against the files. One decision remains with the user (criterion 1, monitoring scope), and one inference is carried openly (no SQL statement after the 401 fix, labelled in four places, with the live command above if you want it observed). The orchestrator's working assumption on monitoring scope is recorded here as an assumption, not as a decision.
+No open gap against a ROADMAP criterion or a plan must_have. Pass 1's four gaps and pass 2's two open items are closed and rechecked against files and commands, not against SUMMARYs. The stated scope limits (Prometheus self-scrape undrawn, live target list unread, 401 observation limited to cookie-less `GET`/`POST /api/boards` on one machine without a proxy) are written in the artifacts at the point where they apply and are not rounded up anywhere I looked. WR-01, WR-02, WR-07, WR-09 and the info findings stay deliberately unfixed and contradict nothing.
 
 ---
 
-_Verified: 2026-10-28T17:05:00Z_
+_Verified: 2026-10-28T17:53:13Z_
 _Verifier: Claude (gsd-verifier)_
-
-## Addendum, 2026-10-28 (quick task 261028-opl): human item 1 answered
-
-This addendum records what changed after the report above. It sets no verdict, and nothing above it was edited.
-
-- **Human item 1.** The user chose option (b): draw the chart-default scrape targets.
-- **No override was written.** The frontmatter of this file is unchanged, so its status and score stay as the verifier left them. The next verifier run re-checks criterion 1 and PHYS-03.
-- **What the Task 1 commit (1d6c40e) draws.** The `monitoring` view now has Prometheus edges to the kubelet with cAdvisor, the API server, kube-state-metrics and the operator, which the item named. It also has edges to CoreDNS and Grafana, which the full values file showed the repo leaves on as well. The Prometheus self-scrape is stated, not drawn, because LikeC4 rejects a relationship from an element to itself (measured). The controller-manager, scheduler, etcd, kube-proxy and Alertmanager monitors are not drawn, because the repo turns them off.
-- **The record.** `.planning/workstreams/architecture-views/quick/261028-opl-phase-02-final-gap-pass-draw-kube-promet/261028-opl-chart-values.txt` ties each edge to a values.yaml line at tag kube-prometheus-stack-91.5.2 (218683 bytes, sha256 7d089fcf435e6904cda5ad246602e1c61005d08c68e3a9ab82770c249e395081). It also lists what was not read: the live target list, the chart templates and the Alloy chart defaults.
-- **Criterion 3.** The statement-level absence of SQL after 17a94cb, which this report carried as an inference, now rests on the post-fix re-measure at 7bccf71 (`02-04-401-measure.txt`, section Post-fix re-measure, commit 2fbe8ff): no statement appeared in its capture windows (one second after each request, plus one log-tail read after rows A to I). The whole log was not re-read, so a statement outside those windows is not ruled out. Other routes and methods, a proxy, Redpanda, TLS and a stale session cookie were not tried. The Task 2 commit (6b6385d) carries that observation, with its limits, into the view, the evidence file and the standard.
