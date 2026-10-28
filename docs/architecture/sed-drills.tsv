@@ -1,0 +1,2 @@
+id	title	file	sed
+D18	a scenario view gets a sixth participant	model/views.c4	s|^\(    client <- traefik '200 {id, email, displayName, theme}'\)$|\1\n    kanban.api -> redpanda.activity 'probe'|

@@ -61,6 +61,24 @@ function labeldrill --inherit-variable scratch
     printf '%s\n' 'model {' "  kanban.publisher -[sync]-> postgres '$argv[1]'" '}' >$scratch/model/labeldrill.c4
 end
 
+# Runs the named drills from their rows in sed-drills.tsv, whose columns are id, title, the file
+# to edit relative to the scratch root, and the sed expression. The expression is passed to sed
+# as one argument that fish never parses again, so its quotes, dollar signs and backslashes reach sed as written.
+function sed_drills --inherit-variable here --inherit-variable scratch
+    for id in $argv
+        set row (string match -- "$id"\t'*' <$here/sed-drills.tsv)
+        or begin
+            echo "sed_drills: no row for $id in sed-drills.tsv" >&2
+            exit 2
+        end
+        set f (string split -m3 \t -- $row)
+        echo "== $id: $f[2]"
+        fresh
+        sed -i --sandbox -e $f[4] $scratch/$f[3]
+        run
+    end
+end
+
 echo "== baseline: untouched scratch copy"
 fresh
 run
@@ -210,10 +228,7 @@ fresh
 labeldrill 'SQL over JDBC'
 run
 
-echo "== D18: a scenario view gets a sixth participant"
-fresh
-sed -i "s|^\(    client <- traefik '200 {id, email, displayName, theme}'\)\$|\1\n    kanban.api -> redpanda.activity 'probe'|" $scratch/model/views.c4
-run
+sed_drills D18
 
 echo "== D19: the only instance of a workload element is deleted (backup)"
 fresh
