@@ -1,0 +1,65 @@
+Mutation check for quick 261028-s6i: the kind of 6 rows set to none and D5 retargeted.
+
+awk program (s6i-mutate.awk), run with awk -F'\t' -v OFS='\t' on docs/architecture/drills.tsv:
+$1 == "D14c" || $1 == "D14" || $1 == "D16" || $1 == "D13" || $1 == "D17" || ($1 == "D12b" && $4 == "model/model.c4") { $3 = "none" }
+$1 == "D5 (negative control)" { $4 = "k8s/data/postgres/postgres.yaml"; $5 = "k8s/data/postgres/moved.yaml" }
+{ print }
+
+cmp exit: 1
+
+changed sections:
+== D12b: unknown metadata keys on a deployment node, an instance and a relationship
+== D13: an instance with no relationship (lonely)
+== D14: a k8s fact source directory is missing (k8s/overlays)
+== D14c: a k8s manifest does not parse
+== D16: a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)
+== D17: a drawn instance pair gains a relationship with a different title
+== D5 (negative control): a controller class is renamed
+
+diff of the mutant replay (<) against drill-output.txt (>):
+27,30c27,28
+<   exit=1
+<   DRIFT (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads):
+<   - postgres: metadata source 'k8s/data/postgres/postgres.yaml' does not exist
+<   - placement: postgres is deployed in [kanban-data] in the model, manifests place it in []
+---
+>   exit=0
+>   OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+98,99c96,98
+<   exit=0
+<   OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+---
+>   exit=1
+>   DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads):
+>   - placement: certmgr is deployed in [flux-system] in the model, manifests place it in [cert-manager]
+114a114
+>   - relationship client -> traefik carries metadata key 'relkey', not in the allowlist (source, workload, host)
+117,118c117,119
+<   exit=0
+<   OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+---
+>   exit=1
+>   DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads):
+>   - instance netcup.k3s.data.lonely appears in no deployment view
+125,127c126,127
+<   exit=0
+<   OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+<   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+---
+>   exit=4
+>   k8s fact source missing: k8s/overlays
+132,134c132,133
+<   exit=0
+<   OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+<   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+---
+>   exit=4
+>   k8s fact source unreadable: k8s/platform/broken.yaml: BAD_INDENT Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:
+136,137c135,138
+<   exit=0
+<   OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+---
+>   exit=1
+>   DRIFT (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads):
+>   - view production: edge netcup.k3s.nonprod.kanban -> netcup.k3s.data.postgres has merged label '[...]'
+>   - view production: edge netcup.k3s.prod.kanban -> netcup.k3s.data.postgres has merged label '[...]'
