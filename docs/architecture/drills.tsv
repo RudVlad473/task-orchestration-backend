@@ -39,3 +39,5 @@ D22	a Flux controller is renamed in the generator file (source-controller)	sed	k
 D23	a ClusterIssuer is renamed (letsencrypt-staging)	sed	k8s/platform/edge/clusterissuers.yaml	s|^  name: letsencrypt-staging$|  name: letsencrypt-stagingx|
 D24	a claimed host is changed in an IngressRoute (nonprod)	sed	k8s/overlays/nonprod/ingressroute.yaml	s|kanban-board-rud-vlad-473-nonprod|kanban-board-rud-vlad-473-nonprodx|g
 D25	the site Deployment is renamed (architecture-site)	sed	k8s/base/architecture-site/architecture-site.yaml	0,/^  name: architecture-site$/s//  name: architecture-sitex/
+D26	the architecture host is changed in its IngressRoute	sed	k8s/overlays/architecture/ingressroute.yaml	s|kanban-board-rud-vlad-473-architecture|kanban-board-rud-vlad-473-architecturex|g
+D27	the site overlay's namespace changes (architecture to kanban-nonprod)	sed	k8s/overlays/architecture/kustomization.yaml	s|^namespace: architecture$|namespace: kanban-nonprod|
