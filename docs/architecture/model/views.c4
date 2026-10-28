@@ -47,7 +47,13 @@ views {
     #physical
     title 'Physical view: what runs where'
     description 'Mapping of software to nodes. The VPS is x86_64.'
-    include netcup, netcup.k3s, netcup.**
+    include
+      netcup, netcup.k3s,
+      netcup.k3s.kube-system.*,
+      netcup.k3s.prod.*,
+      netcup.k3s.nonprod.*,
+      netcup.k3s.data.*,
+      netcup.k3s.cert-manager.*
   }
 
   dynamic view signin-ok {

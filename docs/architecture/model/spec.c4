@@ -15,9 +15,21 @@ specification {
     }
   }
   element job {
-    notation 'Scheduled job'
+    notation 'Run-to-completion job'
     style {
       color secondary
+    }
+  }
+  element external {
+    notation 'Outside this repository'
+    style {
+      color muted
+    }
+  }
+  element note {
+    notation 'Note, not a runtime element'
+    style {
+      shape document
     }
   }
   element datastore {
@@ -43,6 +55,7 @@ specification {
   deploymentNode server
   deploymentNode cluster
   deploymentNode namespace
+  deploymentNode provider
 
   relationship sync {
     line solid
