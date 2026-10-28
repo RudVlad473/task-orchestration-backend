@@ -11,4 +11,57 @@ views {
     ci -> dockerhub 'build the amd64 image once and push it to the production and nonprod repositories'
     ci -> postgres 'Flyway check that the migrations apply, through an SSH forward with a pinned host key'
   }
+
+  dynamic view image-to-rollout {
+    #scenarios
+    variant sequence
+    title 'Scenario: a new image tag becomes a running pod'
+    description 'Flux scans the image repositories, picks the highest run number, commits the tag bump under k8s/overlays and later pulls that commit back from Git. Deploy.yml ignores k8s paths, so the bump starts no build. Applying the overlay rolls the Deployment with Recreate, and the init container registers the schemas before the app container starts.'
+
+    flux -> dockerhub 'list the tags of the app image repositories on a timer'
+    flux -> flux 'the numerical policy picks the highest run number among the tags that match the main run sha pattern'
+    flux -> repo 'commit the new tag into the overlay files under k8s/overlays and push it to main, deploy.yml ignores k8s paths so this commit starts no build'
+    flux -> repo 'poll the repository over SSH and pull the new commit'
+    flux -> kanban.init 'apply the overlay: the Deployment rolls with Recreate and the new pod runs its init container first'
+    kanban.init -> kanban.api 'the init container registers the schemas and exits, then the app container starts'
+  }
+
+  dynamic view inbound-packet-path {
+    #scenarios
+    variant sequence
+    title 'Scenario: a client connection reaches Traefik'
+    description 'The first two hops are authored: the provider firewall is configured outside this repository, and the hostPort forward to the ServiceLB pod rests on a claim in INFRA_ARCHITECTURE.md, with no manifest in the repo. Only the host filter script is in the repo, and the check proves only that it exists.'
+
+    client -> firewall 'HTTPS request to the server, filtered first by the provider firewall'
+    firewall -> hostfilter 'allowed packets reach the host, where a PREROUTING jump sends new inbound connections into the host filter chain ahead of every NAT rule'
+    hostfilter -> hostfilter 'established traffic and new TCP on an allow-listed port return from the chain, any other new connection is dropped'
+    hostfilter -> svclb 'the hostPort forward delivers the connection to the ServiceLB pod'
+    svclb -> traefik 'the pod proxies the connection to the Traefik Service'
+  }
+
+  dynamic view ingress-to-pod {
+    #scenarios
+    variant sequence
+    title 'Scenario: Traefik routes a request to the app'
+    description 'From the connection reaching Traefik to the response. The route is chosen by the Host rule, and the rate-limit Middleware of that route is applied before the request is forwarded to the app Service. The production routes carry a Middleware, the nonprod routes do not.'
+
+    svclb -> traefik 'the connection reaches the HTTPS entry point of Traefik'
+    traefik -> traefik 'the route whose Host rule matches the request is chosen, the sign-in and sign-up paths match their own route'
+    traefik -> traefik 'the rate-limit Middleware of that route is applied to the client'
+    traefik -> kanban.api 'forward to the app Service'
+    traefik <- kanban.api 'the response returns through Traefik on the same connection'
+  }
+
+  dynamic view nightly-backup {
+    #scenarios
+    variant sequence
+    title 'Scenario: the nightly backup reaches the off-cluster bucket'
+    description 'The backup job waits for Postgres, dumps and checks the archive, encrypts it with the public age recipient and uploads the ciphertext under a daily prefix. On Sundays the same ciphertext is uploaded a second time under a weekly prefix. The key can write to the bucket but not read it, so the script never reads the upload back.'
+
+    backup -> postgres 'wait until Postgres accepts connections, a fresh pod can be refused for several seconds by the NetworkPolicy'
+    backup -> postgres 'pg_dump to a custom-format archive, then check that the archive reads and is not empty'
+    backup -> backup 'encrypt the archive with age and delete the plaintext'
+    backup -> b2 'upload the encrypted archive under the daily prefix'
+    backup -> b2 'on Sundays only, upload the same ciphertext again under the weekly prefix'
+  }
 }
