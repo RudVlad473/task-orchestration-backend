@@ -38,3 +38,4 @@ D21	a claimed namespace changes (loki moved to kanban-data)	sed	k8s/monitoring/c
 D22	a Flux controller is renamed in the generator file (source-controller)	sed	k8s/flux-system/gotk-components.yaml	s|^  name: source-controller$|  name: source-controllerx|
 D23	a ClusterIssuer is renamed (letsencrypt-staging)	sed	k8s/platform/edge/clusterissuers.yaml	s|^  name: letsencrypt-staging$|  name: letsencrypt-stagingx|
 D24	a claimed host is changed in an IngressRoute (nonprod)	sed	k8s/overlays/nonprod/ingressroute.yaml	s|kanban-board-rud-vlad-473-nonprod|kanban-board-rud-vlad-473-nonprodx|g
+D25	the site Deployment is renamed (architecture-site)	sed	k8s/base/architecture-site/architecture-site.yaml	0,/^  name: architecture-site$/s//  name: architecture-sitex/
