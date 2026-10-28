@@ -230,4 +230,19 @@ fresh
 sed -i 's|^  namespace: monitoring$|  namespace: kanban-data|' $scratch/k8s/monitoring/controllers/loki.yaml
 run
 
+echo "== D22: a Flux controller is renamed in the generator file (source-controller)"
+fresh
+sed -i 's|^  name: source-controller$|  name: source-controllerx|' $scratch/k8s/flux-system/gotk-components.yaml
+run
+
+echo "== D23: a ClusterIssuer is renamed (letsencrypt-staging)"
+fresh
+sed -i 's|^  name: letsencrypt-staging$|  name: letsencrypt-stagingx|' $scratch/k8s/platform/edge/clusterissuers.yaml
+run
+
+echo "== D24: a claimed host is changed in an IngressRoute (nonprod)"
+fresh
+sed -i 's|kanban-board-rud-vlad-473-nonprod|kanban-board-rud-vlad-473-nonprodx|g' $scratch/k8s/overlays/nonprod/ingressroute.yaml
+run
+
 trash-put $scratch

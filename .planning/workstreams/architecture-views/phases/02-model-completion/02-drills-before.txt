@@ -153,3 +153,15 @@
   exit=0
   OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D22: a Flux controller is renamed in the generator file (source-controller)
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D23: a ClusterIssuer is renamed (letsencrypt-staging)
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D24: a claimed host is changed in an IngressRoute (nonprod)
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
