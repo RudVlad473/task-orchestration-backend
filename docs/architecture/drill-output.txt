@@ -1,126 +1,127 @@
 == baseline: untouched scratch copy
   exit=0
-  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  OK (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D1: a new migration adds table attachments
   exit=1
-  DRIFT (33 elements, 7 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 7 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D2: a new Kafka topic constant
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 3 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 3 topics, 9 workloads):
   - topic kanban.audit is in KafkaTopics.java but not in the model
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D3: a new k8s Deployment named worker
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 5 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 10 workloads):
   - k8s Deployment/worker has no element carrying metadata workload 'Deployment/worker'
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D4: a manifest the model cites as its source is deleted
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 3 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 8 workloads):
   - model claims workload StatefulSet/postgres but k8s/ has no such manifest
   - postgres: metadata source 'k8s/data/postgres/postgres.yaml' does not exist
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D5 (negative control): a controller class is renamed
   exit=0
-  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  OK (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D6: a view loses its viewpoint tag
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - view process carries no viewpoint tag
   - viewpoint process has no view
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D6b: a view carries two viewpoint tags
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - view process carries 2 viewpoint tags
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D7: a migration adds a foreign key by ALTER TABLE
   exit=1
-  DRIFT (33 elements, 6 tables, 5 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 5 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D7b: a migration drops a named foreign key
   exit=1
-  DRIFT (33 elements, 6 tables, 3 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 3 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D7c: a migration drops a foreign-key column
   exit=1
-  DRIFT (33 elements, 6 tables, 3 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 3 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D8: a new cross-package import
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 39 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 39 package edges, 2 topics, 9 workloads):
   - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
   package cycles (reported, not gated): base, config, constant, dto, entity, mapper, repository, security, service
 == D8b: a two-package cycle appears
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 39 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 39 package edges, 2 topics, 9 workloads):
   - generated.c4 is stale: run `sync.mjs generate` (the migrations or the package imports changed)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service | exception, handler
 == D9: the only development view is retagged
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - viewpoint development has no view
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D10: a namespace node is deleted from the model (cert-manager)
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
-  - model does not validate: Could not resolve reference to Referenceable named 'cert-manager'.; Validation failed: Element "netcup.k3s.cert-manager" is not resolved
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
+  - model does not validate: Could not resolve reference to Referenceable named 'cert-manager'.; ExtendDeployment allows only DeploymentNode; Could not resolve reference to Referenceable named 'cert-manager'.; Validation failed: Element "netcup.k3s.cert-manager" is not resolved; Could not resolve reference to Referenceable named 'cert-manager'.; Validation failed: Element "netcup.k3s.cert-manager" is not resolved
   - namespace cert-manager is defined in k8s/platform/cert-manager/cert-manager.yaml but has no namespace node in the deployment model
+  - element certmanager claims workload HelmRelease/cert-manager but has no deployment instance
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D10b: a manifest namespace is misspelled (kube-sytem)
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - namespace kube-sytem is defined in k8s/platform/traefik/helmchartconfig.yaml but has no namespace node in the deployment model
   - deployment node netcup.k3s.kube-system names namespace 'kube-system', which no manifest under k8s/ defines
   - placement: traefik is deployed in [kube-system] in the model, manifests place it in [kube-sytem]
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D11: an instance is moved into the wrong namespace (backup to kanban-prod)
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - placement: backup is deployed in [kanban-prod] in the model, manifests place it in [kanban-data]
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D15: a new k8s Deployment under k8s/platform
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 5 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 10 workloads):
   - k8s Deployment/worker has no element carrying metadata workload 'Deployment/worker'
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D16: a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)
   exit=1
-  DRIFT (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (47 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - placement: certmgr is deployed in [flux-system] in the model, manifests place it in [cert-manager]
   - instance netcup.k3s.flux-system.certmgr appears in no deployment view
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D16b (control): the same element drawn in its targetNamespace (cert-manager)
   exit=0
-  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  OK (47 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D12: a metadata key is misspelled on an element (sourc)
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - element traefik carries metadata key 'sourc', not in the allowlist (source, workload)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D12b: unknown metadata keys on a deployment node, an instance and a relationship
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - deployment node netcup.k3s.kube-system carries metadata key 'nodekey', not in the allowlist (source, workload)
   - instance netcup.k3s.kube-system.traefik carries metadata key 'instkey', not in the allowlist (source, workload)
   - relationship client -> traefik carries metadata key 'relkey', not in the allowlist (source, workload)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D13: an instance with no relationship (lonely)
   exit=1
-  DRIFT (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (47 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - instance netcup.k3s.data.lonely appears in no deployment view
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D13b (control): the same instance with a relationship
   exit=0
-  OK (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  OK (47 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D14: a k8s fact source directory is missing (k8s/overlays)
   exit=4
@@ -133,21 +134,32 @@
   k8s fact source unreadable: k8s/platform/broken.yaml: BAD_INDENT Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:
 == D17: a drawn instance pair gains a relationship with a different title
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - view production: edge netcup.k3s.nonprod.kanban -> netcup.k3s.data.postgres has merged label '[...]'
   - view production: edge netcup.k3s.prod.kanban -> netcup.k3s.data.postgres has merged label '[...]'
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D17b (control): the same pair gains a relationship with the shared title
   exit=0
-  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  OK (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads)
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D18: a scenario view gets a sixth participant
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - dynamic view signin-ok has 6 participants, more than 5
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D19: the only instance of a workload element is deleted (backup)
   exit=1
-  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
   - element backup claims workload CronJob/postgres-backup but has no deployment instance
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D20: a claimed HelmRelease is renamed (loki)
+  exit=1
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
+  - k8s HelmRelease/lokix has no element carrying metadata workload 'HelmRelease/lokix'
+  - model claims workload HelmRelease/loki but k8s/ has no such manifest
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D21: a claimed namespace changes (loki moved to kanban-data)
+  exit=1
+  DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 9 workloads):
+  - placement: loki is deployed in [monitoring] in the model, manifests place it in [kanban-data]
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service

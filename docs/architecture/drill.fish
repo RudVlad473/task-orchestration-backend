@@ -220,4 +220,14 @@ fresh
 sed -i '/^        instanceOf backup$/d' $scratch/model/deployment.c4
 run
 
+echo "== D20: a claimed HelmRelease is renamed (loki)"
+fresh
+sed -i 's|^  name: loki$|  name: lokix|' $scratch/k8s/monitoring/controllers/loki.yaml
+run
+
+echo "== D21: a claimed namespace changes (loki moved to kanban-data)"
+fresh
+sed -i 's|^  namespace: monitoring$|  namespace: kanban-data|' $scratch/k8s/monitoring/controllers/loki.yaml
+run
+
 trash-put $scratch
