@@ -1,0 +1,10 @@
+DATE 2026-10-28 image_id=sha256:10146ec6075f55186e6055d4d1a3969d8ad1da7090600f2c1e25793df159442e image_size_bytes=10233192
+RUN docker run --read-only --cap-drop ALL --security-opt no-new-privileges --memory 32m --user 101:101 --tmpfs /tmp -p 127.0.0.1:18080:8080
+PROBE / status=200 marker=1 sha256=a3ac3daa6e0438078c582ad9333142e144b3a5718fab1e9749f60a56c65759b5
+PROBE /view/signin-ok/ status=200 content-type=text/html
+PROBE /assets/missing.js status=404 immutable=no cache-control=[]
+PROBE /@fs/etc/hostname status=200 sha256=a3ac3daa6e0438078c582ad9333142e144b3a5718fab1e9749f60a56c65759b5 same_as_root=yes
+PROBE /healthz status=200 body=ok
+PROBE /robots.txt status=200 disallow=yes
+CONTROL devserver /@fs/etc/hostname status=200 same_as_root=no same_as_file=no
+NOTE devserver body is the file plus an appended sourceMappingURL comment (content-type text/javascript, 223 bytes for a 16 byte file), so the sha256 differs from the file's although the body starts with the file's exact content: DESKTOP-88EQU47. The file-read hole is present on the dev server; the static image answers the shell instead. Measured once, not retried with other flags.

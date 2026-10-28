@@ -280,7 +280,10 @@ ordered `paths` list, not `paths-ignore`, so instruction-file changes still run 
 `build-and-push-docker-image` job's `linux/amd64` platform target (the deploy target pivoted from
 Oracle A1 Flex/ARM64 to Netcup/x86_64 in Phase 5) and the 7 job names (reduced from 14 across
 Plans 13-05/13-06's removal of every SSH-based deploy/health-check/cleanup-unused-image job, and by
-13-10's removal of the Caddy image job). If any of those facts changes — a job renamed or added, a
+13-10's removal of the Caddy image job). Also tracked: `.github/workflows/architecture-site.yml`, which
+builds the static LikeC4 site into an nginx image and pushes it to its own Docker Hub repository; its
+trigger is a paths list over the model, the site directory and the LikeC4 manifest and lockfile, so
+Flux's tag bumps never start it. If any of those facts changes — a job renamed or added, a
 build platform changed, a new `k8s/` root added — update this document, and the diagrams it links
 to, in the same change: it is the single checked-in description of what actually runs where.
 

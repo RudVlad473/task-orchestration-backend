@@ -1,0 +1,139 @@
+# Builds the static LikeC4 architecture site into an nginx image and pushes it to its own Docker Hub repository.
+#
+# Decisions:
+# - Triggers: the model, the site directory, the LikeC4 manifest and lockfile, and this file, on a push to main,
+#   on a pull request and by hand. No k8s path is listed: Flux commits its tag bumps to k8s/overlays, and a
+#   bump must never rebuild the site.
+# - docs/architecture/sync.mjs is not a trigger although the build job runs it. The site's bytes do not depend
+#   on the script, invariant-checks.yml runs the same check on every push and pull request, and a script change
+#   that rewrites the generated model file reaches the filter through the model path.
+# - Two jobs: a pull-request run must hold no secret, and the publish job pushes the very bytes the build job
+#   gated and built, handed over as an artifact. The builds are not byte-reproducible, so a rebuild in the
+#   publish job would push something nobody tested.
+# - The tag is main-<run number>-<short sha>, which the numerical ImagePolicy of the cluster sorts by run number.
+# - The build passes use-dot=false because likec4 build fails without Graphviz in a container, and the runner
+#   should not depend on it either.
+# - The site is only ever served from this static build, never by the LikeC4 dev or preview server. Invariant
+#   I12 in scripts/verify-k8s-invariants.py refuses such a command in a manifest, a Dockerfile or a workflow.
+# - The publish job alone names the production environment because that is where DOCKERHUB_TOKEN lives. The
+#   token reaches docker login through env and stdin only. The guard on the job binds only the copy of this file
+#   on main, so the environment's deployment-branch policy is what fences the token against other branches.
+name: Architecture Site
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - docs/architecture/model/**
+      - docs/architecture/site/**
+      - docs/architecture/package.json
+      - docs/architecture/pnpm-lock.yaml
+      - .github/workflows/architecture-site.yml
+  pull_request:
+    paths:
+      - docs/architecture/model/**
+      - docs/architecture/site/**
+      - docs/architecture/package.json
+      - docs/architecture/pnpm-lock.yaml
+      - .github/workflows/architecture-site.yml
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  DOCKERHUB_USER: rudenkovladimir
+  DOCKERHUB_REPOSITORY: kanban-board-backend-architecture
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # Trusted by tag like the other jobs that hold no secret: see invariant-checks.yml.
+      - name: Install pnpm at the version the manifest pins
+        uses: pnpm/action-setup@v6
+        with:
+          package_json_file: docs/architecture/package.json
+
+      - name: Install Node at the version the model was verified with
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24.19.0'
+
+      - name: Install the pinned LikeC4 tooling from the lockfile
+        run: pnpm --dir docs/architecture install --frozen-lockfile
+
+      - name: Verify the model matches the code
+        run: node docs/architecture/sync.mjs check
+
+      - name: Build the static site
+        run: pnpm --dir docs/architecture exec likec4 build --use-dot=false -o site/out model
+
+      - name: Verify the build holds the app shell
+        run: grep -q 'id="likec4-root"' docs/architecture/site/out/index.html
+
+      - name: Build the image without pushing
+        run: docker build docs/architecture/site
+
+      - name: Hand the build output to the publish job
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-site
+          path: docs/architecture/site/out
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Fetch the build output the build job produced
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: architecture-site
+          path: docs/architecture/site/out
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin
+
+      - name: Set image tag
+        id: tag
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+        run: echo "image_tag=main-${RUN_NUMBER}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push image (linux/amd64)
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: docs/architecture/site
+          file: docs/architecture/site/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.DOCKERHUB_USER }}/${{ env.DOCKERHUB_REPOSITORY }}:${{ steps.tag.outputs.image_tag }}
+
+      - name: Write the pinned image reference to the job summary
+        env:
+          IMAGE_TAG: ${{ steps.tag.outputs.image_tag }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          echo "Image reference for the Deployment:" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "$DOCKERHUB_USER/$DOCKERHUB_REPOSITORY:$IMAGE_TAG@$IMAGE_DIGEST" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
