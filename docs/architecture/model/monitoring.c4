@@ -1,0 +1,81 @@
+model {
+  prometheus = system 'Prometheus' {
+    description 'Metrics store and scraper; its scrape edges are drawn from the PodMonitor and ServiceMonitor settings in the repo, not from live targets.'
+    metadata {
+      source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
+      workload 'HelmRelease/kube-prometheus-stack'
+    }
+  }
+
+  grafana = system 'Grafana' {
+    description 'Dashboards over the Prometheus and Loki datasources.'
+    metadata {
+      source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
+      workload 'HelmRelease/kube-prometheus-stack'
+    }
+  }
+
+  node-exporter = system 'node-exporter' {
+    description 'Host-level metrics exporter that runs on the node.'
+    metadata {
+      source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
+      workload 'HelmRelease/kube-prometheus-stack'
+    }
+  }
+
+  loki = datastore 'Loki' {
+    description 'Log store, single binary on a filesystem volume.'
+    metadata {
+      source 'k8s/monitoring/controllers/loki.yaml'
+      workload 'HelmRelease/loki'
+    }
+  }
+
+  alloy = system 'Alloy' {
+    description 'Log collector that ships pod logs to Loki.'
+    metadata {
+      source 'k8s/monitoring/controllers/alloy.yaml'
+      workload 'HelmRelease/alloy'
+    }
+  }
+
+  postgres-exporter = system 'postgres-exporter' {
+    description 'Exposes Postgres statistics as Prometheus metrics.'
+    metadata {
+      source 'k8s/monitoring/controllers/postgres-exporter.yaml'
+      workload 'HelmRelease/postgres-exporter'
+    }
+  }
+
+  prometheus -[sync]-> node-exporter 'scrape metrics'
+  prometheus -[sync]-> postgres-exporter 'scrape metrics'
+  prometheus -[sync]-> certmanager 'scrape metrics'
+  postgres-exporter -[sync]-> postgres 'read statistics over SQL'
+  grafana -[sync]-> prometheus 'PromQL queries'
+  grafana -[sync]-> loki 'LogQL queries'
+  alloy -[sync]-> loki 'push pod logs'
+}
+
+deployment {
+  extend netcup.k3s.monitoring {
+    instanceOf prometheus
+    instanceOf grafana
+    instanceOf node-exporter
+    instanceOf loki
+    instanceOf alloy
+    instanceOf postgres-exporter
+  }
+}
+
+views {
+  deployment view monitoring {
+    #physical
+    title 'Physical view: the monitoring stack and what it scrapes'
+    description 'The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo; the check proves each HelmRelease exists and lands in monitoring, not what its chart renders.'
+    include
+      netcup, netcup.k3s,
+      netcup.k3s.monitoring.*,
+      netcup.k3s.cert-manager.*,
+      netcup.k3s.data.postgres
+  }
+}

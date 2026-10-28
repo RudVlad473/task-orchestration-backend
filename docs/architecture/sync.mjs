@@ -227,11 +227,12 @@ function topics() {
   return new Set([...src.matchAll(/String\s+\w+\s*=\s*"([^"]+)"/g)].map((m) => m[1]))
 }
 
-// The Kind/name of every Deployment, StatefulSet and CronJob under k8s/base, k8s/data and
-// k8s/platform. k8s/flux-system is left out on purpose: its controller Deployments are not
+// The Kind/name of every Deployment, StatefulSet, CronJob and HelmRelease under k8s/base,
+// k8s/data, k8s/platform and k8s/monitoring. k8s/overlays holds patches and routes, not
+// workloads. k8s/flux-system is left out on purpose: its controller Deployments are not
 // modelled, so counting them would make the check fail.
-const WORKLOAD_DIRS = ['k8s/base/', 'k8s/data/', 'k8s/platform/']
-const WORKLOAD_KINDS = new Set(['Deployment', 'StatefulSet', 'CronJob'])
+const WORKLOAD_DIRS = ['k8s/base/', 'k8s/data/', 'k8s/platform/', 'k8s/monitoring/']
+const WORKLOAD_KINDS = new Set(['Deployment', 'StatefulSet', 'CronJob', 'HelmRelease'])
 
 function workloads(docs) {
   const out = new Set()

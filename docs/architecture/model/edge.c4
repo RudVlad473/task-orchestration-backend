@@ -1,0 +1,15 @@
+model {
+  certmanager = system 'cert-manager' {
+    description 'Controller that owns the ACME certificate lifecycle for the public hostnames.'
+    metadata {
+      source 'k8s/platform/cert-manager/cert-manager.yaml'
+      workload 'HelmRelease/cert-manager'
+    }
+  }
+}
+
+deployment {
+  extend netcup.k3s.cert-manager {
+    instanceOf certmanager
+  }
+}
