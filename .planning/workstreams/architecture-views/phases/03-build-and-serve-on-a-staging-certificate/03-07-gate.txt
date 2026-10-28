@@ -1,0 +1,71 @@
+# Phase 3 gate record, plan 03-07, 2026-10-28. Tree: local main after commit 65a40d4 (a26694f and e38c028 are Task 1's commits A and B).
+# Cites read `file:line` are lines of the files in this phase directory unless a path is given.
+
+## Local gates, each run for this record
+GATE node docs/architecture/sync.mjs check exit=0
+GATE fish docs/architecture/drill.fish | cmp - docs/architecture/drill-output.txt exit=0
+GATE python3 scripts/pre-commit-likec4-selftest.py exit=0
+GATE python3 scripts/verify-k8s-invariants-selftest.py exit=0
+GATE python3 scripts/verify-k8s-invariants.py --no-provisional exit=0
+GATE bash scripts/verify-k8s-manifests.sh exit=0
+GATE python3 scripts/verify-comments.py check exit=0
+GATE docs/architecture/node_modules/.bin/likec4 export json --skip-layout -o docs/architecture/out/export.json docs/architecture/model exit=0
+CHECK physical views and merged labels printed: delivery,monitoring,production 0
+CHECK scenarios views printed (id participants steps): signup-ok 5 9, error-401 3 4, error-403 5 6, error-409 4 5, activity-log-row 5 5, push-to-image 4 5, image-to-rollout 5 6, publish-the-site 5 8, inbound-packet-path 5 5, ingress-to-pod 3 5, nightly-backup 3 5, signin-ok 5 9, signin-bad-credentials 4 6, signin-ceiling 5 9 (14 views, none above 5 participants, publish-the-site present)
+CHECK export file docs/architecture/out/export.json trashed afterwards; the directory was left in place
+
+## src-only control (criterion 1)
+CHECK commits on origin/main after plan 02's PUSHED 5d44dac9ec0b7a060b0ff217ffb874cec90a8fa1 (21 commits, listed with git log --no-merges --name-only) whose changed paths all start with src/: none
+PENDING: src-only push, none on origin/main yet (DECISION Q4 1, 03-DECISIONS.txt:5); the same filter was observed excluding the k8s-only push (03-03-solver.txt:36), the Flux bump controls (03-02-publish.txt:26, 03-06-live.txt:32, 03-07-model-only-push.txt:18) and the flush push (03-07-model-only-push.txt:6), none of which is the literal src-only case
+
+## Criteria, each clause quoted from the record that shows it
+CRITERION 1: a push that changes only the model runs the site workflow, builds after sync.mjs check, pushes main-<run>-<sha7>; drift fails red and the fix goes green; the PR build holds no secret; no site run for a Flux bump or a src-only push
+  - model-only push runs the workflow and publishes: 03-07-model-only-push.txt:13 `SITE RUN 40774467920 event=push conclusion=success tag=main-5-a26694f`; the pushed range was one commit and one path: 03-07-model-only-push.txt:10 `MODEL-ONLY COMMITS: a26694f`, :11 `MODEL-ONLY DIFF: docs/architecture/model/scenarios-platform.c4`; deploy.yml did not run: :14 `DEPLOY RUNS 0`
+  - sync.mjs check before likec4 build: .github/workflows/architecture-site.yml:71-72 `- name: Verify the model matches the code` / `run: node docs/architecture/sync.mjs check`, then :75 `run: pnpm --dir docs/architecture exec likec4 build --use-dot=false -o site/out model`
+  - tag in the site's own repository: 03-02-publish.txt:21 `TAG: main-1-5d44dac`, 03-07-model-only-push.txt:13 `tag=main-5-a26694f`
+  - drifted model red, fixed model green: 03-02-pr-proof.txt:3 `RED run=40766223979 build=failure failed_step=Verify the model matches the code publish=skipped`; 03-02-pr-proof.txt:9 `GREEN run=40766992838 build=success publish=skipped`
+  - the PR-time build holds no secret: 03-02-pr-proof.txt:3 and :9 both read `publish=skipped`; 03-02-pr-proof.txt:11-12 `ENV_PROBE production run=40767150747 conclusion=failure token_step=absent` and the same for staging
+  - no site run for a Flux bump: 03-02-publish.txt:26 `CONTROL flux-bump 673238f04f6038edb7a0c9aa4f49a53fa728cb33: architecture-site runs=0`; 03-06-live.txt:32 `CONTROL flux-bump fe3466b015517641282f4031c01a9fba077b0bb8: architecture-site runs=0`; 03-07-model-only-push.txt:18 `CONTROL flux-bump 6a82ddef8ff77b4ea35f9f680e4cd2b5e13a3e13: architecture-site runs=0`
+  - the filter excludes other pushes: 03-03-solver.txt:36 `CONTROL k8s-only push 855359585fdb6822b99dc8e05324d4e2a9d50723: architecture-site runs=0`; 03-07-model-only-push.txt:6 `CONTROL flush push 82a5dee6c12202cbfac7f6efaa42768e2b08d207: architecture-site runs=0 deploy runs=0 witness=secret-scan:40773919680`
+  - no site run for a push that touches only src/: PENDING, see the src-only line above
+CRITERION 2: Flux rolls the tag into the site's namespace; staging issuer; Certificate Ready on letsencrypt-staging; / answers 200 with the marker; other hosts as before
+  - rolled: 03-06-live.txt:31 `ROLLED image=main-4-b1aa8c5 restarts=0 (pod started 2026-10-28T21:35:08Z)`; 03-07-model-only-push.txt:17 `ROLLED image=main-5-a26694f restarts=0 (pod started 2026-10-28T21:49:40Z)`
+  - issuer: 03-06-live.txt:23 `TLS issuer=C=US, O=Let's Encrypt, CN=(STAGING) Dastardly Durum YR1`
+  - Certificate: 03-06-live.txt:20 `CERT architecture ready=True issuer=letsencrypt-staging`
+  - marker: 03-06-live.txt:24 `GET / status=200 marker=1`
+  - other hosts: 03-06-live.txt:6 `BASELINE OTHERS prod=200 nonprod=200 monitoring=302` and :25 `OTHERS prod=200 nonprod=200 monitoring=302`
+CRITERION 3: only static output is reachable; the dev-server gate red then green; a cold deep link renders; the missing-asset response is recorded
+  - /@fs: 03-06-live.txt:40 `FSREAD status=200 same_as_root=yes` (the app shell, not the file's bytes); 03-01-local-probe.txt:6 the same on the local image
+  - gate red then green on planted dev-server lines in a workflow, a Dockerfile and a manifest: 03-01-i12-red.txt:17-20 `GATE AFTER I12 exit=1` with three `FAIL: I12:` lines; 03-01-i12-green.txt:2 `GATE GREEN exit=0`
+  - cold deep link: 03-06-live.txt:41 `DEEPLINK /view/signin-ok/ nav_status=200 svg_nodes=184`, :42 `DEEPLINK_CURL /view/signin-ok/ status=200`; the new view: 03-07-model-only-push.txt:20 `DEEPLINK /view/publish-the-site/ nav_status=200 svg_nodes=162`
+  - missing asset: 03-06-live.txt:43 `MISSING_ASSET status=404 content_type=text/html immutable=no`; 03-01-local-probe.txt:5 `PROBE /assets/missing.js status=404 immutable=no cache-control=[]`
+CRITERION 4: I-gate green for the new manifests; MEASURED memory from a VPS ladder (I4); I5 red then green; I10 route shape and I11 single owner
+  - gate green for the new manifests: the `GATE python3 scripts/verify-k8s-invariants.py --no-provisional exit=0` line above; in CI 03-06-live.txt:36 `CI k8s-invariants conclusion=success`
+  - MEASURED memory: 03-03-ladder.txt:14 `ADOPTED: requests.memory=16Mi limits.memory=32Mi`, :13 the 8Mi rung `result=fail`; k8s/base/architecture-site/architecture-site.yaml:61 carries the `MEASURED 2026-10-28 on the VPS` comment
+  - I5 red then green: 03-04-i5-red.txt:1-2 `GATE exit=1` / `FAIL: I5: k8s/overlays/architecture/kustomization.yaml: image 'rudenkovladimir/kanban-board-backend-architecture' carries no Flux $imagepolicy setter-marker comment`; 03-04-i5-green.txt:1 `GATE exit=0`
+  - I10 route shape: held by the same gate run (exit 0 above); no separate record line shows I10 failing
+  - I11 one owner: 03-06-live.txt:26 `I11 architecture-https {"kustomize.toolkit.fluxcd.io/name":"apps-architecture",...}` and :27 the same for architecture-http
+CRITERION 5: the model contains the site as built; a publish-the-site scenario whose steps cite the workflow and manifest lines; Phase 1 and Phase 2 checks green and covering the site's workload
+  - namespace node and instance: docs/architecture/model/deployment.c4:37-38 `architecture = namespace 'architecture' {` / `instanceOf archsite`; the model before it existed: 03-04-model-red.txt:3-5 three DRIFT lines naming the Deployment, the host and namespace architecture
+  - traefik edge: docs/architecture/model/model.c4:143 `traefik -[sync]-> archsite 'HTTP :8080'`
+  - scenario with cited steps: 03-SCENARIO-EVIDENCE.md `## view publish-the-site`, 8 rows for 8 exported steps (`publish-the-site scenarios 5 8`)
+  - Phase 1 and Phase 2 checks green and covering the workload: the `sync.mjs check` and drill-replay GATE lines above; the check's own output names 18 workloads, the site's Deployment included (03-04-model-red.txt:3 is the failing case)
+  - drills D25 to D27 on the site: docs/architecture/drill-output.txt:183-199 three sections, `exit=1` each
+
+## Red and green per live clause
+PAIR c2-issuer: red=03-06-live.txt:2 green=03-06-live.txt:23
+PAIR c2-marker: red=03-06-live.txt:3 green=03-06-live.txt:24
+AFTER-ONLY c2-other-hosts: a regression control compared with `BASELINE OTHERS` (03-06-live.txt:6 against :25, both prod=200 nonprod=200 monitoring=302); a failing case would mean breaking a live host
+PAIR c3-deeplink-browser: red=03-06-live.txt:4 green=03-06-live.txt:41
+PAIR c3-deeplink-curl: red=03-06-live.txt:5 green=03-06-live.txt:42
+AFTER-ONLY c3-fsread: the control did not read the file byte for byte: 03-01-local-probe.txt:9 `CONTROL devserver /@fs/etc/hostname status=200 same_as_root=no same_as_file=no` (its body is the file plus an appended sourceMappingURL comment, so the hash differs); the live result is 03-06-live.txt:40 `FSREAD status=200 same_as_root=yes`
+AFTER-ONLY c3-missing-asset: before the push the host answers Traefik's 404 for an unrouted name, which does not discriminate, and the failing case (a fallback that answers 200) was measured in the research's server comparison, not rebuilt
+PAIR c1-model-only: red=03-03-solver.txt:36 green=03-07-model-only-push.txt:13
+AFTER-ONLY c5-publish-view: DEEPLINK_BEFORE did not read 0 nodes or a status other than 200 (03-07-model-only-push.txt:7 `DEEPLINK_BEFORE /view/publish-the-site/ nav_status=200 svg_nodes=11`: nginx serves the app shell for any path), so the node count and status do not discriminate; the body text did, reading "The diagram publish-the-site does not exist or contains errors" before the push (:8) and step 1 of the view after it (:21, `DEEPLINK ... svg_nodes=162` at :20)
+
+## Findings carried to Phase 4, not clauses of criteria 1 to 5
+CARRIED: crt.sh listed 0 entries for the staging certificate about 8 minutes after issuance (03-06-live.txt:46); no CT claim is made, and one query is not proof staging certificates never reach CT
+CARRIED: the live deep link drew 184 SVG nodes for signin-ok where the plan's note on the research's local build said 38 (03-06-live.txt:41); the difference was not investigated
+CARRIED: Traefik restarts were 2 before and 2 after the 22-file load (03-06-live.txt:45); its two earlier restarts predate this phase
+
+PHASE STATUS: criteria 1 to 5 mapped; pending: src-only push (criterion 1, DECISION Q4 1)
