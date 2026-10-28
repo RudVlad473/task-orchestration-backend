@@ -48,6 +48,10 @@ deploy target (see `DIAGRAM_CONVENTIONS.md`'s own note on this).
 <img src="diagrams/physical/delivery-nodes.png" width="808" alt="Flowchart: nodes of the delivery path">
 <sub>[diagram source](diagrams/physical/delivery-nodes.mmd)</sub>
 
+These Mermaid diagrams predate the architecture site. LikeC4's `production` and `delivery` views
+include it, and the Mermaid files are left as they are because their migration and retirement are
+outside this milestone.
+
 **Externally reachable vs. internal-only:** `svclb-traefik-*` is the ONLY Pod in the cluster
 carrying a `hostPort` (80, 443) — confirmed live via `k3s kubectl get pods -A -o json` filtered for
 `hostNetwork`/`hostPort`, and the only non-`ClusterIP` `Service` is `kube-system/traefik`
@@ -122,7 +126,12 @@ containers across 7 namespaces at last count, Plan 13-09's T0 snapshot: `cert-ma
 `monitoring` ×13). Docker Compose's process-isolation boundary (one Compose project's `docker
 compose ps` silently excluding the other project's containers, the exact failure mode the
 pre-cutover version of this document warned about) no longer applies — a single `k3s kubectl get
-pods -A` enumerates the entire host-wide workload set by construction.
+pods -A` enumerates the entire host-wide workload set by construction. Read again on 2026-10-28
+with the same command (regular containers of every pod it listed, init containers not counted):
+38 containers across 8 namespaces, `architecture` ×1 (the static architecture site, added in
+Phase 3 of the architecture-views workstream), `cert-manager` ×3, `flux-system` ×6, `kanban-data`
+×4, `kanban-nonprod` ×2, `kanban-prod` ×2, `kube-system` ×7, `monitoring` ×13. The `kanban-data`
+count is 4 against 1 in the earlier snapshot; the cause was not investigated here.
 
 ## Scenario (+1) View — Delivery Path
 

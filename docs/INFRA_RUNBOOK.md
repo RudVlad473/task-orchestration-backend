@@ -482,6 +482,11 @@ land in Phase 14.1.
 Not yet attempted: certificate issuance — that's plan 05-04's job once Caddy is actually deployed
 and can run its own HTTP-01 challenge against this hostname.
 
+The architecture site has its own subdomain, `kanban-board-rud-vlad-473-architecture.duckdns.org`:
+an A record to the same VPS, no AAAA record, created outside the repo, with no updater running for
+it either. It is served on a Let's Encrypt staging certificate until the built site has passed the
+leak review, so a browser warns about the certificate on purpose.
+
 ## Observability on k3s — Plan 13-07 (2026-09-26)
 
 The observability stack (kube-prometheus-stack, Loki, Alloy, postgres-exporter) is live in the
