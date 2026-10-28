@@ -15,4 +15,56 @@ views {
     traefik <- kanban.api '201 Created, Set-Cookie JSESSIONID'
     client <- traefik '201 {id, email, displayName, theme}'
   }
+
+  dynamic view error-401 {
+    #scenarios
+    variant sequence
+    title 'Scenario: 401 with no session cookie'
+    description 'A request to a protected route with no session cookie is answered 401 with code UNAUTHENTICATED by the authentication entry point, before any controller runs. No SQL step is drawn, and that is authored, not measured: the one live measurement of what a cookie-less request issues did not run (verdict not measured, port 5433 was held by another project Postgres), and the main security chain creates sessions when required, so a cookie-less request may still write a session row.'
+
+    client -> traefik 'GET /api/boards, no session cookie'
+    traefik -> kanban.api 'forward'
+    traefik <- kanban.api '401 UNAUTHENTICATED, answered by the entry point before any controller'
+    client <- traefik '401 ProblemDetail, code UNAUTHENTICATED'
+  }
+
+  dynamic view error-403 {
+    #scenarios
+    variant sequence
+    title 'Scenario: 403 on a board the caller does not own'
+    description 'The caller is signed in, but the board in the path belongs to another user. The ownership check reads the user and the board, compares the owner, and refuses with code ACCESS_DENIED. The session lookup that authenticates the request is not drawn.'
+
+    client -> traefik 'GET /api/boards/{boardId}/columns, board owned by another user'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres.table_users 'SELECT user by id'
+    kanban.api -> postgres.table_boards 'SELECT board by id'
+    traefik <- kanban.api '403 ACCESS_DENIED, the board owner id differs from the caller'
+    client <- traefik '403 ProblemDetail, code ACCESS_DENIED'
+  }
+
+  dynamic view error-409 {
+    #scenarios
+    variant sequence
+    title 'Scenario: 409 on a stale task version'
+    description 'A task update carries the version the client last read, and another request has changed the task since. The ownership chain (task, column, board, user) passes and the task is loaded, the version check fails, and the request ends with code OPTIMISTIC_LOCK_CONFLICT. Only the tasks table is drawn: the other ownership reads are named in the step title. Nothing is written and no activity event is published.'
+
+    client -> traefik 'PUT /api/boards/{boardId}/columns/{columnId}/tasks/{taskId} {title, description, version}'
+    traefik -> kanban.api 'forward'
+    kanban.api -> postgres.table_tasks 'SELECT task, with the ownership reads of its column, board and user'
+    traefik <- kanban.api '409 OPTIMISTIC_LOCK_CONFLICT, request version differs from the stored one, nothing written, no event published'
+    client <- traefik '409 ProblemDetail, code OPTIMISTIC_LOCK_CONFLICT'
+  }
+
+  dynamic view activity-log-row {
+    #scenarios
+    variant sequence
+    title 'Scenario: a committed mutation becomes an activity_log row'
+    description 'Starts after the HTTP request: a task update has committed. The domain event is handed to the publish executor after commit, so the request never waits on Kafka, then it is sent keyed by event id, polled by the activity-log consumer group and inserted once, idempotent on event_id. The dead-letter path is not drawn.'
+
+    kanban.api -> kanban.publisher 'task update committed: TaskUpdatedEvent handed off AFTER_COMMIT, the request does not wait on Kafka'
+    kanban.publisher -> redpanda.activity 'send, Avro, keyed by event id'
+    redpanda.activity -> kanban.consumer 'poll, group activity-log'
+    kanban.consumer -> postgres.table_activity_log 'SELECT: is event_id already recorded'
+    kanban.consumer -> postgres.table_activity_log 'INSERT activity_log row, the unique event_id backstops a race past the check'
+  }
 }
