@@ -518,14 +518,16 @@ run
 | A7 | LikeC4 metadata on relationships works in 1.60 | Locked note | Not used; the roadmap says put metadata on elements |
 | A8 | Natural width of a 5-participant sequence view stays near 1838 px | Scenarios | Evidence file records widths; no pass/fail number is set |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does the user want the planned `[...]` fix via identical titles (D1-A)?** It changes `process` view labels. What we know: D1-A and D1-B both verified. Unclear: how much the specific labels matter. Recommendation: D1-A, with the specific wording moved into relationship descriptions.
-2. **Is a developer actor wanted in `push-to-image`?** Not required; it is the fifth allowed participant. Recommendation: include only if the trigger step reads better with it.
-3. **Does `kanban.management` belong in the same view as Prometheus (Process) or only in Physical?** The roadmap names the management port in the `process` view; that pulls a monitoring element in. Recommendation: draw a single `scrape` relationship from the Prometheus element, accept one extra node, measure the `process` view width, and split to a second `#process` view only if it becomes unreadable.
-4. **Does the user accept closing WR-03 and WR-04 inside Phase 2?** Both live in code this phase edits. Recommendation: yes, one drill each.
-5. **Mixed-kind merged edges and `par`** remain unrendered (A5, Pitfall 5 note). Not needed by the recommended design.
-6. **PNG legibility judgement.** No rule exists (Open Question 7). Record natural widths only.
+Each question below carries its outcome as planned (plans 02-01 to 02-05, revision a2bcd24).
+
+1. **Does the user want the planned `[...]` fix via identical titles (D1-A)?** (RESOLVED) Planned as D1-A+ in 02-01: one shared protocol title per merging instance pair, and the `process` view restores the specific labels with `include … with { title }`. Measured on a scratch copy: `production` has no `[...]` edge and `process` keeps its six labels.
+2. **Is a developer actor wanted in `push-to-image`?** (RESOLVED) No. 02-05 draws push-to-image with repo, ci, dockerhub and postgres participants and no developer actor.
+3. **Does `kanban.management` belong in the same view as Prometheus (Process) or only in Physical?** (RESOLVED) Same view, via a single scrape relationship from the Prometheus element (02-02). No split of the `process` view; its natural width is recorded in the 02-05 evidence file, not judged.
+4. **Does the user accept closing WR-03 and WR-04 inside Phase 2?** (RESOLVED) WR-03 is folded into 02-01 (drill D19). WR-04 stays open: no Phase 2 element anchors on a `k8s/` directory source, and 02-05 records that disposition in `01-REVIEW-DISPOSITION.md`.
+5. **Mixed-kind merged edges and `par`** (RESOLVED, not used) Unrendered and unneeded: no plan uses `par`, a parent-and-child participant pair, or a mixed-kind merged edge as a checked design. A5 and the Pitfall 5 note stay as unmeasured assumptions.
+6. **PNG legibility judgement.** (RESOLVED) No rule exists (Open Question 7). Natural widths are recorded in the 02-05 evidence file only.
 
 ## Environment Availability
 
