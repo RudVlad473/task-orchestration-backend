@@ -1,0 +1,43 @@
+# Architecture site edge: TLS on websecure plus a web-only redirect route; Traefik owns 80/443 via
+# ServiceLB. No rate-limit Middleware, because the site is static files.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: architecture-https
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`kanban-board-rud-vlad-473-architecture.duckdns.org`)
+      kind: Rule
+      services:
+        - name: architecture-site
+          port: 8080
+  tls:
+    secretName: architecture-tls
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: architecture-http
+spec:
+  entryPoints:
+    - web
+  routes:
+    # The negation excludes cert-manager's HTTP-01 solver path from the redirect (I10).
+    - match: Host(`kanban-board-rud-vlad-473-architecture.duckdns.org`) && !PathPrefix(`/.well-known/acme-challenge/`)
+      kind: Rule
+      middlewares:
+        - name: redirect-https
+      services:
+        - name: architecture-site
+          port: 8080

@@ -1,0 +1,14 @@
+# Staging certificate for the architecture hostname; it moves to letsencrypt-production in a later,
+# separate commit, after the built site has passed the leak review. ClusterIssuers are in
+# k8s/platform/edge/clusterissuers.yaml.
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: architecture
+spec:
+  secretName: architecture-tls
+  dnsNames:
+    - kanban-board-rud-vlad-473-architecture.duckdns.org
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer

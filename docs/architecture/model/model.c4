@@ -10,7 +10,8 @@ model {
       host [
         'kanban-board-rud-vlad-473.duckdns.org',
         'kanban-board-rud-vlad-473-nonprod.duckdns.org',
-        'kanban-board-rud-vlad-473-monitoring.duckdns.org'
+        'kanban-board-rud-vlad-473-monitoring.duckdns.org',
+        'kanban-board-rud-vlad-473-architecture.duckdns.org'
       ]
     }
   }
@@ -139,6 +140,7 @@ model {
   backup -[sync]-> postgres 'pg_dump over the Postgres protocol'
   client -[sync]-> traefik 'HTTPS :443'
   traefik -[sync]-> kanban.api 'HTTP :8080'
+  traefik -[sync]-> archsite 'HTTP :8080'
   kanban.api -[sync]-> postgres 'SQL over JDBC'
   kanban.api -[async]-> kanban.publisher 'AFTER_COMMIT hand-off'
   kanban.publisher -[async]-> redpanda.activity 'Kafka protocol and Schema Registry API'

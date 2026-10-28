@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: architecture
+resources:
+  - ../../base/architecture-site
+  - ingressroute.yaml
+  - certificate.yaml
+images:
+  - name: rudenkovladimir/kanban-board-backend-architecture
+    newName: rudenkovladimir/kanban-board-backend-architecture
+    # Flux's ImagePolicy flux-system/kanban-board-backend-architecture rewrites this value in place on
+    # every new image it selects.
+    newTag: main-1-5d44dac # {"$imagepolicy": "flux-system:kanban-board-backend-architecture:tag"}

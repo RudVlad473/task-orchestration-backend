@@ -1,0 +1,2 @@
+GATE exit=1
+FAIL: I5: k8s/overlays/architecture/kustomization.yaml: image 'rudenkovladimir/kanban-board-backend-architecture' carries no Flux $imagepolicy setter-marker comment

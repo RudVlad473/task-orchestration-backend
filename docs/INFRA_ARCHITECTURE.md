@@ -270,7 +270,8 @@ VM (D-04). Only the local-dev `docker-compose.yml` remains, and it is not a depl
 
 This document now describes: `k8s/**` (every Kustomize root — `flux-system`, `platform`,
 `platform/cert-manager`, `platform/edge`, `data`, `data/postgres(-bridge)`, `base/app`,
-`base/redpanda`, `monitoring/{controllers,configs}`, `overlays/{prod,nonprod}`), `infra/vm/k3s/`
+`base/architecture-site`, `base/redpanda`, `monitoring/{controllers,configs}`,
+`overlays/{prod,nonprod,architecture}`), `infra/vm/k3s/`
 (k3s config + pinned install wrapper), `infra/vm/k3s-host-firewall.*` (the `KANBAN-INGRESS`
 ruleset + systemd unit), and `infra/vm/sshd/` (the sshd hardening this VM already carried forward
 from Phase 5, unchanged by the k3s cutover but now cited here alongside its k3s-era siblings).
@@ -283,7 +284,8 @@ Plans 13-05/13-06's removal of every SSH-based deploy/health-check/cleanup-unuse
 13-10's removal of the Caddy image job). Also tracked: `.github/workflows/architecture-site.yml`, which
 builds the static LikeC4 site into an nginx image and pushes it to its own Docker Hub repository; its
 trigger is a paths list over the model, the site directory and the LikeC4 manifest and lockfile, so
-Flux's tag bumps never start it. If any of those facts changes — a job renamed or added, a
+Flux's tag bumps never start it. Namespace `architecture` serves that site at the fourth DuckDNS
+hostname, on a Let's Encrypt staging certificate until the built site has passed the leak review. If any of those facts changes — a job renamed or added, a
 build platform changed, a new `k8s/` root added — update this document, and the diagrams it links
 to, in the same change: it is the single checked-in description of what actually runs where.
 

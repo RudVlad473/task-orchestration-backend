@@ -1,4 +1,4 @@
-# Flux image automation: two Docker Hub repos, one ImagePolicy each tracking the sortable
+# Flux image automation: three Docker Hub repos, one ImagePolicy each tracking the sortable
 # `main-<run_number>-<sha7>` tag scheme, one ImageUpdateAutomation pushing tag bumps to main.
 ---
 apiVersion: image.toolkit.fluxcd.io/v1
@@ -17,6 +17,15 @@ metadata:
   namespace: flux-system
 spec:
   image: docker.io/rudenkovladimir/kanban-board-backend-nonprod
+  interval: 5m
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImageRepository
+metadata:
+  name: kanban-board-backend-architecture
+  namespace: flux-system
+spec:
+  image: docker.io/rudenkovladimir/kanban-board-backend-architecture
   interval: 5m
 ---
 apiVersion: image.toolkit.fluxcd.io/v1
@@ -42,6 +51,21 @@ metadata:
 spec:
   imageRepositoryRef:
     name: kanban-board-backend-nonprod
+  filterTags:
+    pattern: '^main-(?P<num>[0-9]+)-[a-f0-9]{7}$'
+    extract: $num
+  policy:
+    numerical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1
+kind: ImagePolicy
+metadata:
+  name: kanban-board-backend-architecture
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: kanban-board-backend-architecture
   filterTags:
     pattern: '^main-(?P<num>[0-9]+)-[a-f0-9]{7}$'
     extract: $num

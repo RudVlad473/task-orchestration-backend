@@ -1,0 +1,85 @@
+# An nginx Deployment serving the static LikeC4 build, and its Service; the overlay sets the
+# namespace and the image tag.
+#
+# Decisions:
+# - The memory request and limit sit here, not in an overlay patch, because exactly one overlay uses
+#   this base.
+# - Recreate keeps one pod's memory at a time.
+# - The root filesystem is read-only, and nginx writes its pid and temp files to the /tmp emptyDir.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: architecture-site
+  labels:
+    app.kubernetes.io/name: architecture-site
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: architecture-site
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: architecture-site
+    spec:
+      # The site never calls the Kubernetes API, so no service-account token is mounted.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: architecture-site
+          # Untagged: the overlay's images transform sets the tag.
+          image: rudenkovladimir/kanban-board-backend-architecture
+          ports:
+            - name: http
+              containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+          resources:
+            # MEASURED 2026-10-28 on the VPS: rungs 64Mi, 32Mi, 16Mi and 8Mi, one pod at a time. 8Mi was
+            # OOM-killed, 16Mi was the lowest rung that passed, so the request is 16Mi and the limit is
+            # twice it, as in docs/INFRA_RUNBOOK.md's resource measurement.
+            requests:
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: architecture-site
+  labels:
+    app.kubernetes.io/name: architecture-site
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: architecture-site
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

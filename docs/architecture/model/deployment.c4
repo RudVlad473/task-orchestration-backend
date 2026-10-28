@@ -33,6 +33,10 @@ deployment {
 
       monitoring = namespace 'monitoring' {
       }
+
+      architecture = namespace 'architecture' {
+        instanceOf archsite
+      }
     }
   }
 }

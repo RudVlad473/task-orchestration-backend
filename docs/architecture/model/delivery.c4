@@ -4,14 +4,14 @@ model {
   }
 
   ci = system 'GitHub Actions' {
-    description 'Runs the tests, builds the app image and pushes it to Docker Hub when main changes; changes under k8s/ and the docs do not start it.'
+    description 'Two workflows: deploy.yml tests and pushes the app image when main changes outside k8s/, the docs and the planning files; architecture-site.yml checks the model, builds the site and pushes its image when the model, the site directory or the LikeC4 manifest change.'
     metadata {
       source '.github/workflows/deploy.yml'
     }
   }
 
   dockerhub = external 'Docker Hub' {
-    description 'Authored. Registry that holds the app image repositories; the workflow pushes to it and the cluster pulls from it.'
+    description 'Authored. Registry that holds the app image repositories and the architecture site image repository; the workflows push to it and the cluster pulls from it.'
     metadata {
       source '.github/workflows/deploy.yml'
     }
@@ -31,12 +31,22 @@ model {
     }
   }
 
-  repo -[async]-> ci 'push to main starts deploy.yml'
-  ci -[sync]-> dockerhub 'push the app image'
+  archsite = system 'Architecture site' {
+    description 'The static LikeC4 build of this model, served by nginx behind Traefik.'
+    metadata {
+      workload 'Deployment/architecture-site'
+      source 'k8s/base/architecture-site/architecture-site.yaml'
+    }
+  }
+
+  repo -[async]-> ci 'push to main starts deploy.yml and, for model changes, architecture-site.yml'
+  ci -[sync]-> dockerhub 'push the app and site images'
   flux -[sync]-> dockerhub 'scan image tags'
   flux -[sync]-> repo 'Git over SSH: pull, commit tag bumps'
   flux -[sync]-> kanban 'apply the app overlays'
   kanban -[sync]-> dockerhub 'image pull'
+  flux -[sync]-> archsite 'apply the architecture overlay'
+  archsite -[sync]-> dockerhub 'image pull'
 }
 
 deployment {

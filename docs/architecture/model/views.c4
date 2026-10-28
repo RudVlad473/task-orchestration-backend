@@ -59,7 +59,7 @@ views {
   deployment view production {
     #physical
     title 'Physical view: what runs where'
-    description 'Inbound traffic goes from the internet through the provider firewall and the host filter to ServiceLB and Traefik, which routes to the app, and cert-manager obtains the certificates from Let\'s Encrypt through its two issuers. The VPS is x86_64.'
+    description 'Inbound traffic goes from the internet through the provider firewall and the host filter to ServiceLB and Traefik, which routes to the app and to the architecture site, and cert-manager obtains the certificates from Let\'s Encrypt through its two issuers. The VPS is x86_64.'
     include
       netcup, netcup.k3s,
       netcup.hostfilter,
@@ -68,6 +68,7 @@ views {
       netcup.k3s.prod.**,
       netcup.k3s.nonprod.**,
       netcup.k3s.data.**,
+      netcup.k3s.architecture, netcup.k3s.architecture.**,
       netcup.k3s.cert-manager.**,
       internet.*, netcup-cloud.*, letsencrypt.*
 
@@ -77,14 +78,15 @@ views {
   deployment view delivery {
     #physical
     title 'Physical view: how an app image reaches the cluster'
-    description 'A push to main starts the workflow on a GitHub-hosted runner, which pushes the image to Docker Hub. Flux scans the tags, commits the bump to the manifests over Git and applies the overlays, and the app pod pulls the image.'
+    description 'A push to main starts the workflow on a GitHub-hosted runner, which pushes the app and site images to Docker Hub. Flux scans the tags, commits the bump to the manifests over Git and applies the overlays, and the app and site pods pull the images.'
     include
       github, github.**,
       docker-hub, docker-hub.**,
       netcup, netcup.k3s,
       netcup.k3s.flux-system.*,
       netcup.k3s.prod.kanban,
-      netcup.k3s.nonprod.kanban
+      netcup.k3s.nonprod.kanban,
+      netcup.k3s.architecture.archsite
   }
 
   dynamic view signin-ok {

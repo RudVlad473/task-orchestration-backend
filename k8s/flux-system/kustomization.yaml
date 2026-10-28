@@ -9,6 +9,7 @@ resources:
   - cert-manager.yaml
   - edge.yaml
   - apps-prod.yaml
+  - apps-architecture.yaml
   - monitoring-controllers.yaml
   - monitoring.yaml
   - image-automation.yaml

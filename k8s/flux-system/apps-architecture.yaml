@@ -1,0 +1,24 @@
+# The single Flux owner of the architecture site's objects.
+#
+# The `edge` dependsOn exists because the Certificate and the websecure IngressRoute need cert-manager's
+# ClusterIssuers and Traefik's LoadBalancer edge first, and `platform` creates the namespace. There
+# are no healthChecks because Flux ignores them when wait is true, and wait already counts the
+# Deployment and the Certificate.
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: apps-architecture
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./k8s/overlays/architecture
+  prune: true
+  wait: true
+  suspend: false
+  dependsOn:
+    - name: platform
+    - name: edge
+  sourceRef:
+    kind: GitRepository
+    name: flux-system

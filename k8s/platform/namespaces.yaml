@@ -1,5 +1,6 @@
 # Namespaces: kanban-prod and kanban-nonprod host the app and redpanda workloads, kanban-data the
-# Postgres StatefulSet and the interim postgres-bridge Service, monitoring the observability stack.
+# Postgres StatefulSet and the interim postgres-bridge Service, monitoring the observability stack,
+# architecture the static LikeC4 site.
 ---
 apiVersion: v1
 kind: Namespace
@@ -20,3 +21,8 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: architecture
