@@ -1,0 +1,137 @@
+Chart values record for quick task 261028-opl: kube-prometheus-stack default scrape targets
+==========================================================================================
+
+Checked: 2026-10-28T17:23Z (UTC). BASE (git rev-parse --short HEAD before Task 1): 2fbe8ff.
+
+Source read
+-----------
+File: charts/kube-prometheus-stack/values.yaml of prometheus-community/helm-charts at tag
+kube-prometheus-stack-91.5.2 (the chart version pinned at k8s/monitoring/controllers/kube-prometheus-stack.yaml
+line 25, version "91.5.2").
+
+Command: gh api -H 'Accept: application/vnd.github.raw' 'repos/prometheus-community/helm-charts/contents/charts/kube-prometheus-stack/values.yaml?ref=kube-prometheus-stack-91.5.2'
+Why gh and not a web fetch: the previous pass fetched the file through the web-access MCP and stopped at
+62,574 of 218,683 characters, so it could not see the monitors after that point. gh api returned the whole
+file in one call.
+
+Measured: 218683 bytes, sha256 7d089fcf435e6904cda5ad246602e1c61005d08c68e3a9ab82770c249e395081.
+Both equal the planning measurement. No line in the table below differs from the plan's table.
+
+The download sat in its own new directory under the gitignored docs/architecture/out, was read only with
+sed -n and rg -n, and was never executed. Every line number and quote below was read from it with sed -n
+at this check, row by row.
+
+Table: one row per monitor
+--------------------------
+Line numbers are values.yaml lines at the tag unless marked "repo", which means
+k8s/monitoring/controllers/kube-prometheus-stack.yaml. Only enabled, port, https, cAdvisor, probes,
+resource, selfMonitor and serverName lines are quoted; the authorization lines are not copied.
+
+kubernetesServiceMonitors (master switch)
+  1730-1731  "kubernetesServiceMonitors:" / "  enabled: true"
+  repo: not set.
+  Outcome: holds the component monitors below on.
+
+kubeApiServer
+  1735-1736  "kubeApiServer:" / "  enabled: true"
+  1742       "    serverName: kubernetes"   (inside tlsConfig, lines 1741 to 1747)
+  1748-1749  "  serviceMonitor:" / "    enabled: true"
+  repo: not set.
+  Outcome: drawn, edge title "scrape API server metrics". The title names no protocol. The tlsConfig block
+  (1741 to 1747) sets TLS client fields only (serverName, insecureSkipVerify, ca), and no values line in the
+  kubeApiServer block (1735 to 1749) states the scheme. The only "https" in that range is a URL inside the
+  comment at line 1739. The chart templates that would set the scheme are not read.
+
+kubelet
+  1838-1839  "kubelet:" / "  enabled: true"
+  1846-1847  "  serviceMonitor:" / "    enabled: true"
+  1849       "    kubelet: true"
+  1900       "    https: true"
+  1929       "    probes: true"
+  1934       "    resource: false"
+  1944       "    cAdvisor: true"
+  repo: not set.
+  Outcome: drawn, edge title "scrape kubelet, cAdvisor and probe metrics over HTTPS". HTTPS rests on line
+  1900. The resource endpoint (line 1934) is off and is not named in the title.
+
+coreDns
+  2229-2230  "coreDns:" / "  enabled: true"
+  2233       "    port: 9153"   (under service, lines 2231 to 2233)
+  2242-2243  "  serviceMonitor:" / "    enabled: true"
+  repo: not set. infra/vm/k3s/config.yaml has a disable list that names only metrics-server, so the
+  CoreDNS that k3s bundles stays on.
+  Outcome: drawn, edge title "scrape DNS metrics on port 9153". The port rests on line 2233.
+
+kubeStateMetrics
+  2835-2836  "kubeStateMetrics:" / "  enabled: true"
+  2849-2853  "  prometheus:" / "    monitor:" / ... / "      enabled: true"
+  repo: resources only (kube-prometheus-stack.yaml lines 169 to 177); lines 1 and 13 of the same file
+  say the release brings kube-state-metrics.
+  Outcome: drawn, edge title "scrape cluster object state metrics".
+
+prometheusOperator
+  2981-2982  "prometheusOperator:" / "  enabled: true"
+  2997-2998  "  tls:" / "    enabled: true"
+  3525-3528  "  serviceMonitor:" / ... / "    selfMonitor: true"
+  repo: resources only (kube-prometheus-stack.yaml lines 179 to 187).
+  Outcome: drawn, edge title "scrape operator metrics". No port or protocol in the title, although line
+  2998 shows the operator TLS is on, because no values line ties it to the scrape edge.
+
+grafana
+  1696-1700  "  serviceMonitor:" / ... / "    enabled: true"
+  repo: the grafana block (kube-prometheus-stack.yaml lines 86 to 137) sets no serviceMonitor.
+  Outcome: drawn, edge title "scrape Grafana server metrics".
+
+nodeExporter
+  2867-2868  "nodeExporter:" / "  enabled: true"
+  repo: monitor enabled (kube-prometheus-stack.yaml lines 160 to 162).
+  Outcome: already drawn before this task (title "scrape metrics").
+
+prometheus (self-scrape)
+  4341-4344  "  serviceMonitor:" / ... / "    selfMonitor: true"
+  repo: not set.
+  Outcome: stated, not drawn. LikeC4 1.60 rejects a relationship from an element to itself (probe below).
+
+alertmanager
+  398, 402   "alertmanager:" / "  enabled: true"
+  repo: "enabled: false" at kube-prometheus-stack.yaml lines 37 to 38.
+  Outcome: not drawn, the repo turns it off.
+
+kubeControllerManager, kubeScheduler, kubeEtcd, kubeProxy
+  values: key at 2102, 2563, 2431 and 2718; each followed by "  enabled: true" on the next line
+  (2103, 2564, 2432, 2719).
+  repo: "enabled: false" for each at kube-prometheus-stack.yaml lines 45 to 52.
+  Outcome: not drawn, the repo turns them off.
+
+kubeDns, thanosRuler, windowsMonitoring
+  values: kubeDns 2322-2323, thanosRuler 5515 and 5519, windowsMonitoring 367 and 369, each "enabled: false".
+  repo: not set.
+  Outcome: not drawn, the chart leaves them off.
+
+Other repo-side facts read
+--------------------------
+- Prometheus selects every ServiceMonitor and PodMonitor: kube-prometheus-stack.yaml lines 83 and 84,
+  serviceMonitorSelectorNilUsesHelmValues: false and podMonitorSelectorNilUsesHelmValues: false.
+- k3s disable list (infra/vm/k3s/config.yaml): "disable:" with the single entry "metrics-server".
+- Loki ServiceMonitor: loki.yaml lines 102 to 103, "serviceMonitor:" / "enabled: false", under
+  monitoring (selfMonitoring is also off, lines 100 to 101).
+
+Self-relationship probe (measured again at execution)
+-----------------------------------------------------
+A scratch copy of docs/architecture/model gained one file with a model block holding
+"prometheus -[sync]-> prometheus 'probe'". Command:
+node docs/architecture/sync.mjs check --model <scratch copy>/model < /dev/null
+Output line: "- model does not validate: Invalid parent-child relationship". Exit code 1.
+The scratch copy was trashed afterwards.
+
+Not read
+--------
+- The live target list (no cluster access).
+- The chart templates (no helm binary), so a port, path or scheme appears in a title only where a values
+  line states it.
+- The Alloy chart defaults (not fetched).
+
+Cleanup
+-------
+The directory that held the downloaded values.yaml was trashed after the checks (see the commit of this
+file for the final state of docs/architecture/out).

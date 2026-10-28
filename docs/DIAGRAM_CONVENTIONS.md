@@ -109,7 +109,7 @@ the `verify/` folder.
 | Logical | plain `view` over `table` elements | tables and the FK ownership chain | columns, entity classes, DTOs | tables and `fk` edges generated from the migrations by a statement-level regex (see V4 and note (a)); the two Spring Session tables authored; two `note` elements (on `activity_log` and on the Avro subjects) carry a `source` whose existence is checked, and their text is authored |
 | Process | `view ... of kanban` | request threads, named executors, topics, consumer groups, DB writes; the Schema Registry, the schema-registering init job, the management server and the nightly backup flow to the off-cluster bucket | method calls, class names | topics checked; the backup job's CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored |
 | Development | `view ... of kanban`, packages as `component` | top-level packages and their dependency direction | classes, third-party libraries | components and `imports` edges generated from import lines (see V5 and note (d)); cycles printed by the check, not gated |
-| Physical | `deployment` model and `deployment view`: three views, `production`, `delivery` and `monitoring` | `production`: the server and the provider nodes (arch in the server titles), the cluster, namespaces, workloads, the cluster-scoped ClusterIssuers, and the inbound path with the provider firewall and the host filter as external elements. `delivery`: GitHub and its runner (arch in the title), Docker Hub, Flux and the image path into the cluster. `monitoring`: the monitoring workloads, the scrape targets the repo's monitor settings name, and the query edges; the kube-prometheus-stack default scrape targets (among them the kubelet with cAdvisor, kube-state-metrics, the API server and the operator) are not drawn | pods, replicas, secrets, objects a chart renders | workloads checked (`Deployment`, `StatefulSet`, `CronJob`, `HelmRelease` and `ClusterIssuer` under `k8s/base`, `k8s/data`, `k8s/platform` and `k8s/monitoring`, plus the Flux controller Deployments in `k8s/flux-system/gotk-components.yaml`); routed hosts checked against every `IngressRoute`; namespace nodes and instance placement checked against the manifests under `k8s`; the firewall, host filter, ServiceLB, provider nodes, the runner and the scrape edges authored |
+| Physical | `deployment` model and `deployment view`: three views, `production`, `delivery` and `monitoring` | `production`: the server and the provider nodes (arch in the server titles), the cluster, namespaces, workloads, the cluster-scoped ClusterIssuers, and the inbound path with the provider firewall and the host filter as external elements. `delivery`: GitHub and its runner (arch in the title), Docker Hub, Flux and the image path into the cluster. `monitoring`: the monitoring workloads, the scrape targets the repo's monitor settings name, the default scrape targets that the kube-prometheus-stack chart at 91.5.2 leaves on (the kubelet with cAdvisor, the API server, CoreDNS, kube-state-metrics, the operator and Grafana), and the query edges; the self-scrape of Prometheus is stated, not drawn | pods, replicas, secrets, objects a chart renders (the chart workloads drawn under a HelmRelease claim are drawn, but the check does not render the chart) | workloads checked (`Deployment`, `StatefulSet`, `CronJob`, `HelmRelease` and `ClusterIssuer` under `k8s/base`, `k8s/data`, `k8s/platform` and `k8s/monitoring`, plus the Flux controller Deployments in `k8s/flux-system/gotk-components.yaml`); routed hosts checked against every `IngressRoute`; namespace nodes and instance placement checked against the manifests under `k8s`; the firewall, host filter, ServiceLB, the kubelet, the API server, CoreDNS, provider nodes, the runner and the scrape edges authored |
 | Scenarios | `dynamic view`, one per outcome, at most 5 participants | client-visible facts: method and path, status and `code`, cookie, SQL action, topic; also the internal steps of `activity-log-row` (the AFTER_COMMIT hand-off, the publish executor, the topic, the consumer group, the idempotent insert) and of the delivery scenarios `push-to-image` and `image-to-rollout` (workflow jobs, Flux controllers, the init container); class-level calls and branches inside one view are still not drawn | class-level calls, branches inside one view | authored: every step of the ten Phase 2 scenario views is cited in `.planning/workstreams/architecture-views/phases/02-model-completion/02-SCENARIO-EVIDENCE.md`, or marked authored with its reason; the three `signin-*` views were built before that file and have no section in it (the lines they were drawn from are listed, not per step, in `.planning/quick/261027-if9-build-the-kruchten-views-the-likec4-stan/261027-if9-T4-SUMMARY.md` at 8b7e379); at most 5 participants checked; `error-401` draws no SQL step; measured before the fix, and after it a test checks session rows and cookies while the absence of SQL is inferred from the code (note (b2)) |
 
 Three notes on the table.
@@ -238,19 +238,24 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
   - `METADATA_KEYS` in `sync.mjs` is the one place the key vocabulary lives: `source`, `workload`
     and `host`.
 
-  Not placement-checked, so a moved instance of any of them passes: `svclb` (no manifest declares
-  it), the host filter (its `source` is a script outside `k8s`), and the instances on provider nodes
-  or on the server: `repo`, `ci`, `dockerhub`, `acme`, `firewall` and `client`. Three monitoring
-  elements share one `HelmRelease/kube-prometheus-stack` claim, so the check proves that release
-  exists and where it lands, not what the chart renders. The scrape edges in `monitoring` are
-  authored from the repo's PodMonitor and ServiceMonitor settings, not from live targets. The
-  targets the chart scrapes through its own default monitors, among them the kubelet with cAdvisor,
-  kube-state-metrics, the API server and the operator, are not drawn, and
-  `k8s/monitoring/controllers/kube-prometheus-stack.yaml` turns off only the controller-manager,
-  scheduler, etcd and kube-proxy monitors (lines 45 to 52). Of those four defaults only the API
-  server was read as enabled in the chart values at the pinned version (`values.yaml` line 1735 at
-  91.5.2); the others are the chart documented defaults, not read from this repo, and the live
-  target list is not read. Scenario
+  Not placement-checked, so a moved instance of any of them passes: `svclb`, `coredns`, `kubelet` and
+  `kube-apiserver` (no manifest declares them), the host filter (its `source` is a script outside `k8s`), and the instances on provider nodes
+  or on the server: `repo`, `ci`, `dockerhub`, `acme`, `firewall` and `client`. Five monitoring elements (Prometheus, Grafana,
+  node-exporter, kube-state-metrics and the operator) share one `HelmRelease/kube-prometheus-stack`
+  claim, so the check proves that release exists and where it lands, not what the chart renders.
+  The scrape edges in `monitoring` are authored from the repo's PodMonitor and ServiceMonitor
+  settings and from the default monitors of the kube-prometheus-stack chart at 91.5.2 that the
+  values file leaves on: the kubelet with cAdvisor, the API server, CoreDNS, kube-state-metrics, the
+  operator and Grafana. Each was read from the chart's `values.yaml` at that tag and is recorded,
+  with its line number, its quoted text, the byte count and the sha256 of the file read, in
+  `.planning/workstreams/architecture-views/quick/261028-opl-phase-02-final-gap-pass-draw-kube-promet/261028-opl-chart-values.txt`.
+  A title names a port or protocol only where a values line states it. No check reads the chart
+  defaults, so a chart bump can leave the drawn set stale without failing. The values file turns off
+  the controller-manager, scheduler, etcd and kube-proxy monitors (lines 45 to 52) and Alertmanager
+  (lines 37 to 38), and none of them is drawn. Prometheus also scrapes itself, which is not drawn
+  because LikeC4 rejects a relationship from an element to itself. Of the other charts, the Loki
+  ServiceMonitor is off (`loki.yaml` lines 102 to 103) and the Alloy chart defaults are not read; the
+  live target list is not read either. Scenario
   steps are authored prose that LikeC4 does not validate against the model; only the participant cap
   is checked, and each step is tied to a line, or marked authored, in the evidence file.
 - **Drills:** `docs/architecture/drill.fish` runs on a scratch copy (`--model DIR`), never on the
@@ -349,7 +354,7 @@ their sizes replace the Phase 1 ones above. The other views in the Phase 1 table
 | `process` | `#process` | topics checked; the backup CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored | 3280 x 1536 |
 | `production` | `#physical` | workloads, ClusterIssuers, routed hosts, namespaces and placement checked; nodes, provider firewall, host filter and ServiceLB authored | 3427 x 2566 |
 | `delivery` | `#physical` | Flux controller Deployments checked as workloads; repository, CI, Docker Hub and the runner authored | 1862 x 1556 |
-| `monitoring` | `#physical` | HelmReleases checked as workloads; scrape and query edges authored from the repo's monitor settings; the chart default scrape targets are not drawn | 3490 x 1574 |
+| `monitoring` | `#physical` | HelmReleases checked as workloads; scrape and query edges authored from the repo's monitor settings and the chart values at 91.5.2; the Prometheus self-scrape is stated, not drawn | 3490 x 1574 |
 | `signup-ok` | `#scenarios` | authored, steps cited | 1838 x 960 |
 | `error-401` | `#scenarios` | authored, steps cited; no SQL step, measured before the fix; after it a test checks rows and cookies and the absence of SQL is inferred from the code (note (b2)) | 1180 x 530 |
 | `error-403` | `#scenarios` | authored, steps cited | 1820 x 656 |

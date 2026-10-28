@@ -1,6 +1,6 @@
 model {
   prometheus = system 'Prometheus' {
-    description 'Metrics store and scraper; its scrape edges are drawn from the PodMonitor and ServiceMonitor settings in the repo, not from live targets.'
+    description 'Metrics store and scraper. Its scrape edges are drawn from the PodMonitor and ServiceMonitor settings in the repo and from the default monitors of the kube-prometheus-stack chart that the values file leaves on, not from live targets. It also scrapes itself, which is not drawn.'
     metadata {
       source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
       workload 'HelmRelease/kube-prometheus-stack'
@@ -47,11 +47,54 @@ model {
     }
   }
 
+  kube-state-metrics = system 'kube-state-metrics' {
+    description 'Exposes the state of Kubernetes objects as metrics; a subchart of the kube-prometheus-stack release.'
+    metadata {
+      source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
+      workload 'HelmRelease/kube-prometheus-stack'
+    }
+  }
+
+  prometheus-operator = system 'Prometheus Operator' {
+    description 'Reconciles the Prometheus, ServiceMonitor and PodMonitor objects of the kube-prometheus-stack release.'
+    metadata {
+      source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
+      workload 'HelmRelease/kube-prometheus-stack'
+    }
+  }
+
+  kubelet = system 'kubelet (with cAdvisor)' {
+    description 'Authored. The node agent and its built-in cAdvisor run inside the k3s server process that infra/vm/k3s/install.sh installs; no manifest in the repo declares them.'
+    metadata {
+      source 'infra/vm/k3s/config.yaml'
+    }
+  }
+
+  kube-apiserver = system 'Kubernetes API server' {
+    description 'Authored. The API server runs inside the k3s server process that infra/vm/k3s/install.sh installs; no manifest in the repo declares it.'
+    metadata {
+      source 'infra/vm/k3s/config.yaml'
+    }
+  }
+
+  coredns = system 'CoreDNS' {
+    description 'Authored. The cluster DNS that k3s deploys in kube-system; infra/vm/k3s/config.yaml leaves it on (its disable list names only metrics-server) and no manifest in the repo declares it.'
+    metadata {
+      source 'infra/vm/k3s/config.yaml'
+    }
+  }
+
   prometheus -[sync]-> node-exporter 'scrape metrics'
   prometheus -[sync]-> postgres-exporter 'scrape metrics'
   prometheus -[sync]-> certmanager 'scrape metrics'
   prometheus -[sync]-> kanban.management 'scrape metrics'
   prometheus -[sync]-> redpanda 'scrape metrics'
+  prometheus -[sync]-> kubelet 'scrape kubelet, cAdvisor and probe metrics over HTTPS'
+  prometheus -[sync]-> kube-apiserver 'scrape API server metrics'
+  prometheus -[sync]-> coredns 'scrape DNS metrics on port 9153'
+  prometheus -[sync]-> kube-state-metrics 'scrape cluster object state metrics'
+  prometheus -[sync]-> prometheus-operator 'scrape operator metrics'
+  prometheus -[sync]-> grafana 'scrape Grafana server metrics'
   postgres-exporter -[sync]-> postgres 'read statistics over SQL'
   grafana -[sync]-> prometheus 'PromQL queries'
   grafana -[sync]-> loki 'LogQL queries'
@@ -66,6 +109,17 @@ deployment {
     instanceOf loki
     instanceOf alloy
     instanceOf postgres-exporter
+    instanceOf kube-state-metrics
+    instanceOf prometheus-operator
+  }
+
+  extend netcup.k3s {
+    instanceOf kubelet
+    instanceOf kube-apiserver
+  }
+
+  extend netcup.k3s.kube-system {
+    instanceOf coredns
   }
 }
 
@@ -73,14 +127,15 @@ views {
   deployment view monitoring {
     #physical
     title 'Physical view: the monitoring stack and what it scrapes'
-    description 'The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo; the check proves each HelmRelease exists and lands in monitoring, not what its chart renders. Not drawn are the scrape targets the kube-prometheus-stack chart enables by default and the values file leaves on, among them the kubelet with cAdvisor, kube-state-metrics, the API server and the operator. The values file turns off only the controller-manager, scheduler, etcd and kube-proxy monitors. Of the four named, only the API server was confirmed enabled in the chart values at the pinned version; the rest are the chart documented defaults, not read from this repo, and the live target list is not read.'
+    description 'The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo, and from the default monitors of kube-prometheus-stack at the pinned version 91.5.2 that the values file leaves on: the kubelet with cAdvisor, the API server, CoreDNS, kube-state-metrics, the operator and Grafana. Each of those was read from the chart values and is recorded line by line in 261028-opl-chart-values.txt. Not drawn are the controller-manager, scheduler, etcd and kube-proxy monitors and Alertmanager, which the values file turns off, and the scrape Prometheus makes of itself, because LikeC4 rejects a relationship from an element to itself. The check proves each HelmRelease exists and lands in monitoring, not what its chart renders; the kubelet, the API server and CoreDNS are authored, and the live target list is not read.'
     include
       netcup, netcup.k3s,
       netcup.k3s.monitoring.*,
       netcup.k3s.cert-manager.*,
       netcup.k3s.data.postgres,
       netcup.k3s.prod.kanban, netcup.k3s.nonprod.kanban,
-      netcup.k3s.prod.redpanda, netcup.k3s.nonprod.redpanda
+      netcup.k3s.prod.redpanda, netcup.k3s.nonprod.redpanda,
+      netcup.k3s.kubelet, netcup.k3s.kube-apiserver, netcup.k3s.kube-system.coredns
     exclude
       netcup.k3s.prod.kanban -> netcup.k3s.data.postgres,
       netcup.k3s.nonprod.kanban -> netcup.k3s.data.postgres,
