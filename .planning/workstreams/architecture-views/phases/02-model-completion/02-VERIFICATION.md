@@ -245,3 +245,13 @@ No open gaps against a ROADMAP criterion or a plan must_have. All four first-pas
 
 _Verified: 2026-10-28T17:05:00Z_
 _Verifier: Claude (gsd-verifier)_
+
+## Addendum, 2026-10-28 (quick task 261028-opl): human item 1 answered
+
+This addendum records what changed after the report above. It sets no verdict, and nothing above it was edited.
+
+- **Human item 1.** The user chose option (b): draw the chart-default scrape targets.
+- **No override was written.** The frontmatter of this file is unchanged, so its status and score stay as the verifier left them. The next verifier run re-checks criterion 1 and PHYS-03.
+- **What the Task 1 commit (1d6c40e) draws.** The `monitoring` view now has Prometheus edges to the kubelet with cAdvisor, the API server, kube-state-metrics and the operator, which the item named. It also has edges to CoreDNS and Grafana, which the full values file showed the repo leaves on as well. The Prometheus self-scrape is stated, not drawn, because LikeC4 rejects a relationship from an element to itself (measured). The controller-manager, scheduler, etcd, kube-proxy and Alertmanager monitors are not drawn, because the repo turns them off.
+- **The record.** `.planning/workstreams/architecture-views/quick/261028-opl-phase-02-final-gap-pass-draw-kube-promet/261028-opl-chart-values.txt` ties each edge to a values.yaml line at tag kube-prometheus-stack-91.5.2 (218683 bytes, sha256 7d089fcf435e6904cda5ad246602e1c61005d08c68e3a9ab82770c249e395081). It also lists what was not read: the live target list, the chart templates and the Alloy chart defaults.
+- **Criterion 3.** The statement-level absence of SQL after 17a94cb, which this report carried as an inference, now rests on the post-fix re-measure at 7bccf71 (`02-04-401-measure.txt`, section Post-fix re-measure, commit 2fbe8ff): no statement appeared in its capture windows (one second after each request, plus one log-tail read after rows A to I). The whole log was not re-read, so a statement outside those windows is not ruled out. Other routes and methods, a proxy, Redpanda, TLS and a stale session cookie were not tried. The Task 2 commit (6b6385d) carries that observation, with its limits, into the view, the evidence file and the standard.

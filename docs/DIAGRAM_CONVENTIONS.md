@@ -349,15 +349,19 @@ packages into layers was not tried.
 Every view added or changed in Phase 2. Sizes are the PNG size divided by 2 (V6), from a fresh
 `likec4.fish png` export on 2026-10-28, and are recorded without a verdict against any bound: the
 LikeC4 legibility rule is still undefined. `production`, `process` and `data` are changed views, so
-their sizes replace the Phase 1 ones above. The other views in the Phase 1 table are unchanged.
+their sizes replace the Phase 1 ones above. The other views in the Phase 1 table are unchanged. The
+sizes of `monitoring`, `production`, `process` and `inbound-packet-path` were re-exported on
+2026-10-28 after quick task 261028-opl drew the chart-default scrape targets; the model of the
+last three were not edited in that task, and the export still printed different sizes for them; the
+cause was not investigated.
 
 | View id | Tag | Provenance | Natural size |
 |---|---|---|---|
 | `data` | `#logical` | as before, plus two `note` elements whose `source` is checked and whose text is authored | 1148 x 1392 |
-| `process` | `#process` | topics checked; the backup CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored | 3280 x 1536 |
-| `production` | `#physical` | workloads, ClusterIssuers, routed hosts, namespaces and placement checked; nodes, provider firewall, host filter and ServiceLB authored | 3427 x 2566 |
+| `process` | `#process` | topics checked; the backup CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored | 3281 x 1536 |
+| `production` | `#physical` | workloads, ClusterIssuers, routed hosts, namespaces and placement checked; nodes, provider firewall, host filter and ServiceLB authored | 3461 x 2566 |
 | `delivery` | `#physical` | Flux controller Deployments checked as workloads; repository, CI, Docker Hub and the runner authored | 1862 x 1556 |
-| `monitoring` | `#physical` | HelmReleases checked as workloads; scrape and query edges authored from the repo's monitor settings and the chart values at 91.5.2; the Prometheus self-scrape is stated, not drawn | 3490 x 1574 |
+| `monitoring` | `#physical` | HelmReleases checked as workloads; scrape and query edges authored from the repo's monitor settings and the chart values at 91.5.2; the Prometheus self-scrape is stated, not drawn | 6725 x 1276 |
 | `signup-ok` | `#scenarios` | authored, steps cited | 1838 x 960 |
 | `error-401` | `#scenarios` | authored, steps cited; no SQL step, measured before the fix at 82775fa, observed at 7bccf71 after it, with no statement in the capture windows (one second after each request, plus one log-tail read; the whole log was not re-read; note (b2) lists the other limits) | 1180 x 530 |
 | `error-403` | `#scenarios` | authored, steps cited | 1820 x 656 |
@@ -365,7 +369,7 @@ their sizes replace the Phase 1 ones above. The other views in the Phase 1 table
 | `activity-log-row` | `#scenarios` | authored, steps cited | 1926 x 567 |
 | `push-to-image` | `#scenarios` | authored, steps cited | 1780 x 933 |
 | `image-to-rollout` | `#scenarios` | authored, steps cited | 2205 x 960 |
-| `inbound-packet-path` | `#scenarios` | authored, steps cited; the provider firewall and ServiceLB steps rest on a doc, not on a repo line | 2148 x 665 |
+| `inbound-packet-path` | `#scenarios` | authored, steps cited; the provider firewall and ServiceLB steps rest on a doc, not on a repo line | 2166 x 680 |
 | `ingress-to-pod` | `#scenarios` | authored, steps cited; the response step authored | 1346 x 884 |
 | `nightly-backup` | `#scenarios` | authored, steps cited | 1344 x 920 |
 
