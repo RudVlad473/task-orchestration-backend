@@ -71,6 +71,7 @@
 == D10: a namespace node is deleted from the model (cert-manager)
   exit=1
   DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - model does not validate: Could not resolve reference to Referenceable named 'cert-manager'.; Validation failed: Element "netcup.k3s.cert-manager" is not resolved
   - namespace cert-manager is defined in k8s/platform/cert-manager/cert-manager.yaml but has no namespace node in the deployment model
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D10b: a manifest namespace is misspelled (kube-sytem)
@@ -94,6 +95,7 @@
   exit=1
   DRIFT (34 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
   - placement: certmgr is deployed in [flux-system] in the model, manifests place it in [cert-manager]
+  - instance netcup.k3s.flux-system.certmgr appears in no deployment view
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D16b (control): the same element drawn in its targetNamespace (cert-manager)
   exit=0
@@ -129,3 +131,23 @@
 == D14c: a k8s manifest does not parse
   exit=4
   k8s fact source unreadable: k8s/platform/broken.yaml: BAD_INDENT Flow sequence in block collection must be sufficiently indented and end with a ] at line 2, column 1:
+== D17: a drawn instance pair gains a relationship with a different title
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - view production: edge netcup.k3s.nonprod.kanban -> netcup.k3s.data.postgres has merged label '[...]'
+  - view production: edge netcup.k3s.prod.kanban -> netcup.k3s.data.postgres has merged label '[...]'
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D17b (control): the same pair gains a relationship with the shared title
+  exit=0
+  OK (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D18: a scenario view gets a sixth participant
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - dynamic view signin-ok has 6 participants, more than 5
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D19: the only instance of a workload element is deleted (backup)
+  exit=1
+  DRIFT (33 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 4 workloads):
+  - element backup claims workload CronJob/postgres-backup but has no deployment instance
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service

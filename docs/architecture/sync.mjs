@@ -436,6 +436,30 @@ function checkEdgeLabels(computed, problems) {
   }
 }
 
+// A scenario view draws at most 5 participants. 5 is the width signin-ok already has, kept as the
+// cap while the LikeC4 legibility rule is undefined.
+function checkParticipants(computed, problems) {
+  const views = [...computed.views()].filter((v) => v.isDynamicView?.()).sort((a, b) => a.id.localeCompare(b.id))
+  for (const view of views) {
+    const count = [...view.nodes()].length
+    if (count > 5) problems.push(`dynamic view ${view.id} has ${count} participants, more than 5`)
+  }
+}
+
+// An element that claims a workload needs a deployment instance. checkPlacement only sees elements
+// that have instances, so deleting the last instanceOf of a workload element used to pass. The
+// rule keys on `workload` alone: children such as kanban.api carry sources and no instance by design.
+function checkDeployedWorkloads(computed, problems) {
+  const deployed = new Set([...computed.deployment.instances()].map((i) => i.element.id))
+  const elements = [...computed.elements()].sort((a, b) => a.id.localeCompare(b.id))
+  for (const e of elements) {
+    const workloads = [e.getMetadata('workload')].flat().filter(Boolean)
+    if (workloads.length && !deployed.has(e.id)) {
+      problems.push(`element ${e.id} claims workload ${workloads.join(', ')} but has no deployment instance`)
+    }
+  }
+}
+
 // --- generation -----------------------------------------------------------------------
 
 // One function per fact source, each returning the lines it contributes, so a source added
@@ -570,6 +594,8 @@ async function check() {
   checkPlacement(computed, docs, problems)
   checkViewMembership(computed, problems)
   checkEdgeLabels(computed, problems)
+  checkParticipants(computed, problems)
+  checkDeployedWorkloads(computed, problems)
 
   const pkgs = packages()
   const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${manifestWorkloads.size} workloads`

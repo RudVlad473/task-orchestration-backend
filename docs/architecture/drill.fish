@@ -2,25 +2,34 @@
 # Drift drills for sync.mjs. Each drill edits a scratch copy of the code facts and of the model,
 # then runs `sync.mjs check --root --model` and reports whether the check caught it. Every drill
 # is expected to be caught except D5, a negative control that is documented as not caught, and
-# D13b and D16b, controls that must stay clean. A drill on a k8s fact source is caught with exit 4.
+# D13b, D16b and D17b, controls that must stay clean. A drill on a k8s fact source is caught with exit 4.
 # The real model is never edited: a drill that changes a view changes the scratch copy.
 # SYNC names another sync.mjs to run. Running the harness once with the script from before a
 # rule existed and once with the current one records the drill as not caught and then caught.
+# MODEL names another model folder; the not-caught-before half uses the model of the same commit
+# as SYNC's script, so the old script never meets a model whose claims it cannot read.
 
 set here (dirname (status filename))
 set repo (realpath $here/../..)
 set sync $here/sync.mjs
 set -q SYNC; and set sync $SYNC
+set model $here/model
+set -q MODEL; and set model $MODEL
 set scratch $here/out/drill-root
 
-function fresh --inherit-variable repo --inherit-variable scratch --inherit-variable here
+function fresh --inherit-variable repo --inherit-variable scratch --inherit-variable model
     test -e $scratch; and trash-put $scratch
     mkdir -p $scratch/src/main/resources/db $scratch/src/main/java/com/vrudenko/kanban_board
     cp -r $repo/src/main/resources/db/migration $scratch/src/main/resources/db/
     cp $repo/src/main/resources/application.properties $scratch/src/main/resources/
     cp -r $repo/src/main/java/com/vrudenko/kanban_board/. $scratch/src/main/java/com/vrudenko/kanban_board/
     cp -r $repo/k8s $scratch/
-    cp -r $here/model $scratch/model
+    # Later elements cite these trees as `source`, and the check reads each cited path.
+    mkdir -p $scratch/.github $scratch/infra $scratch/src/main
+    cp -r $repo/.github/workflows $scratch/.github/
+    cp -r $repo/infra/vm $scratch/infra/
+    cp -r $repo/src/main/avro $scratch/src/main/
+    cp -r $model $scratch/model
 end
 
 function run --inherit-variable sync --inherit-variable scratch
@@ -44,6 +53,12 @@ function lonely_into --inherit-variable scratch
     test "$argv[1]" = linked; and set body $body "  traefik -[sync]-> lonely 'probe'"
     printf '%s\n' 'model {' $body '}' >$scratch/model/lonely.c4
     sed -i "s|^\(        instanceOf backup\)\$|\1\n        instanceOf lonely|" $scratch/model/deployment.c4
+end
+
+# Adds a relationship from kanban.publisher to postgres titled $argv[1]. It merges onto the
+# kanban to postgres instance pair, which already carries the shared title SQL over JDBC.
+function labeldrill --inherit-variable scratch
+    printf '%s\n' 'model {' "  kanban.publisher -[sync]-> postgres '$argv[1]'" '}' >$scratch/model/labeldrill.c4
 end
 
 echo "== baseline: untouched scratch copy"
@@ -183,6 +198,26 @@ run
 echo "== D14c: a k8s manifest does not parse"
 fresh
 printf '%s\n' 'a: [1, 2' 'b: 3' >$scratch/k8s/platform/broken.yaml
+run
+
+echo "== D17: a drawn instance pair gains a relationship with a different title"
+fresh
+labeldrill probe
+run
+
+echo "== D17b (control): the same pair gains a relationship with the shared title"
+fresh
+labeldrill 'SQL over JDBC'
+run
+
+echo "== D18: a scenario view gets a sixth participant"
+fresh
+sed -i "s|^\(    client <- traefik '200 {id, email, displayName, theme}'\)\$|\1\n    kanban.api -> redpanda.activity 'probe'|" $scratch/model/views.c4
+run
+
+echo "== D19: the only instance of a workload element is deleted (backup)"
+fresh
+sed -i '/^        instanceOf backup$/d' $scratch/model/deployment.c4
 run
 
 trash-put $scratch
