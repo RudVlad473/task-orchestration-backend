@@ -5,16 +5,16 @@ milestone_name: Architecture Views
 current_phase: 3
 current_phase_name: Build and Serve on a Staging Certificate
 status: planning
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-10-28T20:55:15.110Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-10-28T21:07:47.459Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: 8b56cfe1428f2d8b279d36ea3e08945abfa8151e
+state_head: 68999af05afbac74fe1fb4d48be3951b7fa0ea91
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -69,6 +69,7 @@ Progress: [█████░░░░░] 50%
 | Phase 02 P05 | not measured | 3 tasks | 5 files |
 | Phase 03 P01 | 8 min | 2 tasks | 9 files |
 | Phase 03 P02 | 35 min | 3 tasks | 3 files |
+| Phase 03 P03 | 70min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Recent decisions affecting current work:
 - [Phase 03]: I12 scope statement lives in its docstring entry: the comment lint caps prose before the first Known holes marker at 8 lines
 - [Phase 03]: 03-02: the green proof restores the model line and adds a comment, because a pure revert leaves the pull request's net diff empty and starts no path-filtered run
 - [Phase 03]: 03-02: production and staging deploy only from main (Q7 1); push refspecs under zsh need ${SHA}:refs/heads/main, since $SHA:r is a modifier
+- [Phase 03]: 03-03: adopt requests.memory=16Mi limits.memory=32Mi for the architecture site (lowest passing rung 16Mi, 8Mi OOMKilled on the VPS)
+- [Phase 03]: 03-03: both ClusterIssuers set serviceType ClusterIP (Q2 1), applied live, live Certificates unchanged
 
 ### Pending Todos
 
@@ -123,6 +126,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T20:55:14.749Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-10-28T21:07:47.153Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None

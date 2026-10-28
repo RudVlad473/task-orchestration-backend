@@ -94,7 +94,7 @@ Plans:
   4. `scripts/verify-k8s-invariants.py --no-provisional` is green in CI for the new manifests. The memory value carries a MEASURED comment from a ladder run on the VPS (I4). I5 applies to the site overlay, failing with the setter marker removed (red) and passing once it is restored (green). The route has the I10 shape, and the site objects have one owner under I11: the live IngressRoute's `kustomize.toolkit.fluxcd.io/name` label names a single Kustomization.
   5. The model contains the site as built: a namespace node for it, the site instance with a `traefik ->` edge, and a publish-the-site scenario whose steps cite the workflow and manifest lines. The Phase 1 and Phase 2 checks are green and cover the site's workload.
 
-**Plans**: 2/7 plans executed
+**Plans**: 3/7 plans executed
 
 Plans:
 **Wave 1**
@@ -104,7 +104,7 @@ Plans:
 - [x] 03-02-PLAN.md — blocking-human decisions Q1 to Q4 and Q7 (first push with the Docker Hub repo created public, solver type, VPS ladder, src-only control, production and staging environments fenced to main); first tag published from main and probed; pull-request drift proof red then green; branch probe refused by the environment policy
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 03-03-PLAN.md — memory ladder on the VPS in ladder-scratch with an adopted value; ClusterIP solver on both ClusterIssuers pushed alone, live Certificates unchanged
+- [x] 03-03-PLAN.md — memory ladder on the VPS in ladder-scratch with an adopted value; ClusterIP solver on both ClusterIssuers pushed alone, live Certificates unchanged
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 03-04-PLAN.md — one atomic commit: namespace, base and overlay manifests, Flux wiring, model element, host, namespace node and edge, Maintenance Note; I5 red then green; sync red then green
@@ -187,5 +187,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
 | 2. Model Completion | 5/5 | Complete    | 2026-10-28 |
-| 3. Build and Serve on a Staging Certificate | 2/7 | In Progress | - |
+| 3. Build and Serve on a Staging Certificate | 3/7 | In Progress | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |
