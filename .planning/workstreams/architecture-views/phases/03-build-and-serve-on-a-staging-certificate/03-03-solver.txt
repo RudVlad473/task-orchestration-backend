@@ -1,0 +1,38 @@
+# Plan 03-03 Task 2: ClusterIP solver Service on both ClusterIssuers (DECISION Q2 1)
+SOLVER: changed
+COMMIT: 6a023fe fix(edge): solve HTTP-01 challenges through a ClusterIP Service, not a NodePort (one path: k8s/platform/edge/clusterissuers.yaml)
+GATES: verify-k8s-invariants.py --no-provisional exit 0; verify-k8s-manifests.sh exit 0 (all 12 roots valid); sync.mjs check OK; verify-comments.py check OK; full .githooks/pre-commit passed
+
+BEFORE certificates (k3s kubectl get certificate -A):
+NS               NAME      READY   REVISION   NOTAFTER
+kanban-nonprod   app       True    1          2026-12-25T07:05:56Z
+kanban-prod      app       True    1          2026-12-25T07:15:38Z
+monitoring       grafana   True    1          2026-12-25T07:15:38Z
+BEFORE non-ClusterIP services: kube-system traefik LoadBalancer
+BEFORE live solvers:
+letsencrypt-staging [{"http01":{"ingress":{"ingressClassName":"traefik"}}}]
+letsencrypt-production [{"http01":{"ingress":{"ingressClassName":"traefik"}}}]
+
+PUSH range before pushing: 6 commits (git rev-list --count origin/main..HEAD), paths by top-level directory: .planning 7, docs 1, k8s 1
+CLASS a (named by DECISION Q2 1): 6a023fe issuer edit; bc82d9b ladder record and runbook
+CLASS b (planning-only, every path under .planning/): d6fe95e, 8b56cfe, cac105d (plan 02 summary, state files and records)
+CLASS c (Flux merge): 8553595 Merge origin/main taking 673238f chore(flux): bump images (fluxcdbot, the only incoming commit; adds no path to the diff against origin/main)
+PUSHED 855359585fdb6822b99dc8e05324d4e2a9d50723
+PUSH changed top-level paths: .planning, docs, k8s (k8s only k8s/platform/edge/clusterissuers.yaml); nothing in the site workflow's filter
+
+FLUX: edge lastAppliedRevision main@sha1:855359585fdb6822b99dc8e05324d4e2a9d50723 (it first read "dependency flux-system/cert-manager is not ready" while the upstream Kustomizations re-applied the new revision, then applied it without intervention)
+AFTER live solvers:
+letsencrypt-staging [{"http01":{"ingress":{"ingressClassName":"traefik","serviceType":"ClusterIP"}}}]
+letsencrypt-production [{"http01":{"ingress":{"ingressClassName":"traefik","serviceType":"ClusterIP"}}}]
+AFTER certificates:
+NS               NAME      READY   REVISION   NOTAFTER
+kanban-nonprod   app       True    1          2026-12-25T07:05:56Z
+kanban-prod      app       True    1          2026-12-25T07:15:38Z
+monitoring       grafana   True    1          2026-12-25T07:15:38Z
+AFTER non-ClusterIP services: kube-system traefik LoadBalancer
+A2: unchanged
+
+WITNESS: Invariant Checks run 40768818477 for the pushed SHA concluded success; Secret Scan 40768818447 and Dependency Submission 40768818458 also success
+CONTROL k8s-only push 855359585fdb6822b99dc8e05324d4e2a9d50723: architecture-site runs=0
+CONTROL deploy.yml runs for the same SHA=0
+NOTE: git diff --name-only bc82d9b..HEAD -- k8s also lists k8s/overlays/nonprod/kustomization.yaml and k8s/overlays/prod/kustomization.yaml, because HEAD contains the Flux merge; those two paths are fluxcdbot's 673238f, already on origin/main, and are not in the pushed diff (git diff --name-only 673238f 855359585fdb6822b99dc8e05324d4e2a9d50723 -- k8s lists only clusterissuers.yaml)
