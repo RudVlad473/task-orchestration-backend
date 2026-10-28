@@ -73,7 +73,7 @@ views {
   deployment view monitoring {
     #physical
     title 'Physical view: the monitoring stack and what it scrapes'
-    description 'The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo; the check proves each HelmRelease exists and lands in monitoring, not what its chart renders.'
+    description 'The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo; the check proves each HelmRelease exists and lands in monitoring, not what its chart renders. Not drawn are the scrape targets the kube-prometheus-stack chart enables by default and the values file leaves on, among them the kubelet with cAdvisor, kube-state-metrics, the API server and the operator. The values file turns off only the controller-manager, scheduler, etcd and kube-proxy monitors. Of the four named, only the API server was confirmed enabled in the chart values at the pinned version; the rest are the chart documented defaults, not read from this repo, and the live target list is not read.'
     include
       netcup, netcup.k3s,
       netcup.k3s.monitoring.*,

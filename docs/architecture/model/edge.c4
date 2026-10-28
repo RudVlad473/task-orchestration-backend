@@ -7,7 +7,7 @@ model {
     }
 
     staging = component 'ClusterIssuer letsencrypt-staging' {
-      description 'Issuer that every certificate starts on, so a misconfiguration costs no production rate limit.'
+      description 'A staging issuer, defined in the repo but referenced by no Certificate today. The prod, nonprod and monitoring Certificates all name the production issuer.'
       metadata {
         source 'k8s/platform/edge/clusterissuers.yaml'
         workload 'ClusterIssuer/letsencrypt-staging'
@@ -15,7 +15,7 @@ model {
     }
 
     production = component 'ClusterIssuer letsencrypt-production' {
-      description 'Issuer for the trusted certificates, used once the staging issuance has been validated.'
+      description 'Issuer for the trusted certificates, which the prod, nonprod and monitoring Certificates all reference.'
       metadata {
         source 'k8s/platform/edge/clusterissuers.yaml'
         workload 'ClusterIssuer/letsencrypt-production'
@@ -28,7 +28,7 @@ model {
   }
 
   hostfilter = external 'KANBAN-INGRESS host filter' {
-    description 'Authored. Host firewall chain ahead of k3s that admits new TCP connections only on allow-listed ports; only the existence of its script is checked.'
+    description 'Authored. Host firewall chain ahead of k3s that admits new connections only as TCP on an allow-listed port or as ICMP, and drops every other new connection; only the existence of its script is checked.'
     metadata {
       source 'infra/vm/k3s-host-firewall.sh'
     }

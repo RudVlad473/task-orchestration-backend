@@ -34,7 +34,7 @@ views {
 
     client -> firewall 'HTTPS request to the server, filtered first by the provider firewall'
     firewall -> hostfilter 'allowed packets reach the host, where a PREROUTING jump sends new inbound connections into the host filter chain ahead of every NAT rule'
-    hostfilter -> hostfilter 'established traffic and new TCP on an allow-listed port return from the chain, any other new connection is dropped'
+    hostfilter -> hostfilter 'established traffic, new TCP on an allow-listed port and ICMP return from the chain, any other new connection is dropped'
     hostfilter -> svclb 'the hostPort forward delivers the connection to the ServiceLB pod'
     svclb -> traefik 'the pod proxies the connection to the Traefik Service'
   }
