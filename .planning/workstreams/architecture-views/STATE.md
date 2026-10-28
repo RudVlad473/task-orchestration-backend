@@ -4,17 +4,18 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: 3
 current_phase_name: Build and Serve on a Staging Certificate
-status: planning
-stopped_at: Completed 03-06-PLAN.md
-last_updated: "2026-10-28T21:38:56.567Z"
+current_plan: 7
+status: verifying
+stopped_at: Completed 03-07-PLAN.md
+last_updated: "2026-10-28T22:02:30.037Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: c789fed96d7f75a5817da6aa5090f9da6c0905c7
+state_head: 503d4caefaec4af76717168a1752072958a0c209
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -30,8 +31,9 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 ## Current Position
 
 Phase: 3 — Build and Serve on a Staging Certificate
-Plan: Not started
-Status: Ready to plan
+Current Plan: 7
+Total Plans in Phase: 7
+Status: Phase complete — ready for verification
 Last activity: 2026-10-28 — Phase 02 complete, transitioned to Phase 3
 
 Progress: [█████░░░░░] 50%
@@ -73,6 +75,7 @@ Progress: [█████░░░░░] 50%
 | Phase 03 P04 | 40min | 2 tasks | 17 files |
 | Phase 03 P05 | 12min | 2 tasks | 2 files |
 | Phase 03 P06 | 25min | 3 tasks | 2 files |
+| Phase 03 P07 | 23min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -101,6 +104,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-03: both ClusterIssuers set serviceType ClusterIP (Q2 1), applied live, live Certificates unchanged
 - [Phase 03]: 03-04: the production view includes netcup.k3s.architecture explicitly, because LikeC4 collapses a single-instance namespace into its parent
 - [Phase 03]: Plan 06: Q5 1 and Q6 1 authorized; the site went live on a staging certificate from one push of 8 commits (b1aa8c5), Flux bump fe3466b rolled main-4-b1aa8c5 with no site run
+- [Phase 03]: 03-07: Q6 1 authorized the flush push and the model-only push, both made by explicit SHA; the src-only push stays pending under Q4 1
 
 ### Pending Todos
 
@@ -131,6 +135,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T21:38:56.150Z
-Stopped at: Completed 03-06-PLAN.md
+Last session: 2026-10-28T22:02:29.760Z
+Stopped at: Completed 03-07-PLAN.md
 Resume file: None

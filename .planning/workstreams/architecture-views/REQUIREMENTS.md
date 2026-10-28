@@ -28,7 +28,7 @@ Research: `.planning/workstreams/architecture-views/research/SUMMARY.md`. Phase 
 - [x] **SCEN-05**: Inbound-packet-path and ingress-to-pod scenarios.
 - [x] **SCEN-06**: A mutation to `activity_log` row scenario.
 - [x] **SCEN-07**: Nightly backup scenario.
-- [ ] **SCEN-08**: Publish-the-site scenario.
+- [x] **SCEN-08**: Publish-the-site scenario.
 
 ### Honesty gates (GATE)
 
@@ -91,7 +91,7 @@ Populated by the roadmapper.
 | SCEN-05 | Phase 2 | Complete |
 | SCEN-06 | Phase 2 | Complete |
 | SCEN-07 | Phase 2 | Complete |
-| SCEN-08 | Phase 3 | Pending |
+| SCEN-08 | Phase 3 | Complete |
 | GATE-01 | Phase 2 | Complete |
 | GATE-02 | Phase 1 | Complete |
 | GATE-03 | Phase 1 | Complete |

@@ -16,7 +16,7 @@
     {
       "number": "3",
       "name": "Build and Serve on a Staging Certificate",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "number": "4",
@@ -26,8 +26,8 @@
   ],
   "next": {
     "command": "/gsd-progress --next",
-    "label": "Advance to the next step (plan phase 3)",
-    "reason": "Phase 3 of 4 — needs a plan"
+    "label": "Advance to the next step (verify)",
+    "reason": "Phase 3 of 4 · ready to verify"
   },
-  "updated_at": "2026-10-28T17:55:18.853Z"
+  "updated_at": "2026-10-28T22:02:15.995Z"
 }

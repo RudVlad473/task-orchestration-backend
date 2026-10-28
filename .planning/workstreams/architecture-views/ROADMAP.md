@@ -94,7 +94,7 @@ Plans:
   4. `scripts/verify-k8s-invariants.py --no-provisional` is green in CI for the new manifests. The memory value carries a MEASURED comment from a ladder run on the VPS (I4). I5 applies to the site overlay, failing with the setter marker removed (red) and passing once it is restored (green). The route has the I10 shape, and the site objects have one owner under I11: the live IngressRoute's `kustomize.toolkit.fluxcd.io/name` label names a single Kustomization.
   5. The model contains the site as built: a namespace node for it, the site instance with a `traefik ->` edge, and a publish-the-site scenario whose steps cite the workflow and manifest lines. The Phase 1 and Phase 2 checks are green and cover the site's workload.
 
-**Plans**: 6/7 plans executed
+**Plans**: 7/7 plans executed
 
 Plans:
 **Wave 1**
@@ -116,7 +116,7 @@ Plans:
 - [x] 03-06-PLAN.md — blocking-human decisions Q5 and Q6; baseline probes, then push; staging certificate, TLS, marker, other hosts, I11 label, bump with no site run, CI green; static-only, cold deep link and missing-asset checks on the live host
 
 **Wave 7** *(blocked on Wave 6 completion)*
-- [ ] 03-07-PLAN.md — publish-the-site scenario with cited steps and a model-only push (pending records flushed first); standard and infra docs updated; phase gate mapping each criterion to recorded evidence, red/green pairs and pending clauses
+- [x] 03-07-PLAN.md — publish-the-site scenario with cited steps and a model-only push (pending records flushed first); standard and infra docs updated; phase gate mapping each criterion to recorded evidence, red/green pairs and pending clauses
 
 **Planning notes**: Open Questions 1, 2 and 3 block planning. Bootstrap order: run the workflow once with `workflow_dispatch` so the first tag exists before the overlay that names it is committed. Before this Certificate is committed, decide on `serviceType: ClusterIP` for the HTTP-01 solver (Pitfall 10, Open Question 8). No uptime probe yet, because a staging certificate fails its TLS check. Live checks over SSH are read-only unless the plan says otherwise (PROJECT.md key decision).
 
@@ -187,5 +187,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
 | 2. Model Completion | 5/5 | Complete    | 2026-10-28 |
-| 3. Build and Serve on a Staging Certificate | 6/7 | In Progress | - |
+| 3. Build and Serve on a Staging Certificate | 7/7 | In Progress | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |
