@@ -557,15 +557,17 @@ spec:
 | A8 | Dependabot not tracking the nginx base image is acceptable debt (the backup image has the same) | OQ1 | Unpatched base image; add a `docker` ecosystem entry later |
 | A9 | LikeC4 upgrades may add routes; the extension rule needs no change | OQ1 | An extensionful route would 404 |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does the user accept a src-only push as the criterion 1 negative control, or a docs-only proxy?**
+Items 1 and 2 are resolved as user-gated: the plans do not answer them, they route them to a named blocking checkpoint, and no plan acts on either until the user's answer is a `DECISION` line in `03-DECISIONS.txt`. Items 3 to 5 are settled in the plans.
+
+1. **Does the user accept a src-only push as the criterion 1 negative control, or a docs-only proxy?** (RESOLVED, user-gated) Routed to DECISION Q4 in 03-02-PLAN.md Task 1 (option 1 passive, option 2 an active src-only push in 03-07-PLAN.md Task 3). Under Q4 1, 03-07-PLAN.md's phase gate records the src-only clause as `PENDING` with its reason and names the same-mechanism controls observed instead (the k8s-only push in 03-03, Flux bump commits, the planning-only flush push in 03-07); it is never marked met.
    - Known: both use the same filter mechanism; a real src-only push also runs the app pipeline.
    - Recommendation: use passive evidence from the next natural src-only push, plus a docs/`sync.mjs`-only push now.
-2. **Wait for the user's choice on the shared-issuer edit (OQ8).** Recommendation: yes.
-3. **Build stamp (OQ8 list).** Not folded in. The image tag already carries the sha7; revisit in Phase 4.
-4. **Traefik under concurrent cold loads.** Optional read-only before/after restart count during the ladder; baseline `restarts=2`.
-5. **`--build-webcomponent=false`** (drops 2.7 MB). Untested; leave the default.
+2. **Wait for the user's choice on the shared-issuer edit (OQ8).** (RESOLVED, user-gated) Routed to DECISION Q2 in 03-02-PLAN.md Task 1; 03-03-PLAN.md Task 2 applies option 1 or records option 2, and touches `k8s/platform/edge/clusterissuers.yaml` only under `DECISION Q2: 1`. Recommendation: yes.
+3. **Build stamp (OQ8 list).** (RESOLVED) Not folded in (03-01-PLAN.md trade-offs). The image tag already carries the sha7; revisit in Phase 4.
+4. **Traefik under concurrent cold loads.** (RESOLVED) 03-06-PLAN.md Task 3 records Traefik's restart count before and after 10 concurrent cold loads of the live site, read-only; a restart is carried to Phase 4 as a finding. Baseline `restarts=2`.
+5. **`--build-webcomponent=false`** (drops 2.7 MB). (RESOLVED) Untested; the default stays (03-01-PLAN.md trade-offs).
 
 ## Environment Availability
 
