@@ -88,15 +88,15 @@ model {
   }
 
   // --- relationships: runtime facts, not class calls ---
-  backup -[sync]-> postgres 'PGHOST postgres.kanban-data'
+  backup -[sync]-> postgres 'pg_dump over the Postgres protocol'
   client -[sync]-> traefik 'HTTPS :443'
   traefik -[sync]-> kanban.api 'HTTP :8080'
-  kanban.api -[sync]-> postgres 'JDBC: users, boards, columns, tasks, subtasks, spring_session, spring_session_attributes'
+  kanban.api -[sync]-> postgres 'SQL over JDBC'
   kanban.api -[async]-> kanban.publisher 'AFTER_COMMIT hand-off'
-  kanban.publisher -[async]-> redpanda.activity 'Avro, keyed by event id'
+  kanban.publisher -[async]-> redpanda.activity 'Kafka protocol and Schema Registry API'
   redpanda.activity -[async]-> kanban.consumer 'poll, group activity-log'
-  kanban.consumer -[sync]-> postgres 'INSERT activity_log, idempotent on event_id'
-  kanban.consumer -[async]-> redpanda.dlt 'after retries'
+  kanban.consumer -[sync]-> postgres 'SQL over JDBC'
+  kanban.consumer -[async]-> redpanda.dlt 'Kafka protocol and Schema Registry API'
 
   // Authored foreign key: Spring Session's own schema (schema-postgresql.sql in spring-session-jdbc 3.5.7).
   postgres.spring_session_attributes -[fk]-> postgres.spring_session 'session_primary_id'

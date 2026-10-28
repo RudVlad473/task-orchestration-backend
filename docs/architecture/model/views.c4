@@ -14,6 +14,19 @@ views {
       kanban.api, kanban.publisher, kanban.consumer,
       postgres,
       redpanda.*
+
+    include kanban.api -> postgres with {
+      title 'JDBC: users, boards, columns, tasks, subtasks, spring_session, spring_session_attributes'
+    }
+    include kanban.publisher -> redpanda.activity with {
+      title 'Avro, keyed by event id'
+    }
+    include kanban.consumer -> postgres with {
+      title 'INSERT activity_log, idempotent on event_id'
+    }
+    include kanban.consumer -> redpanda.dlt with {
+      title 'after retries'
+    }
   }
 
   view data of postgres {

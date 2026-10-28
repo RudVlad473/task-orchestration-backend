@@ -422,6 +422,20 @@ function checkViewMembership(computed, problems) {
   for (const id of ids) if (!drawn.has(id)) problems.push(`instance ${id} appears in no deployment view`)
 }
 
+// A deployment edge merges every logical relationship between one instance pair. LikeC4 prints
+// the placeholder [...] as its label when those relationships have different titles. The only
+// fix measured in 1.60 is one shared title per pair, so a pair that gains a differently titled
+// relationship brings the placeholder back and is reported here.
+function checkEdgeLabels(computed, problems) {
+  const views = [...computed.views()].filter((v) => v.isDeploymentView?.()).sort((a, b) => a.id.localeCompare(b.id))
+  for (const view of views) {
+    const edges = [...view.edges()].map((e) => ({ line: `${e.source.id} -> ${e.target.id}`, label: e.label }))
+    for (const e of edges.sort((a, b) => a.line.localeCompare(b.line))) {
+      if (e.label === '[...]') problems.push(`view ${view.id}: edge ${e.line} has merged label '[...]'`)
+    }
+  }
+}
+
 // --- generation -----------------------------------------------------------------------
 
 // One function per fact source, each returning the lines it contributes, so a source added
@@ -555,6 +569,7 @@ async function check() {
   checkMetadataKeys(computed, problems)
   checkPlacement(computed, docs, problems)
   checkViewMembership(computed, problems)
+  checkEdgeLabels(computed, problems)
 
   const pkgs = packages()
   const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${manifestWorkloads.size} workloads`
