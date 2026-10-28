@@ -1,0 +1,18 @@
+views {
+  dynamic view signup-ok {
+    #scenarios
+    variant sequence
+    title 'Scenario: signup succeeds'
+    description 'POST /api/signup through to a session cookie. The body is validated, the email is checked for a duplicate and the user inserted, then the new account is authenticated in the same request: the user is read by id, the live sessions are read, and the security context is saved in a new session.'
+
+    client -> traefik 'POST /api/signup {displayName, email, password}'
+    traefik -> kanban.api 'forward, body validated before the handler'
+    kanban.api -> postgres.table_users 'SELECT: is the email taken'
+    kanban.api -> postgres.table_users 'INSERT user'
+    kanban.api -> postgres.table_users 'SELECT user by id (authentication)'
+    kanban.api -> postgres.spring_session 'read live sessions for the user'
+    kanban.api -> postgres.spring_session 'save security context in the session'
+    traefik <- kanban.api '201 Created, Set-Cookie JSESSIONID'
+    client <- traefik '201 {id, email, displayName, theme}'
+  }
+}
