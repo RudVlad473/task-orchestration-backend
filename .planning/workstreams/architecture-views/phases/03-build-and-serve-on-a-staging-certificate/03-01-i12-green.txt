@@ -1,0 +1,3 @@
+## Gate with the plants removed (git diff --exit-code on the three planted paths: 0)
+GATE GREEN exit=0
+invariants OK -- 12 kustomization root(s) checked; no NodePort/LoadBalancer Service, no hostNetwork/hostPID/hostPort/hostPath, every container's memory requests+limits set and dated, no untagged/:latest image, no committed Secret, no redirect route matches the ACME challenge path, no object is rendered by two Flux Kustomizations, and no manifest, Dockerfile or workflow runs a dev or preview server

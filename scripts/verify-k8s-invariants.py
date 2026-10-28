@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 r"""Gate: only the edge is public, memory caps are measured and dated, images are pinned, no Secret is
-committed, no redirect matches the ACME challenge path, and no object has two Flux owners.
+committed, no redirect matches the ACME challenge path, no object has two Flux owners, no dev server.
 
 Successor of the deleted scripts/verify-compose-ports.py's "only the edge is public" invariant; I6
 supersedes the deleted scripts/verify-postgres-memory-invariant.py and ports its two inequalities.
@@ -27,6 +27,8 @@ Known holes:
     comment through render. A base manifest's own literal `image:` field (untouched by any overlay's
     `images:` transform) is checked against `:latest`/untagged only, not the `main-N-sha7` pattern,
     since a base image reference is meant to be overridden by every overlay.
+  * I12 reads the text of the file it is given: a script a workflow calls, a command assembled through a
+    shell variable, HelmRelease `values:` and docs/architecture/likec4.fish are not read.
 
 Invariants, numbered in both this docstring and the emitted FAIL lines so a red CI line names which
 one broke, in which root, on which object:
@@ -75,12 +77,20 @@ I11: no object identity (API group, kind, namespace, name; the API version is ig
     KNOWN HOLE: objects created by a HelmRelease or a controller, and objects applied by hand, are
     invisible here; the runtime check is comparing the Kustomizations' inventories on the cluster. The
     fail-closed field list must be revisited before any Kustomization adopts one of those fields.
+I12: no k8s YAML file, Dockerfile or workflow runs the LikeC4 dev or preview server. Scope: source text,
+    not rendered output, of every k8s YAML file and also of every Dockerfile and workflow in the
+    repository. After comments are dropped, no line matches `likec4 start|serve|dev|preview`,
+    `vite preview` or `--listen`, and neither does a Dockerfile RUN/CMD/ENTRYPOINT written as a JSON
+    array, nor a container's `command` and `args` joined in any YAML form. A k8s or workflow file that does not parse as YAML fails closed.
+    WHY: the dev server answered a request for `/@fs/etc/hostname` with the contents of that file when
+    measured, so only the static build output may be served.
 
 A missing/malformed rendered document, or a root that fails to render entirely, is its own violation
 rather than a silently skipped root: treating "I could not read this" as "nothing to report" is the
 failure mode this gate exists to remove."""
 
 import glob
+import json
 import os
 import posixpath
 import re
@@ -114,6 +124,9 @@ GENERATED = {
 MEASURED_RE = re.compile(r"\b(MEASURED|PROVISIONAL)\b")
 IMAGE_TAG_PATTERN = re.compile(r"^main-\d+-[0-9a-f]{7}$")
 SETTER_MARKER_RE = re.compile(r'"\$imagepolicy":\s*"[^"]+:tag"')
+# The subcommands and aliases `likec4 --help` prints for its dev and preview servers.
+DEV_SERVER_RE = re.compile(r"\blikec4\s+(start|serve|dev|preview)\b|\bvite\s+preview\b|--listen\b")
+DOCKERFILE_JSON_INSTRUCTION_RE = re.compile(r"^\s*(?:RUN|CMD|ENTRYPOINT)\s+(\[.*\])\s*$", re.IGNORECASE)
 
 
 def to_mi(value):
@@ -550,6 +563,89 @@ def check_i5_overlay_kustomization(path, text):
     return violations
 
 
+def check_i12_no_dev_server(path, text):
+    """I12: no k8s YAML file, Dockerfile or workflow runs the LikeC4 dev or preview server.
+
+    Pure function of a (path, text) pair. A line pass drops comments and searches every line; a
+    Dockerfile RUN/CMD/ENTRYPOINT written as a JSON array is joined into one command first, and a YAML
+    file is parsed so a container's `command` and `args` are joined whatever their YAML form. A YAML
+    file that does not parse is a violation, never a skip.
+    """
+    import yaml
+
+    violations = []
+    reported_lines = set()
+    is_dockerfile = posixpath.basename(path).startswith("Dockerfile")
+    for number, line in enumerate(text.splitlines(), start=1):
+        if line.strip().startswith("#"):
+            continue
+        code = line.split(" #", 1)[0]
+        candidates = [code]
+        json_match = DOCKERFILE_JSON_INSTRUCTION_RE.match(code) if is_dockerfile else None
+        if json_match:
+            try:
+                candidates.append(" ".join(str(item) for item in json.loads(json_match.group(1))))
+            except (ValueError, TypeError):
+                pass
+        if number not in reported_lines and any(DEV_SERVER_RE.search(c) for c in candidates):
+            reported_lines.add(number)
+            violations.append(
+                f"I12: {path}:{number}: {line.strip()!r} starts a dev or preview server; "
+                f"only the static build output may be served"
+            )
+
+    if path.endswith((".yaml", ".yml")):
+        try:
+            docs = list(yaml.safe_load_all(text))
+        except yaml.YAMLError:
+            return violations + [
+                f"I12: {path}: does not parse as YAML, so it cannot be checked for a dev server"
+            ]
+        for doc in docs:
+            # JSON6902 patch files under k8s/overlays are lists, and iter_pod_templates calls .get.
+            if not isinstance(doc, dict):
+                continue
+            try:
+                templates = list(iter_pod_templates(doc))
+            except (AttributeError, TypeError):
+                violations.append(
+                    f"I12: {path}: a pod template cannot be walked, so it cannot be checked for a dev server"
+                )
+                continue
+            for kind, name, pod_spec in templates:
+                for container in (pod_spec.get("containers") or []) + (pod_spec.get("initContainers") or []):
+                    if not isinstance(container, dict):
+                        continue
+                    items = list(container.get("command") or []) + list(container.get("args") or [])
+                    joined = " ".join(str(item) for item in items)
+                    if DEV_SERVER_RE.search(joined):
+                        violations.append(
+                            f"I12: {path}: {kind}/{name} container {container.get('name')} runs {joined!r}"
+                        )
+    return violations
+
+
+def i12_source_files():
+    """Sorted repo-relative paths I12 reads: k8s YAML, workflow files and every Dockerfile.
+
+    Directories named node_modules, .git or out are never entered.
+    """
+    found = []
+    for dirpath, dirnames, filenames in os.walk(REPO_ROOT):
+        dirnames[:] = [d for d in dirnames if d not in ("node_modules", ".git", "out")]
+        rel_dir = os.path.relpath(dirpath, REPO_ROOT).replace(os.sep, "/")
+        for name in filenames:
+            rel = posixpath.normpath(posixpath.join(rel_dir, name))
+            is_yaml = name.endswith((".yaml", ".yml"))
+            if (
+                (rel.startswith("k8s/") and is_yaml)
+                or (posixpath.dirname(rel) == ".github/workflows" and is_yaml)
+                or name.startswith("Dockerfile")
+            ):
+                found.append(rel)
+    return sorted(found)
+
+
 def find_uncovered_roots(discovered, rendered, excluded):
     """I7: every discovered kustomization root is either rendered by this gate or explicitly
     excluded with a reason. Pure function of a (discovered, rendered, excluded) triple."""
@@ -635,6 +731,10 @@ def main():
         if os.path.basename(path) == "kustomization.yaml":
             all_violations += check_i5_overlay_kustomization(rel, text)
 
+    for rel in i12_source_files():
+        with open(os.path.join(REPO_ROOT, rel)) as f:
+            all_violations += check_i12_no_dev_server(rel, f.read())
+
     if all_violations:
         for line in all_violations:
             print(f"FAIL: {line}")
@@ -644,8 +744,8 @@ def main():
         f"invariants OK -- {len(roots)} kustomization root(s) checked; no NodePort/LoadBalancer "
         "Service, no hostNetwork/hostPID/hostPort/hostPath, every container's memory "
         "requests+limits set and dated, no untagged/:latest image, no committed Secret, "
-        "no redirect route matches the ACME challenge path, and no object is rendered by two Flux "
-        "Kustomizations"
+        "no redirect route matches the ACME challenge path, no object is rendered by two Flux "
+        "Kustomizations, and no manifest, Dockerfile or workflow runs a dev or preview server"
     )
     return 0
 

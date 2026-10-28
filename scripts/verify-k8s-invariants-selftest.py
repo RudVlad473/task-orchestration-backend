@@ -374,6 +374,7 @@ def run_cases():
     )
 
     run_i11_cases(expect_violation, expect_clean)
+    run_i12_cases(expect_violation, expect_clean)
     run_cronjob_cases(expect_violation, expect_clean)
 
     return fails
@@ -521,6 +522,114 @@ def run_i11_cases(expect_violation, expect_clean):
     )
 
 
+WORKFLOW_PATH = ".github/workflows/fixture.yml"
+DOCKERFILE_PATH = "Dockerfile"
+MANIFEST_PATH = "k8s/base/fixture/fixture.yaml"
+
+
+def workflow_with_run(command):
+    return f"jobs:\n  site:\n    steps:\n      - name: serve\n        run: {command}\n"
+
+
+def manifest_with_container(container_fields):
+    indented = "\n".join(f"          {line}" for line in container_fields)
+    return (
+        "apiVersion: apps/v1\n"
+        "kind: Deployment\n"
+        "metadata:\n"
+        "  name: fixture\n"
+        "spec:\n"
+        "  template:\n"
+        "    spec:\n"
+        "      containers:\n"
+        "        - name: site\n"
+        f"{indented}\n"
+    )
+
+
+def run_i12_cases(expect_violation, expect_clean):
+    for command in (
+        "pnpm exec likec4 start",
+        "pnpm exec likec4 serve",
+        "pnpm exec likec4 dev",
+        "pnpm exec likec4 preview",
+        "pnpm exec vite preview",
+        "likec4 build --listen 0.0.0.0",
+    ):
+        expect_violation(
+            f"I12 workflow line ({command})",
+            _gate.check_i12_no_dev_server(WORKFLOW_PATH, workflow_with_run(command)),
+            "I12:",
+        )
+
+    expect_clean(
+        "I12 workflow full-line comment",
+        _gate.check_i12_no_dev_server(
+            WORKFLOW_PATH, "# never likec4 start here\n" + workflow_with_run("echo hi")
+        ),
+    )
+    expect_clean(
+        "I12 workflow trailing comment",
+        _gate.check_i12_no_dev_server(
+            WORKFLOW_PATH, workflow_with_run("echo hi # not likec4 start")
+        ),
+    )
+    expect_clean(
+        "I12 workflow likec4 build",
+        _gate.check_i12_no_dev_server(
+            WORKFLOW_PATH,
+            workflow_with_run("pnpm --dir docs/architecture exec likec4 build --use-dot=false -o site/out model"),
+        ),
+    )
+
+    expect_violation(
+        "I12 Dockerfile exec form",
+        _gate.check_i12_no_dev_server(DOCKERFILE_PATH, 'FROM x\nCMD ["npx", "likec4", "preview"]\n'),
+        "I12:",
+    )
+    expect_violation(
+        "I12 Dockerfile shell form",
+        _gate.check_i12_no_dev_server(DOCKERFILE_PATH, "FROM x\nRUN likec4 serve\n"),
+        "I12:",
+    )
+    expect_clean(
+        "I12 Dockerfile without a server",
+        _gate.check_i12_no_dev_server(DOCKERFILE_PATH, "FROM x\nCOPY out/ /srv/site/\n"),
+    )
+
+    expect_violation(
+        "I12 manifest block-list form",
+        _gate.check_i12_no_dev_server(
+            MANIFEST_PATH,
+            manifest_with_container(["command:", "  - likec4", "args:", "  - start"]),
+        ),
+        "I12:",
+    )
+    expect_violation(
+        "I12 manifest flow form",
+        _gate.check_i12_no_dev_server(
+            MANIFEST_PATH, manifest_with_container(['command: ["likec4", "start"]'])
+        ),
+        "I12:",
+    )
+    expect_clean(
+        "I12 manifest without a command",
+        _gate.check_i12_no_dev_server(MANIFEST_PATH, manifest_with_container(["image: x"])),
+    )
+    expect_clean(
+        "I12 JSON6902 patch list is skipped",
+        _gate.check_i12_no_dev_server(
+            "k8s/overlays/fixture/patch.yaml",
+            "- op: replace\n  path: /spec/replicas\n  value: 2\n",
+        ),
+    )
+    expect_violation(
+        "I12 unparseable YAML fails closed",
+        _gate.check_i12_no_dev_server(MANIFEST_PATH, "key: [unclosed\n"),
+        "I12:",
+    )
+
+
 def main():
     fails = run_cases()
     if fails:
@@ -528,7 +637,7 @@ def main():
             print(f"SELFTEST FAIL: {line}")
         return 1
     print(
-        "selftest OK -- I1-I11 each fire on an engineered violation; clean fixtures report nothing"
+        "selftest OK -- I1-I12 each fire on an engineered violation; clean fixtures report nothing"
     )
     return 0
 

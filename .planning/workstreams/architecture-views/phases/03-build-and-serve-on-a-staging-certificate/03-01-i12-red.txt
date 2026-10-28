@@ -1,0 +1,20 @@
+## Clean check before planting
+CLEAN BEFORE PLANT worktree=0 index=0
+
+## Selftest before check_i12_no_dev_server existed
+SELFTEST BEFORE exit=1
+AttributeError: module 'verify_k8s_invariants' has no attribute 'check_i12_no_dev_server'
+
+## Gate with three planted dev-server lines, before I12 existed
+GATE BEFORE I12 exit=0
+invariants OK -- 12 kustomization root(s) checked; no NodePort/LoadBalancer Service, no hostNetwork/hostPID/hostPort/hostPath, every container's memory requests+limits set and dated, no untagged/:latest image, no committed Secret, no redirect route matches the ACME challenge path, and no object is rendered by two Flux Kustomizations
+
+## Selftest after check_i12_no_dev_server was added
+SELFTEST AFTER exit=0
+selftest OK -- I1-I12 each fire on an engineered violation; clean fixtures report nothing
+
+## Gate with the same three plants still in place, I12 present
+GATE AFTER I12 exit=1
+FAIL: I12: .github/workflows/architecture-site.yml:78: 'run: pnpm --dir docs/architecture exec likec4 start' starts a dev or preview server; only the static build output may be served
+FAIL: I12: docs/architecture/site/Dockerfile:9: 'CMD ["npx", "likec4", "preview"]' starts a dev or preview server; only the static build output may be served
+FAIL: I12: k8s/base/app/app.yaml: Deployment/app container app runs 'likec4 start'
