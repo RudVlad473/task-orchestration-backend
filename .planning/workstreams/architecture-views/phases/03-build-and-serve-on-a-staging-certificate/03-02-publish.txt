@@ -1,0 +1,26 @@
+# Plan 03-02 publish record: the token fence, the first push, the first site tag
+ENV_BEFORE production null rules=0
+ENV_BEFORE staging null rules=0
+ENV_POLICY production protected_branches=false custom=true branches=main:branch
+ENV_POLICY staging protected_branches=false custom=true branches=main:branch
+DOCKERHUB_REPO anonymous GET https://hub.docker.com/v2/repositories/rudenkovladimir/kanban-board-backend-architecture/ status=200 before the push
+ORIGIN_BEHIND 1 commit, fluxcdbot "chore(flux): bump images"
+MERGE 5d44dac --no-ff origin/main beneath local main (precedent 59346d0)
+RANGE commits=99 (98 non-merge, 1 merge) origin/main..5d44dac
+RANGE first-five: 5d44dac 7e0b5b4 4d8baa4 adfa064 76c843a ; last-five: 6a549ee 679e6ab 5ca7d18 c9e4e15 d39803e
+PATH_CLASSES .planning=154 docs=22 scripts=3 src=2 .githooks=1 .github=1 .zed=1 README.md=1
+NONPLANNING_PATHS .githooks/pre-commit .github/workflows/architecture-site.yml scripts/pre-commit-likec4-selftest.py scripts/verify-k8s-invariants-selftest.py scripts/verify-k8s-invariants.py src/main/java/com/vrudenko/kanban_board/security/SecurityConfiguration.java src/test/java/com/vrudenko/kanban_board/security/AuthorizationGatingTest.java (no k8s path)
+CLASSES (a) 98 non-merge commits, all named by DECISION Q1 1 (covers every commit on local main); (b) planning-only commits among them carried under the same authorization; (c) 1 merge, 5d44dac. Commits in none of the three: 0
+PUSHED 5d44dac9ec0b7a060b0ff217ffb874cec90a8fa1
+NOTE first push attempt `git push origin "$PUSH_SHA:refs/heads/main"` was refused locally (zsh read `$PUSH_SHA:r` as a modifier and mangled the refspec: "src refspec ...efs/heads/main does not match any"); nothing reached origin; the retry used `${PUSH_SHA}:refs/heads/main`
+RUN architecture-site 40765087077 number=1 event=push conclusion=success jobs=build:success,publish:success
+RUN invariant-checks 40765086784 number=113 event=push conclusion=success
+RUN deploy 40765086761 number=160 event=push conclusion=success jobs=setup,run-tests,flyway-verify,flyway-verify-nonprod,build-and-push-docker-image,cleanup-old-images-nonprod,cleanup-old-images all success (the environment-gated jobs passed on refs/heads/main under the new policy)
+RUN secret-scan 40765086751 number=232 event=push conclusion=success
+RUN dependency-submission 40765086902 number=23 event=push conclusion=success
+TAG: main-1-5d44dac
+NOTE the run number is 1, not "not 1": github.run_number counts per workflow and architecture-site.yml had never run, so the tag is main-1-5d44dac; the ImagePolicy only needs the number monotonic
+DIGEST: sha256:8a529ac02b862bb21d3a95648a963295de4b0da909b8e2a3ddb1875f18b6b5ef
+PUBLISHED PROBE / status=200 marker=1 (127.0.0.1:18081, container architecture-site-published, flags as 03-01's probe; /healthz body=ok; container and pulled image removed)
+DEPLOY_FINISHED 2026-10-28T20:45:11Z (bump-control window runs to 21:00:11Z)
+CONTROL flux-bump 673238f04f6038edb7a0c9aa4f49a53fa728cb33: architecture-site runs=0 (witness: invariant-checks push run, success; k8s overlays only; deploy.yml also lists no run)

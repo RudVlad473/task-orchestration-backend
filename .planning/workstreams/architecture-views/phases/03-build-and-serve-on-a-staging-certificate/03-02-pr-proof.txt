@@ -1,0 +1,7 @@
+# Plan 03-02 pull-request proof record (PARTIAL: stopped at the GREEN step, see STOPPED below)
+PR number=21 draft base=main head=site-drift-proof drift_commit=3eb592fa219c06483ab0dc8f3e90158ed7fc6cf9 branch_forked_from=5d44dac9ec0b7a060b0ff217ffb874cec90a8fa1
+RED run=40766223979 build=failure failed_step=Verify the model matches the code publish=skipped
+RED_INVARIANT run=40766224139 job=The LikeC4 model in docs/architecture still describes the code it is checked against conclusion=failure (every other invariant-checks job success)
+REVERT commit=9a985eea59b14a126d96f09058165f33efa5c90d (git revert --no-edit of the drift commit), pushed to site-drift-proof
+OBSERVED after the revert push: gh pr view 21 reports files=0 commits=2 (the pull request's net diff is empty); Secret Scan (no paths filter) ran for 9a985ee, run 40766374362, pull_request, success; no Architecture Site run and no Invariant Checks run exists for 9a985ee (gh run list --workflow architecture-site.yml lists only 40766223979 on 3eb592f and 40765087077 on 5d44dac)
+STOPPED GREEN not observed: expected `GREEN run=<id> build=success publish=skipped`; actual no architecture-site run for the revert, the likely cause (an inference from files=0, not read from GitHub's documentation or logs) is that both path-filtered workflows judge a pull_request by its net diff against the base, and a pure revert leaves that diff empty. The workflow was not changed. The pull request and branch are left open pending a decision.
