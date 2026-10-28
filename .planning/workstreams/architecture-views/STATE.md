@@ -5,16 +5,16 @@ milestone_name: Architecture Views
 current_phase: 3
 current_phase_name: Build and Serve on a Staging Certificate
 status: planning
-stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-10-28T21:24:45.375Z"
+stopped_at: Completed 03-06-PLAN.md
+last_updated: "2026-10-28T21:38:56.567Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: 0728e518deb4764289e15e07f7eb8d7013daaee1
+state_head: c789fed96d7f75a5817da6aa5090f9da6c0905c7
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -72,6 +72,7 @@ Progress: [█████░░░░░] 50%
 | Phase 03 P03 | 70min | 2 tasks | 4 files |
 | Phase 03 P04 | 40min | 2 tasks | 17 files |
 | Phase 03 P05 | 12min | 2 tasks | 2 files |
+| Phase 03 P06 | 25min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-03: adopt requests.memory=16Mi limits.memory=32Mi for the architecture site (lowest passing rung 16Mi, 8Mi OOMKilled on the VPS)
 - [Phase 03]: 03-03: both ClusterIssuers set serviceType ClusterIP (Q2 1), applied live, live Certificates unchanged
 - [Phase 03]: 03-04: the production view includes netcup.k3s.architecture explicitly, because LikeC4 collapses a single-instance namespace into its parent
+- [Phase 03]: Plan 06: Q5 1 and Q6 1 authorized; the site went live on a staging certificate from one push of 8 commits (b1aa8c5), Flux bump fe3466b rolled main-4-b1aa8c5 with no site run
 
 ### Pending Todos
 
@@ -129,6 +131,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T21:24:45.040Z
-Stopped at: Completed 03-05-PLAN.md
+Last session: 2026-10-28T21:38:56.150Z
+Stopped at: Completed 03-06-PLAN.md
 Resume file: None
