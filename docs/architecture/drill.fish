@@ -4,6 +4,11 @@
 # is expected to be caught except D5, a negative control that is documented as not caught, and
 # D13b, D16b and D17b, controls that must stay clean. A drill on a k8s fact source is caught with exit 4.
 # The real model is never edited: a drill that changes a view changes the scratch copy.
+#
+# A drill that is one sed edit on one file is a row of sed-drills.tsv, run by a sed_drills call at
+# its place below, so the drills run in the order drill-output.txt records. Drills that write or
+# delete a file, edit more than once or call a helper are written out in full.
+#
 # SYNC names another sync.mjs to run. Running the harness once with the script from before a
 # rule existed and once with the current one records the drill as not caught and then caught.
 # MODEL names another model folder; the not-caught-before half uses the model of the same commit
@@ -88,10 +93,7 @@ fresh
 printf 'CREATE TABLE attachments (id VARCHAR(20) PRIMARY KEY);\n' >$scratch/src/main/resources/db/migration/V10__add_attachments.sql
 run
 
-echo "== D2: a new Kafka topic constant"
-fresh
-sed -i 's|^}|    public static final String AUDIT = "kanban.audit";\n}|' $scratch/src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java
-run
+sed_drills D2
 
 echo "== D3: a new k8s Deployment named worker"
 fresh
@@ -109,15 +111,7 @@ set c (find $scratch/src/main/java -path '*controller*' -name '*.java' | head -1
 mv $c (dirname $c)/RenamedController.java
 run
 
-echo "== D6: a view loses its viewpoint tag"
-fresh
-sed -i '/^    #process$/d' $scratch/model/views.c4
-run
-
-echo "== D6b: a view carries two viewpoint tags"
-fresh
-sed -i 's|^    #process$|    #process\n    #logical|' $scratch/model/views.c4
-run
+sed_drills D6 D6b
 
 echo "== D7: a migration adds a foreign key by ALTER TABLE"
 fresh
@@ -134,10 +128,7 @@ fresh
 printf 'ALTER TABLE tasks DROP COLUMN column_id;\n' >$scratch/src/main/resources/db/migration/V11__drop_col.sql
 run
 
-echo "== D8: a new cross-package import"
-fresh
-sed -i '1a import com.vrudenko.kanban_board.mapper.Unused;' $scratch/src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java
-run
+sed_drills D8
 
 echo "== D8b: a two-package cycle appears"
 fresh
@@ -145,20 +136,7 @@ set j (find $scratch/src/main/java/com/vrudenko/kanban_board/exception -name '*.
 sed -i '1a import com.vrudenko.kanban_board.handler.Unused;' $j
 run
 
-echo "== D9: the only development view is retagged"
-fresh
-sed -i 's|^    #development$|    #logical|' $scratch/model/views.c4
-run
-
-echo "== D10: a namespace node is deleted from the model (cert-manager)"
-fresh
-sed -i '/^      cert-manager = namespace .cert-manager. {$/,/^      }$/d' $scratch/model/deployment.c4
-run
-
-echo "== D10b: a manifest namespace is misspelled (kube-sytem)"
-fresh
-sed -i 's|namespace: kube-system|namespace: kube-sytem|' $scratch/k8s/platform/traefik/helmchartconfig.yaml
-run
+sed_drills D9 D10 D10b
 
 echo "== D11: an instance is moved into the wrong namespace (backup to kanban-prod)"
 fresh
@@ -181,10 +159,7 @@ fresh
 certmgr_into cert-manager
 run
 
-echo "== D12: a metadata key is misspelled on an element (sourc)"
-fresh
-sed -i "s|^      source 'k8s/platform/traefik'|      sourc 'k8s/platform/traefik'|" $scratch/model/model.c4
-run
+sed_drills D12
 
 echo "== D12b: unknown metadata keys on a deployment node, an instance and a relationship"
 fresh
@@ -228,36 +203,6 @@ fresh
 labeldrill 'SQL over JDBC'
 run
 
-sed_drills D18
-
-echo "== D19: the only instance of a workload element is deleted (backup)"
-fresh
-sed -i '/^        instanceOf backup$/d' $scratch/model/deployment.c4
-run
-
-echo "== D20: a claimed HelmRelease is renamed (loki)"
-fresh
-sed -i 's|^  name: loki$|  name: lokix|' $scratch/k8s/monitoring/controllers/loki.yaml
-run
-
-echo "== D21: a claimed namespace changes (loki moved to kanban-data)"
-fresh
-sed -i 's|^  namespace: monitoring$|  namespace: kanban-data|' $scratch/k8s/monitoring/controllers/loki.yaml
-run
-
-echo "== D22: a Flux controller is renamed in the generator file (source-controller)"
-fresh
-sed -i 's|^  name: source-controller$|  name: source-controllerx|' $scratch/k8s/flux-system/gotk-components.yaml
-run
-
-echo "== D23: a ClusterIssuer is renamed (letsencrypt-staging)"
-fresh
-sed -i 's|^  name: letsencrypt-staging$|  name: letsencrypt-stagingx|' $scratch/k8s/platform/edge/clusterissuers.yaml
-run
-
-echo "== D24: a claimed host is changed in an IngressRoute (nonprod)"
-fresh
-sed -i 's|kanban-board-rud-vlad-473-nonprod|kanban-board-rud-vlad-473-nonprodx|g' $scratch/k8s/overlays/nonprod/ingressroute.yaml
-run
+sed_drills D18 D19 D20 D21 D22 D23 D24
 
 trash-put $scratch
