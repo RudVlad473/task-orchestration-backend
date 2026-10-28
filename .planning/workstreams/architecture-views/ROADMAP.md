@@ -23,7 +23,7 @@ numbering restarts at 1 in this workstream. Requirements are in `REQUIREMENTS.md
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundations, Edge Fix and Honesty Gates** - Traefik moves out of the nonexistent `edge` namespace, and the namespace, placement, metadata-key and view-membership checks are built and proven red then green (completed 2026-10-27)
-- [ ] **Phase 2: Model Completion** - Delivery, monitoring, cert-manager and edge facts in Physical; Schema Registry, backup and Avro subjects in Process and Logical; seven scenarios; the YAML fact reader; the standard amended
+- [x] **Phase 2: Model Completion** - Delivery, monitoring, cert-manager and edge facts in Physical; Schema Registry, backup and Avro subjects in Process and Logical; seven scenarios; the YAML fact reader; the standard amended (completed 2026-10-28)
 - [ ] **Phase 3: Build and Serve on a Staging Certificate** - CI builds the site image on model changes, Flux serves the static build at the architecture hostname on a staging certificate, and the publish path is modelled as built
 - [ ] **Phase 4: Leak Review and Production Go-Live** - Leak scan of the built artifact and the user's review, then the production certificate flip, the uptime probe and the public links
 
@@ -62,7 +62,7 @@ Plans:
   4. `sync.mjs` reads the workloads, namespaces and hosts that the new elements claim from the k8s YAML, including `k8s/platform`, `k8s/monitoring` and `k8s/flux-system`. `check` exits 0 on the completed model. On a scratch copy, three breaks each make `check` exit 1, and each is recorded by a drill: renaming a claimed workload (a HelmRelease or Flux controller included), changing a claimed host, and changing a claimed namespace. The unmodified copy exits 0.
   5. In `docs/DIAGRAM_CONVENTIONS.md`, the Physical row names the deployment views as built and no longer says the monitoring stack is excluded. The Scenarios row describes the scenarios as built, including the internal steps of the activity-log and delivery scenarios. Searching that file for "excluded, as in `production-host.mmd`" finds nothing.
 
-**Plans**: 5/5 plans executed
+**Plans**: 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -163,6 +163,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
-| 2. Model Completion | 5/5 | In Progress | - |
+| 2. Model Completion | 5/5 | Complete    | 2026-10-28 |
 | 3. Build and Serve on a Staging Certificate | 0/TBD | Not started | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |
