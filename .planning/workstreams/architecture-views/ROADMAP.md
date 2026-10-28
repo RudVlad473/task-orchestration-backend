@@ -62,7 +62,14 @@ Plans:
   4. `sync.mjs` reads the workloads, namespaces and hosts that the new elements claim from the k8s YAML, including `k8s/platform`, `k8s/monitoring` and `k8s/flux-system`. `check` exits 0 on the completed model. On a scratch copy, three breaks each make `check` exit 1, and each is recorded by a drill: renaming a claimed workload (a HelmRelease or Flux controller included), changing a claimed host, and changing a claimed namespace. The unmodified copy exits 0.
   5. In `docs/DIAGRAM_CONVENTIONS.md`, the Physical row names the deployment views as built and no longer says the monitoring stack is excluded. The Scenarios row describes the scenarios as built, including the internal steps of the activity-log and delivery scenarios. Searching that file for "excluded, as in `production-host.mmd`" finds nothing.
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — `[...]` label rule red on the real defect and fixed with one title per instance pair; participant and workload-instance rules; spec kinds; `production` narrowed; MODEL override and drills D17 to D19 (wave 1)
+- [ ] 02-02-PLAN.md — HelmRelease reader with the monitoring stack, cert-manager and the `monitoring` view; Schema Registry, init job, management port, backup flow and notes in `process` and `data`; drills D20, D21 (wave 2)
+- [ ] 02-03-PLAN.md — Flux, ClusterIssuer and hosts readers with the `delivery` view, the issuers and the inbound path in `production`; drills D22 to D24 (wave 3)
+- [ ] 02-04-PLAN.md — signup, error 401/403/409 and activity-log scenarios with cited steps; one live measurement of the 401 path's SQL (wave 2)
+- [ ] 02-05-PLAN.md — push-to-image, image-to-rollout, inbound-packet-path, ingress-to-pod and nightly-backup scenarios; STD-01 standard amendment and the phase gate (wave 4)
 **Planning notes**: Build elements and their checks first and scenarios after, because the scenarios use the elements. Write each description fresh, in one sentence, with no runbook text pasted in (Pitfall 11). The Phase 4 scan catches anything that slips through. Before SCEN-05 is planned, run the render spike in Open Question 5. Put metadata on elements, not relationships: whether LikeC4 1.60 supports metadata on relationships is unverified.
 
 ### Phase 3: Build and Serve on a Staging Certificate
