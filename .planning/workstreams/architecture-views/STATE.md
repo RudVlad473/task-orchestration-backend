@@ -5,16 +5,16 @@ milestone_name: Architecture Views
 current_phase: 02
 current_phase_name: Model Completion
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-10-28T13:24:18.382Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-10-28T13:37:03.505Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 execution started
-state_head: 0d177d68e9a2a6f6febc236e8cf6a82180f65a3b
+state_head: 518eb75705cf54e939ef04d3ec82cc6ac9514e5a
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -30,7 +30,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 ## Current Position
 
 Phase: 02 (Model Completion) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-10-28 — Phase 02 execution started
 
@@ -63,6 +63,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 01 P03 | 40min | 3 tasks | 10 files |
 | Phase 02 P01 | n/a | 3 tasks | 8 files |
 | Phase 02 P02 | not measured | 3 tasks | 9 files |
+| Phase 02 P03 | not measured | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,7 @@ Recent decisions affecting current work:
 - [Phase 01]: K8S_DIRS guard exits 4 for any of six missing k8s trees (A3)
 - [Phase 02]: production include uses per-namespace .** plus explicit kube-system: the .* form drew relationship-less instances and silenced drill D13
 - [Phase 02]: 02-02: encryption in the backup flow is the label of the edge to the bucket, not its own node
+- [Phase 02]: Flux controllers: read the single file gotk-components.yaml, not the directory, so a rename is not masked by the patch file
 
 ### Pending Todos
 
@@ -108,6 +110,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T13:24:18.259Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-10-28T13:36:58.021Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None

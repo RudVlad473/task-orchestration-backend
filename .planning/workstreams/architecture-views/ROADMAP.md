@@ -62,7 +62,7 @@ Plans:
   4. `sync.mjs` reads the workloads, namespaces and hosts that the new elements claim from the k8s YAML, including `k8s/platform`, `k8s/monitoring` and `k8s/flux-system`. `check` exits 0 on the completed model. On a scratch copy, three breaks each make `check` exit 1, and each is recorded by a drill: renaming a claimed workload (a HelmRelease or Flux controller included), changing a claimed host, and changing a claimed namespace. The unmodified copy exits 0.
   5. In `docs/DIAGRAM_CONVENTIONS.md`, the Physical row names the deployment views as built and no longer says the monitoring stack is excluded. The Scenarios row describes the scenarios as built, including the internal steps of the activity-log and delivery scenarios. Searching that file for "excluded, as in `production-host.mmd`" finds nothing.
 
-**Plans**: 2/5 plans executed
+**Plans**: 3/5 plans executed
 
 Plans:
 **Wave 1**
@@ -72,7 +72,7 @@ Plans:
 - [x] 02-02-PLAN.md — HelmRelease reader with the monitoring stack, cert-manager and the `monitoring` view; Schema Registry, init job, management port, backup flow and notes in `process` and `data`; drills D20, D21 (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 02-03-PLAN.md — Flux, ClusterIssuer and hosts readers with the `delivery` view, the issuers and the inbound path in `production`; drills D22 to D24 (wave 3)
+- [x] 02-03-PLAN.md — Flux, ClusterIssuer and hosts readers with the `delivery` view, the issuers and the inbound path in `production`; drills D22 to D24 (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 02-04-PLAN.md — signup, error 401/403/409 and activity-log scenarios with cited steps; one live measurement of the 401 path's SQL, stopping for the user's decision if it contradicts criterion 3 (wave 4, after 02-03)
@@ -163,6 +163,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
-| 2. Model Completion | 2/5 | In Progress | - |
+| 2. Model Completion | 3/5 | In Progress | - |
 | 3. Build and Serve on a Staging Certificate | 0/TBD | Not started | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |

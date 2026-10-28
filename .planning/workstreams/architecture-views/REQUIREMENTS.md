@@ -10,9 +10,9 @@ Research: `.planning/workstreams/architecture-views/research/SUMMARY.md`. Phase 
 ### Physical view (PHYS)
 
 - [x] **PHYS-01**: The Physical view places Traefik in `kube-system` (not the nonexistent `edge` namespace) and every namespace the manifests define exists in the model.
-- [ ] **PHYS-02**: A delivery view shows GitHub, the CI runner, Docker Hub and Flux, and how an image reaches the cluster.
+- [x] **PHYS-02**: A delivery view shows GitHub, the CI runner, Docker Hub and Flux, and how an image reaches the cluster.
 - [x] **PHYS-03**: A monitoring view shows the monitoring nodes and what they scrape.
-- [ ] **PHYS-04**: The Physical view shows cert-manager, its issuers and the edge routing, with the host filter as an external element.
+- [x] **PHYS-04**: The Physical view shows cert-manager, its issuers and the edge routing, with the host filter as an external element.
 
 ### Process and logical views (PROC, LOGI)
 
@@ -34,7 +34,7 @@ Research: `.planning/workstreams/architecture-views/research/SUMMARY.md`. Phase 
 
 Every gate is proven red on a deliberate break, then green, before it counts.
 
-- [ ] **GATE-01**: `sync.mjs` reads the k8s yaml facts the new elements claim (namespaces, workloads, hosts) and fails on drift.
+- [x] **GATE-01**: `sync.mjs` reads the k8s yaml facts the new elements claim (namespaces, workloads, hosts) and fails on drift.
 - [x] **GATE-02**: An unknown metadata key fails the check.
 - [x] **GATE-03**: A view-membership check catches an element that silently vanishes from its view (an instance with no relationship).
 - [x] **GATE-04**: A namespace and placement check covers `k8s/platform`, not only `k8s/base` and `k8s/data`.
@@ -79,9 +79,9 @@ Populated by the roadmapper.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | PHYS-01 | Phase 1 | Complete |
-| PHYS-02 | Phase 2 | Pending |
+| PHYS-02 | Phase 2 | Complete |
 | PHYS-03 | Phase 2 | Complete |
-| PHYS-04 | Phase 2 | Pending |
+| PHYS-04 | Phase 2 | Complete |
 | PROC-01 | Phase 2 | Complete |
 | LOGI-01 | Phase 2 | Complete |
 | SCEN-01 | Phase 2 | Pending |
@@ -92,7 +92,7 @@ Populated by the roadmapper.
 | SCEN-06 | Phase 2 | Pending |
 | SCEN-07 | Phase 2 | Pending |
 | SCEN-08 | Phase 3 | Pending |
-| GATE-01 | Phase 2 | Pending |
+| GATE-01 | Phase 2 | Complete |
 | GATE-02 | Phase 1 | Complete |
 | GATE-03 | Phase 1 | Complete |
 | GATE-04 | Phase 1 | Complete |
