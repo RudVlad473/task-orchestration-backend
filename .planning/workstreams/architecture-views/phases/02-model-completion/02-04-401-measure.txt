@@ -1,0 +1,42 @@
+02-04 Task 2: what SQL does a cookie-less request to a protected route issue?
+
+Checked at (UTC): 2026-10-28T13:41Z (host clock showed 14:41 +01:00)
+
+Method planned: bring up this repo's compose postgres and redpanda, run the app on the host
+(docs/LOCAL_DEV.md "Inspecting live output"), turn on log_statement = 'all', send two requests with
+no session cookie to http://localhost:8080/api/boards (A: Accept: application/json; B: no Accept
+header), and record per request the status line, Set-Cookie yes or no, the spring_session row
+count before and after, and the statements Postgres logged.
+
+Precondition result:
+- docker info: exit 0.
+- Port 8080: no listener.
+- Port 5433: a listener on 127.0.0.1:5433 exists and it is NOT this repo's compose Postgres.
+  `docker ps` shows the container `datastore-postgres` (postgres:17, up 3 hours, healthy), whose
+  compose project is `datastore` with working directory
+  /home/andre/dev/custom-ai-skills/shared/datastore. `docker compose ps --all` in this repo lists
+  no service.
+- The plan's precondition says: if 5433 is held by something other than this repo's compose
+  Postgres, record `VERDICT: not measured` with that reason and do not run the steps, and never
+  stop a service this task did not start. Starting this repo's postgres would collide on the same
+  host port, and the only way to free it is to stop the user's datastore. Nothing was started,
+  changed or stopped. No statement logging was switched on, no request was sent, and no Java was
+  changed.
+
+Not observed, therefore unknown: whether a request with no session cookie creates a spring_session
+row, receives a Set-Cookie header, or issues any SQL, for a JSON client or for a default-Accept
+client.
+
+Why the claim could be false (unverified, from reading only): the main chain uses
+SessionCreationPolicy.IF_REQUIRED with CSRF disabled and no request-cache setting
+(SecurityConfiguration.java:122-128 and :87), and Spring Security's default request cache saves an
+unauthenticated request in a new session unless the client asks for JSON (training knowledge, not
+checked against the Spring Security source here). The entry point itself writes no session and no
+SQL: ProblemDetailAuthenticationEntryPoint.java:56-88 only increments a counter, logs and writes
+the body.
+
+To measure later: free port 5433 (the user stops the datastore) or run the app against a Postgres
+on another port, then re-run this task from its method; the VERDICT line below is replaced by the
+measured one.
+
+VERDICT: not measured port 5433 is held by the datastore-postgres container of another compose project, which this task must not stop
