@@ -21,7 +21,7 @@ model {
     description 'GitOps controllers in flux-system that apply the manifests, scan the registry for new image tags and commit the tag bump back to main.'
     metadata {
       workload [
-        'Deployment/source-controller',
+        'Deployment/source-controllerx',
         'Deployment/kustomize-controller',
         'Deployment/helm-controller',
         'Deployment/notification-controller',
