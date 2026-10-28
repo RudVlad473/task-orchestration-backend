@@ -1,4 +1,26 @@
 drill	title	kind	file	value
+baseline	untouched scratch copy	none	-	-
+D1	a new migration adds table attachments	write	src/main/resources/db/migration/V10__add_attachments.sql	CREATE TABLE attachments (id VARCHAR(20) PRIMARY KEY);\n
+D2	a new Kafka topic constant	sed	src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java	s|^}|    public static final String AUDIT = "kanban.audit";\n}|
+D3	a new k8s Deployment named worker	write	k8s/base/worker.yaml	apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: worker\n
+D4	a manifest the model cites as its source is deleted	delete	k8s/data/postgres/postgres.yaml	-
+D5 (negative control)	a controller class is renamed	mv	src/main/java/com/vrudenko/kanban_board/controller/BoardController.java	src/main/java/com/vrudenko/kanban_board/controller/RenamedController.java
+D6	a view loses its viewpoint tag	sed	model/views.c4	/^    #process$/d
+D6b	a view carries two viewpoint tags	sed	model/views.c4	s|^    #process$|    #process\n    #logical|
+D7	a migration adds a foreign key by ALTER TABLE	write	src/main/resources/db/migration/V11__add_owner.sql	ALTER TABLE subtasks ADD COLUMN owner_id VARCHAR(20) REFERENCES users (id);\n
+D7b	a migration drops a named foreign key	write	src/main/resources/db/migration/V11__drop_fk.sql	ALTER TABLE boards DROP CONSTRAINT fk_boards_user;\n
+D7c	a migration drops a foreign-key column	write	src/main/resources/db/migration/V11__drop_col.sql	ALTER TABLE tasks DROP COLUMN column_id;\n
+D8	a new cross-package import	sed	src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java	1a import com.vrudenko.kanban_board.mapper.Unused;
+D8b	a two-package cycle appears	sed	src/main/java/com/vrudenko/kanban_board/exception/AppAccessDeniedException.java	1a import com.vrudenko.kanban_board.handler.Unused;
+D9	the only development view is retagged	sed	model/views.c4	s|^    #development$|    #logical|
+D10	a namespace node is deleted from the model (cert-manager)	sed	model/deployment.c4	/^      cert-manager = namespace .cert-manager. {$/,/^      }$/d
+D10b	a manifest namespace is misspelled (kube-sytem)	sed	k8s/platform/traefik/helmchartconfig.yaml	s|namespace: kube-system|namespace: kube-sytem|
+D11	an instance is moved into the wrong namespace (backup to kanban-prod)	sed	model/deployment.c4	/^        instanceOf backup$/d
+D11	an instance is moved into the wrong namespace (backup to kanban-prod)	sed	model/deployment.c4	s|^\(      prod = namespace .*{\)$|\1\n        instanceOf backup|
+D15	a new k8s Deployment under k8s/platform	write	k8s/platform/worker.yaml	apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: worker\n
+D16	a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)	certmgr_into	-	flux-system
+D16b (control)	the same element drawn in its targetNamespace (cert-manager)	certmgr_into	-	cert-manager
+D12	a metadata key is misspelled on an element (sourc)	sed	model/model.c4	s|^      source 'k8s/platform/traefik'|      sourc 'k8s/platform/traefik'|
 D12b	unknown metadata keys on a deployment node, an instance and a relationship	sed	model/deployment.c4	s|^\(      kube-system = namespace .*{\)$|\1\n        metadata { nodekey 'x' }|
 D12b	unknown metadata keys on a deployment node, an instance and a relationship	sed	model/deployment.c4	s|^        instanceOf traefik$|        instanceOf traefik {\n          metadata { instkey 'y' }\n        }|
 D12b	unknown metadata keys on a deployment node, an instance and a relationship	sed	model/model.c4	s|^  client -\[sync\]-> traefik 'HTTPS :443'$|  client -[sync]-> traefik 'HTTPS :443' {\n    metadata { relkey 'z' }\n  }|

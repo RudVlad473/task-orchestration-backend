@@ -263,8 +263,9 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
   is checked, and each step is tied to a line, or marked authored, in the evidence file.
 - **Drills:** `docs/architecture/drill.fish` runs on a scratch copy (`--model DIR`), never on the
   real model; the `SYNC` and `MODEL` environment variables point it at another script and another
-  model folder, which is how a drill is recorded against the code that preceded its rule. Its
-  sections are the baseline, the drills that introduce a break and are caught (exit 1 for drift,
+  model folder, which is how a drill is recorded against the code that preceded its rule. The
+  drills are the rows of `docs/architecture/drills.tsv`, one row per edit, run in row order by
+  `run_drills`. Its sections are the baseline, the drills that introduce a break and are caught (exit 1 for drift,
   exit 4 for a fact source in D14, D14b and D14c), and the controls D5, D13b, D16b and D17b, which
   stay clean. D6 to D9 were each seen not caught before their rule existed
   (`261027-if9-T1-red.txt` to `261027-if9-T4-red.txt`). Each drill from D10 on was recorded not

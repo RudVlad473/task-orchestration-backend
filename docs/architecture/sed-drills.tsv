@@ -1,9 +1,0 @@
-id	title	file	sed
-D2	a new Kafka topic constant	src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java	s|^}|    public static final String AUDIT = "kanban.audit";\n}|
-D6	a view loses its viewpoint tag	model/views.c4	/^    #process$/d
-D6b	a view carries two viewpoint tags	model/views.c4	s|^    #process$|    #process\n    #logical|
-D8	a new cross-package import	src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java	1a import com.vrudenko.kanban_board.mapper.Unused;
-D9	the only development view is retagged	model/views.c4	s|^    #development$|    #logical|
-D10	a namespace node is deleted from the model (cert-manager)	model/deployment.c4	/^      cert-manager = namespace .cert-manager. {$/,/^      }$/d
-D10b	a manifest namespace is misspelled (kube-sytem)	k8s/platform/traefik/helmchartconfig.yaml	s|namespace: kube-system|namespace: kube-sytem|
-D12	a metadata key is misspelled on an element (sourc)	model/model.c4	s|^      source 'k8s/platform/traefik'|      sourc 'k8s/platform/traefik'|

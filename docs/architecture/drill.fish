@@ -5,10 +5,9 @@
 # D13b, D16b and D17b, controls that must stay clean. A drill on a k8s fact source is caught with exit 4.
 # The real model is never edited: a drill that changes a view changes the scratch copy.
 #
-# Drills from D12b on are rows of drills.tsv, run by run_drills in row order after the drills before
-# them. Before D12b, a drill that is one sed edit on one file is a row of sed-drills.tsv, run by a
-# sed_drills call at its place below, and the others are written out in full. Either way the drills
-# run in the order drill-output.txt records.
+# The drills are the rows of drills.tsv, run by run_drills in row order, so the rows keep the order
+# drill-output.txt records. A drill that makes several edits is several consecutive rows with the
+# same drill and title, and the comment on run_drills lists the kinds.
 #
 # SYNC names another sync.mjs to run. Running the harness once with the script from before a
 # rule existed and once with the current one records the drill as not caught and then caught.
@@ -77,7 +76,9 @@ end
 # - sed: sed --sandbox edits file in place with value as the expression, so the e, r and w commands are refused
 # - write: printf writes value to file as its format, so \n is a newline and a percent sign is written %%
 # - delete: trash-put removes file, which may be a file or a directory
-# - lonely_into, labeldrill: the helper of that name, with value as its one argument
+# - mv: moves file to the path in value
+# - none: no edit
+# - certmgr_into, lonely_into, labeldrill: the helper of that name, with value as its one argument
 #
 # Each field reaches its command as one argument from a variable that fish never parses again, so
 # quotes, dollar signs and backslashes arrive as written. The rows are read whole before the loop,
@@ -110,12 +111,17 @@ function run_drills --inherit-variable scratch
             fresh
         end
         switch $f[3]
+            case none
             case sed
                 sed -i --sandbox -e $f[5] $scratch/$f[4]
             case write
                 printf $f[5] >$scratch/$f[4]
             case delete
                 trash-put $scratch/$f[4]
+            case mv
+                mv $scratch/$f[4] $scratch/$f[5]
+            case certmgr_into
+                certmgr_into $f[5]
             case lonely_into
                 lonely_into $f[5]
             case labeldrill
@@ -127,101 +133,6 @@ function run_drills --inherit-variable scratch
     end
     run
 end
-
-# Runs the named drills from their rows in sed-drills.tsv, whose columns are id, title, the file
-# to edit relative to the scratch root, and the sed expression. The expression is passed to sed
-# as one argument that fish never parses again, so its quotes, dollar signs and backslashes reach sed as written.
-function sed_drills --inherit-variable here --inherit-variable scratch
-    for id in $argv
-        set row (string match -- "$id"\t'*' <$here/sed-drills.tsv)
-        or begin
-            echo "sed_drills: no row for $id in sed-drills.tsv" >&2
-            exit 2
-        end
-        set f (string split -m3 \t -- $row)
-        echo "== $id: $f[2]"
-        fresh
-        sed -i --sandbox -e $f[4] $scratch/$f[3]
-        run
-    end
-end
-
-echo "== baseline: untouched scratch copy"
-fresh
-run
-
-echo "== D1: a new migration adds table attachments"
-fresh
-printf 'CREATE TABLE attachments (id VARCHAR(20) PRIMARY KEY);\n' >$scratch/src/main/resources/db/migration/V10__add_attachments.sql
-run
-
-sed_drills D2
-
-echo "== D3: a new k8s Deployment named worker"
-fresh
-printf 'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: worker\n' >$scratch/k8s/base/worker.yaml
-run
-
-echo "== D4: a manifest the model cites as its source is deleted"
-fresh
-trash-put $scratch/k8s/data/postgres/postgres.yaml
-run
-
-echo "== D5 (negative control): a controller class is renamed"
-fresh
-set c (find $scratch/src/main/java -path '*controller*' -name '*.java' | head -1)
-mv $c (dirname $c)/RenamedController.java
-run
-
-sed_drills D6 D6b
-
-echo "== D7: a migration adds a foreign key by ALTER TABLE"
-fresh
-printf 'ALTER TABLE subtasks ADD COLUMN owner_id VARCHAR(20) REFERENCES users (id);\n' >$scratch/src/main/resources/db/migration/V11__add_owner.sql
-run
-
-echo "== D7b: a migration drops a named foreign key"
-fresh
-printf 'ALTER TABLE boards DROP CONSTRAINT fk_boards_user;\n' >$scratch/src/main/resources/db/migration/V11__drop_fk.sql
-run
-
-echo "== D7c: a migration drops a foreign-key column"
-fresh
-printf 'ALTER TABLE tasks DROP COLUMN column_id;\n' >$scratch/src/main/resources/db/migration/V11__drop_col.sql
-run
-
-sed_drills D8
-
-echo "== D8b: a two-package cycle appears"
-fresh
-set j (find $scratch/src/main/java/com/vrudenko/kanban_board/exception -name '*.java' | sort | head -1)
-sed -i '1a import com.vrudenko.kanban_board.handler.Unused;' $j
-run
-
-sed_drills D9 D10 D10b
-
-echo "== D11: an instance is moved into the wrong namespace (backup to kanban-prod)"
-fresh
-sed -i '/^        instanceOf backup$/d' $scratch/model/deployment.c4
-sed -i 's|^\(      prod = namespace .*{\)$|\1\n        instanceOf backup|' $scratch/model/deployment.c4
-run
-
-echo "== D15: a new k8s Deployment under k8s/platform"
-fresh
-printf 'apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: worker\n' >$scratch/k8s/platform/worker.yaml
-run
-
-echo "== D16: a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)"
-fresh
-certmgr_into flux-system
-run
-
-echo "== D16b (control): the same element drawn in its targetNamespace (cert-manager)"
-fresh
-certmgr_into cert-manager
-run
-
-sed_drills D12
 
 run_drills $here/drills.tsv
 
