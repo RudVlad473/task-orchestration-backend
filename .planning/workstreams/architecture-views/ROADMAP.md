@@ -94,7 +94,7 @@ Plans:
   4. `scripts/verify-k8s-invariants.py --no-provisional` is green in CI for the new manifests. The memory value carries a MEASURED comment from a ladder run on the VPS (I4). I5 applies to the site overlay, failing with the setter marker removed (red) and passing once it is restored (green). The route has the I10 shape, and the site objects have one owner under I11: the live IngressRoute's `kustomize.toolkit.fluxcd.io/name` label names a single Kustomization.
   5. The model contains the site as built: a namespace node for it, the site instance with a `traefik ->` edge, and a publish-the-site scenario whose steps cite the workflow and manifest lines. The Phase 1 and Phase 2 checks are green and cover the site's workload.
 
-**Plans**: 4/7 plans executed
+**Plans**: 5/7 plans executed
 
 Plans:
 **Wave 1**
@@ -110,7 +110,7 @@ Plans:
 - [x] 03-04-PLAN.md — one atomic commit: namespace, base and overlay manifests, Flux wiring, model element, host, namespace node and edge, Maintenance Note; I5 red then green; sync red then green
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 03-05-PLAN.md — drills D25 to D27 as sed rows of docs/architecture/drills.tsv (quick 261028-s6i's end state; any other harness state stops the plan), each caught, every earlier drill's exit code unchanged, drill-output.txt regenerated
+- [x] 03-05-PLAN.md — drills D25 to D27 as sed rows of docs/architecture/drills.tsv (quick 261028-s6i's end state; any other harness state stops the plan), each caught, every earlier drill's exit code unchanged, drill-output.txt regenerated
 
 **Wave 6** *(blocked on Wave 5 completion)*
 - [ ] 03-06-PLAN.md — blocking-human decisions Q5 and Q6; baseline probes, then push; staging certificate, TLS, marker, other hosts, I11 label, bump with no site run, CI green; static-only, cold deep link and missing-asset checks on the live host
@@ -187,5 +187,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
 | 2. Model Completion | 5/5 | Complete    | 2026-10-28 |
-| 3. Build and Serve on a Staging Certificate | 4/7 | In Progress | - |
+| 3. Build and Serve on a Staging Certificate | 5/7 | In Progress | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |
