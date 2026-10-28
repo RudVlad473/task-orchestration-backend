@@ -65,11 +65,21 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
+**Wave 1**
 - [ ] 02-01-PLAN.md — `[...]` label rule red on the real defect and fixed with one title per instance pair; participant and workload-instance rules; spec kinds; `production` narrowed; MODEL override and drills D17 to D19 (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 02-02-PLAN.md — HelmRelease reader with the monitoring stack, cert-manager and the `monitoring` view; Schema Registry, init job, management port, backup flow and notes in `process` and `data`; drills D20, D21 (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 02-03-PLAN.md — Flux, ClusterIssuer and hosts readers with the `delivery` view, the issuers and the inbound path in `production`; drills D22 to D24 (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
 - [ ] 02-04-PLAN.md — signup, error 401/403/409 and activity-log scenarios with cited steps; one live measurement of the 401 path's SQL, stopping for the user's decision if it contradicts criterion 3 (wave 4, after 02-03)
+
+**Wave 5** *(blocked on Wave 4 completion)*
 - [ ] 02-05-PLAN.md — push-to-image, image-to-rollout, inbound-packet-path, ingress-to-pod and nightly-backup scenarios; STD-01 standard amendment and the phase gate (wave 5)
+
 **Planning notes**: Build elements and their checks first and scenarios after, because the scenarios use the elements. Write each description fresh, in one sentence, with no runbook text pasted in (Pitfall 11). The Phase 4 scan catches anything that slips through. Before SCEN-05 is planned, run the render spike in Open Question 5. Put metadata on elements, not relationships: whether LikeC4 1.60 supports metadata on relationships is unverified.
 
 ### Phase 3: Build and Serve on a Staging Certificate
