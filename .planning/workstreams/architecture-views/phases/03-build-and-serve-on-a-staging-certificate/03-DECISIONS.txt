@@ -4,3 +4,5 @@ DECISION Q2: 1 Set serviceType ClusterIP on both ClusterIssuers; user reply: "Q2
 DECISION Q3: 1 Run the memory ladder on the VPS in a scratch namespace; user reply: "Q3 1"
 DECISION Q4: 1 Passive; user reply: "go on with recommended"
 DECISION Q7: 1 Restrict production and staging to main, the executor applies it; user reply: "Q7 1"
+DECISION Q5: 1 Push now; user reply: "Q5 1 Q6 1"
+DECISION Q6: 1 Authorize plan 07's closing model-only push; user reply: "Q5 1 Q6 1"
