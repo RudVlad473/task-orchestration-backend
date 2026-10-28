@@ -794,6 +794,28 @@ uses cert-manager's own solver Ingress and needs neither route. Live ownership c
 `k3s kubectl get ingressroute -n monitoring grafana -o jsonpath='{.metadata.labels}'` must show
 `kustomize.toolkit.fluxcd.io/name` `monitoring`.
 
+### Architecture site (2026-10-28)
+
+The workload is the published static site image (`rudenkovladimir/kanban-board-backend-architecture`,
+nginx-unprivileged serving 22 files from `/srv/site`) in a scratch pod `site-ladder` in namespace
+`ladder-scratch`, with the real Deployment's security settings (user 101, read-only root, all
+capabilities dropped, `/tmp` emptyDir) and a `/healthz` readiness probe. Each rung ran one cycle from
+the VPS host straight at the pod, never through Traefik: every file once, the `assets/main-*.js` file
+200 times with `Accept-Encoding: gzip`, 10 concurrent cold loads of every file (442 requests in all),
+then 20s of settle. A rung fails on a restart, a termination reason, a new OOM line in `dmesg`, a
+non-zero `oom_kill` in the container's `memory.events`, a response other than 200, or a pod that is not
+Ready. Measured on the VPS itself (4 vCPU, 7945Mi), so nginx starts the same four workers it will run.
+The re-verify was a fresh pod with the adopted request and limit through the same cycle, clean. The
+scratch namespace was deleted and answered NotFound afterwards.
+
+| Component | Rungs (✓/✗) | Failure signal | Adopted |
+|---|---|---|---|
+| architecture-site (nginx) | 64Mi✓ → 32Mi✓ → 16Mi✓ → 8Mi✗ | OOMKilled with 1 restart at 8Mi; `anon` stayed about 4MiB (4040-4064KiB) with `shmem` 4KiB at every passing rung | **16Mi/32Mi** |
+
+The adoption follows the Traefik row's rule (request at the lowest passing rung, limit at twice it).
+The raw rung lines are in the phase 3 record `03-03-ladder.txt` under
+`.planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/`.
+
 ## D-08 gate — Plan 13-10 (2026-09-29)
 
 **Verdict: FAIL — D-04 (Compose deletion) is NOT cleared.** Evaluated 2026-09-29T09:17Z to

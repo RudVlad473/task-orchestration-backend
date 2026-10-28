@@ -1,0 +1,17 @@
+# Plan 03-03 Task 1: memory ladder for the architecture site image
+DATE: 2026-10-28
+HOST: the VPS (DECISION Q3 1), scratch namespace ladder-scratch, pod site-ladder, one pod at a time
+TAG: main-1-5d44dac
+NODE: cpus=4 memory_total_mib=7945
+DMESG_OOM_LINES_BEFORE: 24
+CYCLE: every file once; assets/main-*.js 200 times with Accept-Encoding gzip; 10 concurrent cold loads of every file; 20s settle (442 requests per cycle, 22 files)
+PASS_RULE: restarts=0, no termination reason, no new dmesg OOM line, memory.events oom_kill=0, every response 200, pod Ready
+NOTE: the 8Mi pod was OOM-killed while starting its cycle, so its file list could not be read and the 200 gzip requests alone ran (108 of them not 200); its cgroup counters were gone with the container
+RUNG 64Mi restarts=0 lastState=none oom_dmesg=0 anon_kib=4064 shmem_kib=4 ready=yes result=pass
+RUNG 32Mi restarts=0 lastState=none oom_dmesg=0 anon_kib=4060 shmem_kib=4 ready=yes result=pass
+RUNG 16Mi restarts=0 lastState=none oom_dmesg=0 anon_kib=4040 shmem_kib=4 ready=yes result=pass
+RUNG 8Mi restarts=1 lastState=OOMKilled oom_dmesg=24 anon_kib=unreadable shmem_kib=unreadable ready=yes result=fail
+ADOPTED: requests.memory=16Mi limits.memory=32Mi
+REVERIFY limits=32Mi result=pass
+REVERIFY_DETAIL request=16Mi limit=32Mi restarts=0 lastState=none oom_dmesg=0 cgroup_oom_kill=0 anon_kib=4040 shmem_kib=4 non200=0 ready=yes
+CLEANUP: namespace ladder-scratch NotFound
