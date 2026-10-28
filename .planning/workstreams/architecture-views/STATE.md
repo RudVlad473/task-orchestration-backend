@@ -5,17 +5,16 @@ milestone_name: Architecture Views
 current_phase: 3
 current_phase_name: Build and Serve on a Staging Certificate
 status: planning
-stopped_at: Phase 02 complete, ready to plan Phase 3
-last_updated: "2026-10-28T17:55:18.837Z"
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-10-28T20:21:54.026Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: 16bf73e958a6d2e06e2532f99fcd00db6fd38158
+state_head: adfa0647507e907d6a046b820cfc4d93576e30d7
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 50
+  total_plans: 15
+  completed_plans: 9
 ---
 
 # Project State
@@ -68,6 +67,7 @@ Progress: [█████░░░░░] 50%
 | Phase 02 P03 | not measured | 3 tasks | 9 files |
 | Phase 02 P04 | not measured | 3 tasks | 3 files |
 | Phase 02 P05 | not measured | 3 tasks | 5 files |
+| Phase 03 P01 | 8 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -89,6 +89,7 @@ Recent decisions affecting current work:
 - [Phase 02]: Flux controllers: read the single file gotk-components.yaml, not the directory, so a rename is not masked by the patch file
 - [Phase 02]: 02-04: error-401 follows the not-measured branch (port 5433 held by another project Postgres); no SQL step, claim stated as authored and unmeasured
 - [Phase 02]: Hook self-test scratch repos copy .github/workflows and infra/vm; test_08's injected element is placed and drawn instead of relaxing the workload-instance rule
+- [Phase 03]: I12 scope statement lives in its docstring entry: the comment lint caps prose before the first Known holes marker at 8 lines
 
 ### Pending Todos
 
@@ -119,6 +120,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T14:13:38.873Z
-Stopped at: Phase 02 complete, ready to plan Phase 3
+Last session: 2026-10-28T20:21:53.697Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
