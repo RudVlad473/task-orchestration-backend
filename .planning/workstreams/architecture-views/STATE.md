@@ -5,16 +5,16 @@ milestone_name: Architecture Views
 current_phase: 3
 current_phase_name: Build and Serve on a Staging Certificate
 status: planning
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-10-28T20:21:54.026Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-10-28T20:55:15.110Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: adfa0647507e907d6a046b820cfc4d93576e30d7
+state_head: 8b56cfe1428f2d8b279d36ea3e08945abfa8151e
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -68,6 +68,7 @@ Progress: [█████░░░░░] 50%
 | Phase 02 P04 | not measured | 3 tasks | 3 files |
 | Phase 02 P05 | not measured | 3 tasks | 5 files |
 | Phase 03 P01 | 8 min | 2 tasks | 9 files |
+| Phase 03 P02 | 35 min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-04: error-401 follows the not-measured branch (port 5433 held by another project Postgres); no SQL step, claim stated as authored and unmeasured
 - [Phase 02]: Hook self-test scratch repos copy .github/workflows and infra/vm; test_08's injected element is placed and drawn instead of relaxing the workload-instance rule
 - [Phase 03]: I12 scope statement lives in its docstring entry: the comment lint caps prose before the first Known holes marker at 8 lines
+- [Phase 03]: 03-02: the green proof restores the model line and adds a comment, because a pure revert leaves the pull request's net diff empty and starts no path-filtered run
+- [Phase 03]: 03-02: production and staging deploy only from main (Q7 1); push refspecs under zsh need ${SHA}:refs/heads/main, since $SHA:r is a modifier
 
 ### Pending Todos
 
@@ -120,6 +123,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T20:21:53.697Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-10-28T20:55:14.749Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

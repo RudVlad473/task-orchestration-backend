@@ -45,7 +45,7 @@ Every gate is proven red on a deliberate break, then green, before it counts.
 
 ### Publish (PUB)
 
-- [ ] **PUB-01**: CI builds the static site (`likec4 build`) into an image pushed to its own Docker Hub repo, rebuilt only on source-path changes.
+- [x] **PUB-01**: CI builds the static site (`likec4 build`) into an image pushed to its own Docker Hub repo, rebuilt only on source-path changes.
 - [ ] **PUB-02**: k8s manifests and Flux wiring serve the image at the DuckDNS architecture hostname. Only static build output is exposed, never `likec4 start`.
 - [ ] **PUB-03**: The certificate is issued by the staging issuer first, then flipped to production.
 - [ ] **PUB-04**: An uptime probe covers the site.
@@ -97,7 +97,7 @@ Populated by the roadmapper.
 | GATE-03 | Phase 1 | Complete |
 | GATE-04 | Phase 1 | Complete |
 | STD-01 | Phase 2 | Complete |
-| PUB-01 | Phase 3 | Pending |
+| PUB-01 | Phase 3 | Complete |
 | PUB-02 | Phase 3 | Pending |
 | PUB-03 | Phase 4 | Pending |
 | PUB-04 | Phase 4 | Pending |
