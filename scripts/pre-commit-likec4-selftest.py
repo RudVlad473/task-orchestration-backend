@@ -47,6 +47,9 @@ WORKER_MANIFEST = "k8s/base/selftest-worker.yaml"
 WORKER_YAML = "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: selftest-worker\n"
 CRONJOB = "k8s/data/postgres/backup-cronjob.yaml"
 TRAEFIK_CONFIG = "k8s/platform/traefik/helmchartconfig.yaml"
+# The model cites metadata sources outside the code folders (the delivery workflow, the host firewall script).
+# A scratch repo without them fails the check's source-file rule before the case under test runs.
+TRACKED_PATHS = ("src/main", "k8s", "docs/architecture", ".github/workflows", "infra/vm")
 MODEL = "docs/architecture/model/model.c4"
 VIEWS = "docs/architecture/model/views.c4"
 
@@ -147,7 +150,7 @@ def remove_tree(path):
 
 
 def tracked_files():
-    code, out = run([GIT, "ls-files", "-z", "--", "src/main", "k8s", "docs/architecture"], REPO_ROOT)
+    code, out = run([GIT, "ls-files", "-z", "--", *TRACKED_PATHS], REPO_ROOT)
     assert code == 0, "git ls-files failed in the real repo: " + out
     return [rel for rel in out.split("\0") if rel]
 
@@ -352,10 +355,15 @@ def test_07_topic_constant_with_model_topic_passes_the_check():
 def test_08_deployment_with_modelled_workload_passes_the_check():
     case_dir, repo = make_repo("deployment-modelled", True)
     add_worker_manifest(repo)
+    # The check also requires the instance to sit where the manifest puts it and to be drawn in a view. A view
+    # draws an instance only when it has a relationship, and the production view includes the prod namespace.
+    replace_in(repo, WORKER_MANIFEST, "name: selftest-worker\n", "name: selftest-worker\n  namespace: kanban-prod\n")
     write_new(
         repo,
         "docs/architecture/model/selftest.c4",
-        "model {\n  selftest_worker = system 'Selftest worker' {\n    metadata {\n      workload 'Deployment/selftest-worker'\n    }\n  }\n}\n",
+        "model {\n  selftest_worker = system 'Selftest worker' {\n    metadata {\n      workload 'Deployment/selftest-worker'\n    }\n  }\n\n"
+        "  selftest_worker -> postgres 'selftest'\n}\n\n"
+        "deployment {\n  extend netcup.k3s.prod {\n    instanceOf selftest_worker\n  }\n}\n",
     )
     git(repo, "add", WORKER_MANIFEST, "docs/architecture/model/selftest.c4")
     before = head_of(repo)
