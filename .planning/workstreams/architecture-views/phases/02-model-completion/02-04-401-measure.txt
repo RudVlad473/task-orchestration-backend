@@ -134,6 +134,7 @@ WRITES: yes
 VERDICT: b a request with Accept: application/json gets a clean 401 (no SQL, no row, no cookie), but a default-Accept (*/*) request creates a spring_session row and a JSESSIONID Set-Cookie via Spring Security's default request cache
 
 === Follow-up (2026-10-28, quick task 261028-n5v): fixed in 17a94cb ===
+Superseded in part on 2026-10-28 (quick task 261028-opl): the post-fix absence of SQL that this note calls an inference was observed at 7bccf71 in the Post-fix re-measure section below (commit 2fbe8ff); the rest of this note stands as written.
 
 Commit 17a94cb sets a request cache that saves nothing on the main chain
 (SecurityConfiguration.java:129, `http.requestCache(cache -> cache.requestCache(new
