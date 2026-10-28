@@ -5,16 +5,16 @@ milestone_name: Architecture Views
 current_phase: 3
 current_phase_name: Build and Serve on a Staging Certificate
 status: planning
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-10-28T21:07:47.459Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-10-28T21:15:12.246Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: 68999af05afbac74fe1fb4d48be3951b7fa0ea91
+state_head: 8e531d020293d55a1a52c6be17708dca3afd3ede
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 15
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -70,6 +70,7 @@ Progress: [█████░░░░░] 50%
 | Phase 03 P01 | 8 min | 2 tasks | 9 files |
 | Phase 03 P02 | 35 min | 3 tasks | 3 files |
 | Phase 03 P03 | 70min | 2 tasks | 4 files |
+| Phase 03 P04 | 40min | 2 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-02: production and staging deploy only from main (Q7 1); push refspecs under zsh need ${SHA}:refs/heads/main, since $SHA:r is a modifier
 - [Phase 03]: 03-03: adopt requests.memory=16Mi limits.memory=32Mi for the architecture site (lowest passing rung 16Mi, 8Mi OOMKilled on the VPS)
 - [Phase 03]: 03-03: both ClusterIssuers set serviceType ClusterIP (Q2 1), applied live, live Certificates unchanged
+- [Phase 03]: 03-04: the production view includes netcup.k3s.architecture explicitly, because LikeC4 collapses a single-instance namespace into its parent
 
 ### Pending Todos
 
@@ -126,6 +128,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-28T21:07:47.153Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-10-28T21:15:11.922Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
