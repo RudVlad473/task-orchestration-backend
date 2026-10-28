@@ -11,13 +11,13 @@ Research: `.planning/workstreams/architecture-views/research/SUMMARY.md`. Phase 
 
 - [x] **PHYS-01**: The Physical view places Traefik in `kube-system` (not the nonexistent `edge` namespace) and every namespace the manifests define exists in the model.
 - [ ] **PHYS-02**: A delivery view shows GitHub, the CI runner, Docker Hub and Flux, and how an image reaches the cluster.
-- [ ] **PHYS-03**: A monitoring view shows the monitoring nodes and what they scrape.
+- [x] **PHYS-03**: A monitoring view shows the monitoring nodes and what they scrape.
 - [ ] **PHYS-04**: The Physical view shows cert-manager, its issuers and the edge routing, with the host filter as an external element.
 
 ### Process and logical views (PROC, LOGI)
 
-- [ ] **PROC-01**: The Process view shows Schema Registry with its init job and management port, and the backup flow.
-- [ ] **LOGI-01**: The Logical view carries the `activity_log` table and the Avro subjects as notes tied to their sources.
+- [x] **PROC-01**: The Process view shows Schema Registry with its init job and management port, and the backup flow.
+- [x] **LOGI-01**: The Logical view carries the `activity_log` table and the Avro subjects as notes tied to their sources.
 
 ### Scenarios (SCEN)
 
@@ -80,10 +80,10 @@ Populated by the roadmapper.
 |-------------|-------|--------|
 | PHYS-01 | Phase 1 | Complete |
 | PHYS-02 | Phase 2 | Pending |
-| PHYS-03 | Phase 2 | Pending |
+| PHYS-03 | Phase 2 | Complete |
 | PHYS-04 | Phase 2 | Pending |
-| PROC-01 | Phase 2 | Pending |
-| LOGI-01 | Phase 2 | Pending |
+| PROC-01 | Phase 2 | Complete |
+| LOGI-01 | Phase 2 | Complete |
 | SCEN-01 | Phase 2 | Pending |
 | SCEN-02 | Phase 2 | Pending |
 | SCEN-03 | Phase 2 | Pending |
