@@ -1,0 +1,59 @@
+GREEN: the same test run against the FIX
+
+HEAD: 178aff3 (git rev-parse --short HEAD), working tree holds the fix plus the Task 1 test (uncommitted)
+Direction checked: GREEN on the fixed code, the same test that was RED in 261028-m6k-red.txt
+
+`git diff --stat -- src/main` (the fix is the only src/main change):
+  src/main/java/com/vrudenko/kanban_board/security/SecurityConfiguration.java | 11 +++++++++++
+  1 file changed, 11 insertions(+)
+
+Command:
+  ./gradlew fastTest --tests 'com.vrudenko.kanban_board.security.AuthorizationGatingTest*' < /dev/null
+Exit code: 0
+
+Testsuite counts (AuthorizationGatingTest$NoSessionSweep):
+  tests="30" skipped="0" failures="0"
+
+PASS  GET /boards, Accept application/json
+PASS  GET /boards, Accept */*
+PASS  GET /boards, Accept text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+PASS  GET /boards, no Accept header
+PASS  POST /boards, Accept application/json
+PASS  POST /boards, Accept */*
+PASS  POST /boards, Accept text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+PASS  POST /boards, no Accept header
+
+Each of these asserts RefusalSideEffects[status=401, newSessionRows=0, setCookieNames=[]].
+
+Non-regression (Task 3), all run on the fixed working tree before the commit:
+
+1. ./gradlew fastTest --tests 'com.vrudenko.kanban_board.security.*'
+   exit 0. Every in-process security class (AuthenticationTest incl. SigninPersistence,
+   ConcurrentSessionCeiling, SessionFixation, Logout; AuthorizationGatingTest; InjectionAttemptTest;
+   SigninTimingEqualizationTest; ActuatorHealthE2ETest; ResetEndpointProfileGatingTest).
+   fastTest results dir afterwards: 36 files, tests=130 failures=0 errors=0 skipped=0.
+
+2. ./gradlew test --tests 'com.vrudenko.kanban_board.security.SessionCookieAttributesE2ETest'
+     --tests 'com.vrudenko.kanban_board.security.ConcurrentSigninCeilingE2ETest'
+     -x jacocoTestCoverageVerification
+   exit 0. test results dir: 4 files, tests=2 failures=0 errors=0 skipped=0 (the two realSocket
+   classes; cookie Max-Age/Secure/HttpOnly/SameSite contract and the concurrent-signin ceiling bound).
+
+3. git diff --quiet -- src/main/resources
+   exit 0. Neither server.servlet.session.cookie.max-age (600) nor spring.session.timeout (180m) moved.
+
+4. python3 scripts/verify-comments.py check -> "OK: 330 files, 1286 comment blocks", exit 0.
+   ./gradlew spotlessCheck -> exit 0.
+
+5. ./gradlew fastTest (full suite)
+   First run: exit 1, "541 tests completed, 1 failed". The one failure was
+   KafkaEventPublisherTest > OnActivityEventTest >
+   shouldCountOneFailureAndNotThrow_whenThePublishExecutorRejects (KafkaEventPublisherTest.java:74,
+   a baseline + 1 publish-failure counter assertion on the async Kafka publish executor). It touches
+   no security code path and was not caused by this change.
+   Isolation check: ./gradlew fastTest --tests 'com.vrudenko.kanban_board.config.KafkaEventPublisherTest'
+   -> exit 0.
+   Rerun of the full suite: exit 0, results dir 207 files, tests=541 failures=0 errors=0 skipped=0.
+   Disposition: an order- or timing-dependent flake, recorded as a deferred item, not fixed here
+   (out of scope). It was not run against the unfixed code, so "pre-existing" is inferred from the
+   test's subject and its passing in isolation and on rerun, not measured.

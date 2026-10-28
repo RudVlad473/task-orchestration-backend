@@ -1,5 +1,7 @@
 package com.vrudenko.kanban_board.security;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -30,9 +32,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -68,6 +72,12 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
     @Autowired private ObjectMapper objectMapper;
 
     @Autowired private RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+    @Autowired private JdbcTemplate jdbcTemplate;
+
+    // What a browser sends on a page navigation.
+    private static final String BROWSER_NAVIGATION_ACCEPT =
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
 
     private static final String BOARDS_URL = ApiPaths.BOARDS;
     private static final String BOARD_URL = ApiPaths.BOARDS + ApiPaths.BOARD_ID;
@@ -320,6 +330,43 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
         return routeTable().stream().filter(RouteCase::crossUserApplicable).toList();
     }
 
+    /** A null accept means the request carries no Accept header at all. */
+    private record AnonymousRefusalCase(RouteCase route, String accept) {
+        @Override
+        public String toString() {
+            return route.displayName()
+                    + ", "
+                    + (accept == null ? "no Accept header" : "Accept " + accept);
+        }
+    }
+
+    private record RefusalSideEffects(
+            int status, int newSessionRows, List<String> setCookieNames) {}
+
+    private static RouteCase routeNamed(String displayName) {
+        return routeTable().stream()
+                .filter(route -> route.displayName().equals(displayName))
+                .findFirst()
+                .orElseThrow(
+                        () -> new IllegalStateException("routeTable() has no row " + displayName));
+    }
+
+    private static List<AnonymousRefusalCase> anonymousRefusalCases() {
+        var routes = List.of(routeNamed("GET /boards"), routeNamed("POST /boards"));
+        var accepts =
+                Arrays.asList(
+                        MediaType.APPLICATION_JSON_VALUE,
+                        MediaType.ALL_VALUE,
+                        BROWSER_NAVIGATION_ACCEPT,
+                        null);
+        return routes.stream()
+                .flatMap(
+                        route ->
+                                accepts.stream()
+                                        .map(accept -> new AnonymousRefusalCase(route, accept)))
+                .toList();
+    }
+
     private MockHttpServletRequestBuilder buildRequest(RouteCase route, FixtureIds ids)
             throws Exception {
         var pathVars = resolvePathVars(route.pathShape(), ids);
@@ -344,6 +391,57 @@ public class AuthorizationGatingTest extends AbstractAppMockMvcTest {
             mockMvc.perform(buildRequest(route, DUMMY_FIXTURE_IDS))
                     .andExpect(status().isUnauthorized())
                     .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"));
+        }
+
+        /**
+         * A refused anonymous request leaves no SPRING_SESSION row and sets no cookie, whatever its
+         * method or Accept header.
+         *
+         * Why this is the way it is:
+         *
+         * - The new rows are a set difference of PRIMARY_IDs, not a count delta, so a cleanup-job
+         * deletion cannot cancel out an insert. The rows are never cleared by AbstractAppTest.
+         * - Only the Set-Cookie names are compared, never the values, so no session id reaches a
+         * failure message or an evidence file.
+         * - The two Accept application/json cases are the control: that path was already correct,
+         * so they would go red if a change fell back to a cache that saves every request.
+         */
+        @ParameterizedTest(name = "{0}")
+        @MethodSource(
+                "com.vrudenko.kanban_board.security.AuthorizationGatingTest#anonymousRefusalCases")
+        void shouldCreateNoSessionAndSetNoCookie_whenNoSessionIsPresent(
+                AnonymousRefusalCase refusal) throws Exception {
+            // arrange
+            var idsBefore =
+                    new HashSet<>(
+                            jdbcTemplate.queryForList(
+                                    "SELECT PRIMARY_ID FROM SPRING_SESSION", String.class));
+            var builder = buildRequest(refusal.route(), DUMMY_FIXTURE_IDS);
+            if (refusal.accept() != null) {
+                builder.header(HttpHeaders.ACCEPT, refusal.accept());
+            }
+
+            // act
+            var response = mockMvc.perform(builder).andReturn().getResponse();
+
+            // assert
+            var idsAfter =
+                    jdbcTemplate.queryForList(
+                            "SELECT PRIMARY_ID FROM SPRING_SESSION", String.class);
+            var newSessionRows = idsAfter.stream().filter(id -> !idsBefore.contains(id)).count();
+            var setCookieNames =
+                    response.getHeaders(HttpHeaders.SET_COOKIE).stream()
+                            .map(cookie -> cookie.substring(0, Math.max(cookie.indexOf('='), 0)))
+                            .toList();
+            Assertions.assertThat(
+                            new RefusalSideEffects(
+                                    response.getStatus(), (int) newSessionRows, setCookieNames))
+                    .as(
+                            "%s: a refused anonymous request must leave no session row and set no"
+                                    + " cookie",
+                            refusal)
+                    .isEqualTo(
+                            new RefusalSideEffects(HttpStatus.UNAUTHORIZED.value(), 0, List.of()));
         }
     }
 

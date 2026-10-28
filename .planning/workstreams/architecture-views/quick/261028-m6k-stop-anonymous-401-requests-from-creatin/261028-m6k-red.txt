@@ -1,0 +1,32 @@
+RED: the new test run against the UNFIXED code
+
+HEAD: 178aff3 (git rev-parse --short HEAD), working tree has the new test only
+src/main untouched: `git diff --stat -- src/main` printed nothing (exit 0)
+Direction checked: RED against the unfixed code (no SecurityConfiguration change exists yet)
+
+Command:
+  ./gradlew fastTest --tests 'com.vrudenko.kanban_board.security.AuthorizationGatingTest*' < /dev/null
+Exit code: 1 (BUILD FAILED, "53 tests completed, 6 failed")
+
+Testsuite counts (AuthorizationGatingTest$NoSessionSweep):
+  tests="30" skipped="0" failures="6"
+  = the 22 existing shouldReturnUnauthorized_whenNoSessionIsPresent cases (all pass) + the 8 new cases
+
+New test: NoSessionSweep.shouldCreateNoSessionAndSetNoCookie_whenNoSessionIsPresent
+Observed RefusalSideEffects per case (cookie NAMES only, never values):
+
+PASS  GET /boards, Accept application/json
+FAIL  GET /boards, Accept */*                                                              observed=RefusalSideEffects[status=401, newSessionRows=1, setCookieNames=[JSESSIONID]]
+FAIL  GET /boards, Accept text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8  observed=RefusalSideEffects[status=401, newSessionRows=1, setCookieNames=[JSESSIONID]]
+FAIL  GET /boards, no Accept header                                                        observed=RefusalSideEffects[status=401, newSessionRows=1, setCookieNames=[JSESSIONID]]
+PASS  POST /boards, Accept application/json
+FAIL  POST /boards, Accept */*                                                             observed=RefusalSideEffects[status=401, newSessionRows=1, setCookieNames=[JSESSIONID]]
+FAIL  POST /boards, Accept text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8 observed=RefusalSideEffects[status=401, newSessionRows=1, setCookieNames=[JSESSIONID]]
+FAIL  POST /boards, no Accept header                                                       observed=RefusalSideEffects[status=401, newSessionRows=1, setCookieNames=[JSESSIONID]]
+
+Expected for every case: RefusalSideEffects[status=401, newSessionRows=0, setCookieNames=[]]
+
+Reading: the MockMvc tier reproduces the defect (so the plan's E2E-tier contingency was not needed).
+The 2 JSON cases pass on the unfixed code, which is the control from 02-04 rows A, C, F: the default
+HttpSessionRequestCache already skips JSON requests. The 6 failures are exactly the 02-04 rows B, D, E
+shape: a 401 that nevertheless wrote one spring_session row and sent a JSESSIONID cookie.

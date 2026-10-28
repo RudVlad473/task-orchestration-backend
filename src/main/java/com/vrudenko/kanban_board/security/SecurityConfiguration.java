@@ -27,6 +27,7 @@ import org.springframework.security.web.authentication.session.ConcurrentSession
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.Session;
 import org.springframework.session.security.SpringSessionBackedSessionRegistry;
@@ -116,6 +117,16 @@ public class SecurityConfiguration {
         http.exceptionHandling(
                 handling ->
                         handling.authenticationEntryPoint(problemDetailAuthenticationEntryPoint));
+
+        // Save no refused request, so an anonymous 401 creates no session.
+        //
+        // Nothing here replays a saved request: no form login, OAuth2 login or redirect, and signin
+        // answers JSON. The default cache saved every refused request whose Accept did not name
+        // application/json, on any method since CSRF is off, into a new session: one spring_session
+        // row and one JSESSIONID per anonymous 401. This cache is the one
+        // ExceptionTranslationFilter
+        // receives.
+        http.requestCache(cache -> cache.requestCache(new NullRequestCache()));
 
         // This DSL also installs its own, in-memory ceiling enforcer; see
         // sessionAuthenticationStrategy.
