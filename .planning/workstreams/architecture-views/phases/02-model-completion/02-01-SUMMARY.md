@@ -42,7 +42,7 @@ key-decisions:
   - "production includes `netcup.k3s.<ns>.**` plus an explicit `netcup.k3s.kube-system`, not `netcup.k3s.<ns>.*`: the `.*` form draws relationship-less instances and silenced Phase 1 drill D13"
   - "WR-03 folded in (checkDeployedWorkloads); WR-04 left open, every element this phase adds anchors by workload"
 
-requirements-completed: [PHYS-02, PHYS-03, PHYS-04]
+requirements-completed: []  # PHYS-02/03/04 are in the plan's requirements, but the plan states it covers only their "no [...] label" half; plans 02-02 and 02-03 complete them, so none is marked complete here
 
 duration: not measured (continuation after a decision checkpoint)
 completed: 2026-10-28

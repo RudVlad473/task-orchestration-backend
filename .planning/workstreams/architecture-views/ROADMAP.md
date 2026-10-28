@@ -62,11 +62,11 @@ Plans:
   4. `sync.mjs` reads the workloads, namespaces and hosts that the new elements claim from the k8s YAML, including `k8s/platform`, `k8s/monitoring` and `k8s/flux-system`. `check` exits 0 on the completed model. On a scratch copy, three breaks each make `check` exit 1, and each is recorded by a drill: renaming a claimed workload (a HelmRelease or Flux controller included), changing a claimed host, and changing a claimed namespace. The unmodified copy exits 0.
   5. In `docs/DIAGRAM_CONVENTIONS.md`, the Physical row names the deployment views as built and no longer says the monitoring stack is excluded. The Scenarios row describes the scenarios as built, including the internal steps of the activity-log and delivery scenarios. Searching that file for "excluded, as in `production-host.mmd`" finds nothing.
 
-**Plans**: 5 plans
+**Plans**: 1/5 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 02-01-PLAN.md — `[...]` label rule red on the real defect and fixed with one title per instance pair; participant and workload-instance rules; spec kinds; `production` narrowed; MODEL override and drills D17 to D19 (wave 1)
+- [x] 02-01-PLAN.md — `[...]` label rule red on the real defect and fixed with one title per instance pair; participant and workload-instance rules; spec kinds; `production` narrowed; MODEL override and drills D17 to D19 (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 02-02-PLAN.md — HelmRelease reader with the monitoring stack, cert-manager and the `monitoring` view; Schema Registry, init job, management port, backup flow and notes in `process` and `data`; drills D20, D21 (wave 2)
@@ -163,6 +163,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
-| 2. Model Completion | 0/TBD | Not started | - |
+| 2. Model Completion | 1/5 | In Progress | - |
 | 3. Build and Serve on a Staging Certificate | 0/TBD | Not started | - |
 | 4. Leak Review and Production Go-Live | 0/TBD | Not started | - |

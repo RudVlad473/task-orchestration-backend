@@ -2,19 +2,19 @@
 gsd_state_version: "1.0"
 milestone: v1.5
 milestone_name: Architecture Views
-current_phase: 2
+current_phase: 02
 current_phase_name: Model Completion
 status: executing
-stopped_at: Phase 01 complete, ready to plan Phase 2
-last_updated: "2026-10-28T12:39:06.540Z"
-last_activity: 2026-10-27
-last_activity_desc: Phase 01 complete, transitioned to Phase 2
-state_head: bd8687820ffb037358f337963fc077d5e54af968
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-10-28T13:09:00.094Z"
+last_activity: 2026-10-28
+last_activity_desc: Phase 02 execution started
+state_head: 3e7dc379cfe88faaaf1295b95238a43d1cc82dbf
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 8
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -25,14 +25,14 @@ See: .planning/PROJECT.md (updated 2026-09-30; v1.5 is not yet recorded there)
 Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, ROADMAP.md, research/)
 
 **Core value:** A reader of the public repository can see how the system is built from a model that cannot drift from the code, not from screenshots.
-**Current focus:** Phase 01 — Foundations, Edge Fix and Honesty Gates
+**Current focus:** Phase 02 — Model Completion
 
 ## Current Position
 
-Phase: 2 (Model Completion) — READY TO EXECUTE
-Plan: Not started
+Phase: 02 (Model Completion) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-10-27 — Phase 01 complete, transitioned to Phase 2
+Last activity: 2026-10-28 — Phase 02 execution started
 
 Progress: [███░░░░░░░] 25%
 
@@ -61,6 +61,7 @@ Progress: [███░░░░░░░] 25%
 | Phase 01 P01 | 25min | 3 tasks | 8 files |
 | Phase 01 P02 | 30 min | 3 tasks | 4 files |
 | Phase 01 P03 | 40min | 3 tasks | 10 files |
+| Phase 02 P01 | n/a | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,7 @@ Recent decisions affecting current work:
 - [Phase 01]: Placement: HelmRelease lands in spec.targetNamespace, Flux source objects land nowhere, outer namespaced kustomization wins over a nested one
 - [Phase 01]: Hook trigger is the single pathspec k8s so overlays and monitoring typos are refused locally (A2)
 - [Phase 01]: K8S_DIRS guard exits 4 for any of six missing k8s trees (A3)
+- [Phase 02]: production include uses per-namespace .** plus explicit kube-system: the .* form drew relationship-less instances and silenced drill D13
 
 ### Pending Todos
 
@@ -104,6 +106,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-27T18:19:26.106Z
-Stopped at: Phase 01 complete, ready to plan Phase 2
+Last session: 2026-10-28T13:08:59.974Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None
