@@ -1,4 +1,5 @@
 model {
+  // The delivery path: from a change on main to the manifests that Flux applies in the cluster.
   repo = system 'Git repository (main)' {
     description 'Authored. The GitHub repository whose main branch holds the code and the k8s manifests that Flux reconciles.'
   }
