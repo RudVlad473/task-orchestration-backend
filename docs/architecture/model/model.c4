@@ -7,6 +7,11 @@ model {
     description 'Public edge: TLS termination, routes to the app by host'
     metadata {
       source 'k8s/platform/traefik'
+      host [
+        'kanban-board-rud-vlad-473.duckdns.org',
+        'kanban-board-rud-vlad-473-nonprod.duckdns.org',
+        'kanban-board-rud-vlad-473-monitoring.duckdns.org'
+      ]
     }
   }
 

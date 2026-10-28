@@ -59,14 +59,19 @@ views {
   deployment view production {
     #physical
     title 'Physical view: what runs where'
-    description 'Mapping of software to nodes. The VPS is x86_64.'
+    description 'Inbound traffic goes from the internet through the provider firewall and the host filter to ServiceLB and Traefik, which routes to the app, and cert-manager obtains the certificates from Let\'s Encrypt through its two issuers. The VPS is x86_64.'
     include
       netcup, netcup.k3s,
+      netcup.hostfilter,
+      netcup.k3s.issuer-staging, netcup.k3s.issuer-production,
       netcup.k3s.kube-system, netcup.k3s.kube-system.**,
       netcup.k3s.prod.**,
       netcup.k3s.nonprod.**,
       netcup.k3s.data.**,
-      netcup.k3s.cert-manager.**
+      netcup.k3s.cert-manager.**,
+      internet.*, netcup-cloud.*, letsencrypt.*
+
+    exclude internet.client -> netcup.k3s.kube-system.traefik
   }
 
   deployment view delivery {

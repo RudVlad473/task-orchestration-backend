@@ -15,3 +15,16 @@ run-tests	UNKNOWN STEP	2026-10-27T11:51:11.9465768Z Cache restored from key: set
 OK (50 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 15 workloads)
 package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 exit=0
+--- Task 2 red: ClusterIssuer and host readers, no element added ---
+DRIFT (50 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads):
+- k8s ClusterIssuer/letsencrypt-staging has no element carrying metadata workload 'ClusterIssuer/letsencrypt-staging'
+- k8s ClusterIssuer/letsencrypt-production has no element carrying metadata workload 'ClusterIssuer/letsencrypt-production'
+- k8s IngressRoute routes host kanban-board-rud-vlad-473-monitoring.duckdns.org, which no element claims in metadata host
+- k8s IngressRoute routes host kanban-board-rud-vlad-473-nonprod.duckdns.org, which no element claims in metadata host
+- k8s IngressRoute routes host kanban-board-rud-vlad-473.duckdns.org, which no element claims in metadata host
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+exit=1
+--- Task 2 green: issuers, hosts and the inbound path added ---
+OK (56 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+exit=0

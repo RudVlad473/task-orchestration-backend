@@ -50,7 +50,7 @@ const VIEWPOINTS = ['logical', 'process', 'development', 'physical', 'scenarios'
 
 // The metadata keys the checks read. The DSL cannot declare metadata keys, so this list is the
 // vocabulary: a key outside it is reported, and adding a key means editing it here.
-const METADATA_KEYS = ['source', 'workload']
+const METADATA_KEYS = ['source', 'workload', 'host']
 
 // --- facts read from the code ---------------------------------------------------------
 
@@ -227,14 +227,14 @@ function topics() {
   return new Set([...src.matchAll(/String\s+\w+\s*=\s*"([^"]+)"/g)].map((m) => m[1]))
 }
 
-// The Kind/name of every Deployment, StatefulSet, CronJob and HelmRelease under k8s/base,
+// The Kind/name of every Deployment, StatefulSet, CronJob, HelmRelease and ClusterIssuer under k8s/base,
 // k8s/data, k8s/platform and k8s/monitoring. k8s/overlays holds patches and routes, not
 // workloads. From k8s/flux-system exactly one file is read, gotk-components.yaml, because it holds
 // the Flux controller Deployments. controller-resources.yaml beside it is not read: it repeats the
 // six names as a strategic-merge patch, so reading it would let a rename in the generator file
 // pass, the old name still being found in the patch.
 const WORKLOAD_DIRS = ['k8s/base/', 'k8s/data/', 'k8s/platform/', 'k8s/monitoring/', 'k8s/flux-system/gotk-components.yaml']
-const WORKLOAD_KINDS = new Set(['Deployment', 'StatefulSet', 'CronJob', 'HelmRelease'])
+const WORKLOAD_KINDS = new Set(['Deployment', 'StatefulSet', 'CronJob', 'HelmRelease', 'ClusterIssuer'])
 
 function workloads(docs) {
   const out = new Set()
@@ -243,6 +243,31 @@ function workloads(docs) {
     if (WORKLOAD_KINDS.has(o.kind) && typeof o.metadata?.name === 'string') out.add(`${o.kind}/${o.metadata.name}`)
   }
   return out
+}
+
+// Every hostname written as Host(`name`) in the match of an IngressRoute route, in any directory.
+function routedHosts(docs) {
+  const out = new Set()
+  for (const { o } of docs) {
+    if (o.kind !== 'IngressRoute' || !Array.isArray(o.spec?.routes)) continue
+    for (const route of o.spec.routes) {
+      if (typeof route?.match !== 'string') continue
+      for (const m of route.match.matchAll(/Host\(\s*`([^`]+)`/g)) out.add(m[1])
+    }
+  }
+  return out
+}
+
+// The hostnames the routes serve must equal the union of the `host` metadata on elements.
+function checkHosts(computed, docs, problems) {
+  const claimed = new Set([...computed.elements()].flatMap((e) => [e.getMetadata('host')].flat().filter(Boolean)))
+  const routed = routedHosts(docs)
+  for (const h of [...routed].sort()) {
+    if (!claimed.has(h)) problems.push(`k8s IngressRoute routes host ${h}, which no element claims in metadata host`)
+  }
+  for (const h of [...claimed].sort()) {
+    if (!routed.has(h)) problems.push(`model claims host ${h} but no IngressRoute routes it`)
+  }
 }
 
 // The k8s trees the readers depend on. The namespace reader walks the whole k8s tree, so a
@@ -575,6 +600,7 @@ async function check() {
   const manifestWorkloads = workloads(docs)
   for (const w of manifestWorkloads) if (!modelWorkloads.has(w)) problems.push(`k8s ${w} has no element carrying metadata workload '${w}'`)
   for (const w of modelWorkloads) if (!manifestWorkloads.has(w)) problems.push(`model claims workload ${w} but k8s/ has no such manifest`)
+  checkHosts(computed, docs, problems)
 
   for (const e of elements) {
     const src = e.getMetadata('source')

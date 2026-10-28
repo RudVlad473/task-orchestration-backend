@@ -5,11 +5,79 @@ model {
       source 'k8s/platform/cert-manager/cert-manager.yaml'
       workload 'HelmRelease/cert-manager'
     }
+
+    staging = component 'ClusterIssuer letsencrypt-staging' {
+      description 'Issuer that every certificate starts on, so a misconfiguration costs no production rate limit.'
+      metadata {
+        source 'k8s/platform/edge/clusterissuers.yaml'
+        workload 'ClusterIssuer/letsencrypt-staging'
+      }
+    }
+
+    production = component 'ClusterIssuer letsencrypt-production' {
+      description 'Issuer for the trusted certificates, used once the staging issuance has been validated.'
+      metadata {
+        source 'k8s/platform/edge/clusterissuers.yaml'
+        workload 'ClusterIssuer/letsencrypt-production'
+      }
+    }
   }
+
+  acme = external "Let's Encrypt ACME" {
+    description 'Authored. The certificate authority that issues the certificates and checks each hostname over HTTP.'
+  }
+
+  hostfilter = external 'KANBAN-INGRESS host filter' {
+    description 'Authored. Host firewall chain ahead of k3s that admits new TCP connections only on allow-listed ports; only the existence of its script is checked.'
+    metadata {
+      source 'infra/vm/k3s-host-firewall.sh'
+    }
+  }
+
+  firewall = external 'Netcup Cloud Firewall' {
+    description 'Authored. Provider-side firewall configured outside this repository; its rules are not drawn and cannot be checked from here.'
+  }
+
+  svclb = system 'ServiceLB (svclb-traefik)' {
+    description 'Authored. The pod that k3s ServiceLB creates for the Traefik LoadBalancer Service and the only pod with a hostPort; no manifest in the repo declares it.'
+  }
+
+  certmanager.staging -[sync]-> acme 'ACME over HTTPS'
+  certmanager.production -[sync]-> acme 'ACME over HTTPS'
+  acme -[sync]-> traefik 'HTTP-01 challenge'
+  client -[sync]-> firewall 'HTTPS'
+  firewall -[sync]-> hostfilter 'allowed traffic'
+  hostfilter -[sync]-> svclb 'new TCP on allow-listed ports'
+  svclb -[sync]-> traefik 'hostPort to Traefik'
 }
 
 deployment {
+  letsencrypt = provider "Let's Encrypt (SaaS)" {
+    instanceOf acme
+  }
+
+  internet = provider 'Internet' {
+    instanceOf client
+  }
+
+  netcup-cloud = provider 'Netcup Cloud' {
+    instanceOf firewall
+  }
+
+  extend netcup {
+    instanceOf hostfilter
+  }
+
+  extend netcup.k3s {
+    issuer-staging = instanceOf certmanager.staging
+    issuer-production = instanceOf certmanager.production
+  }
+
   extend netcup.k3s.cert-manager {
     instanceOf certmanager
+  }
+
+  extend netcup.k3s.kube-system {
+    instanceOf svclb
   }
 }
