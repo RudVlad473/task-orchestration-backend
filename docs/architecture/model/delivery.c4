@@ -1,0 +1,60 @@
+model {
+  repo = system 'Git repository (main)' {
+    description 'Authored. The GitHub repository whose main branch holds the code and the k8s manifests that Flux reconciles.'
+  }
+
+  ci = system 'GitHub Actions' {
+    description 'Runs the tests, builds the app image and pushes it to Docker Hub when main changes; changes under k8s/ and the docs do not start it.'
+    metadata {
+      source '.github/workflows/deploy.yml'
+    }
+  }
+
+  dockerhub = external 'Docker Hub' {
+    description 'Authored. Registry that holds the app image repositories; the workflow pushes to it and the cluster pulls from it.'
+    metadata {
+      source '.github/workflows/deploy.yml'
+    }
+  }
+
+  flux = system 'Flux' {
+    description 'GitOps controllers in flux-system that apply the manifests, scan the registry for new image tags and commit the tag bump back to main.'
+    metadata {
+      workload [
+        'Deployment/source-controller',
+        'Deployment/kustomize-controller',
+        'Deployment/helm-controller',
+        'Deployment/notification-controller',
+        'Deployment/image-reflector-controller',
+        'Deployment/image-automation-controller'
+      ]
+    }
+  }
+
+  repo -[async]-> ci 'push to main starts deploy.yml'
+  ci -[sync]-> dockerhub 'push the app image'
+  flux -[sync]-> dockerhub 'scan image tags'
+  flux -[sync]-> repo 'Git over SSH: pull, commit tag bumps'
+  flux -[sync]-> kanban 'apply the app overlays'
+  kanban -[sync]-> dockerhub 'image pull'
+}
+
+deployment {
+  github = provider 'GitHub (SaaS)' {
+    instanceOf repo
+
+    runner = server 'GitHub-hosted runner (x86_64)' {
+      description 'The runner architecture is read from a workflow run log, where the Java toolchain path ends in x64.'
+      technology 'x86_64'
+      instanceOf ci
+    }
+  }
+
+  docker-hub = provider 'Docker Hub (SaaS)' {
+    instanceOf dockerhub
+  }
+
+  extend netcup.k3s.flux-system {
+    instanceOf flux
+  }
+}

@@ -229,9 +229,11 @@ function topics() {
 
 // The Kind/name of every Deployment, StatefulSet, CronJob and HelmRelease under k8s/base,
 // k8s/data, k8s/platform and k8s/monitoring. k8s/overlays holds patches and routes, not
-// workloads. k8s/flux-system is left out on purpose: its controller Deployments are not
-// modelled, so counting them would make the check fail.
-const WORKLOAD_DIRS = ['k8s/base/', 'k8s/data/', 'k8s/platform/', 'k8s/monitoring/']
+// workloads. From k8s/flux-system exactly one file is read, gotk-components.yaml, because it holds
+// the Flux controller Deployments. controller-resources.yaml beside it is not read: it repeats the
+// six names as a strategic-merge patch, so reading it would let a rename in the generator file
+// pass, the old name still being found in the patch.
+const WORKLOAD_DIRS = ['k8s/base/', 'k8s/data/', 'k8s/platform/', 'k8s/monitoring/', 'k8s/flux-system/gotk-components.yaml']
 const WORKLOAD_KINDS = new Set(['Deployment', 'StatefulSet', 'CronJob', 'HelmRelease'])
 
 function workloads(docs) {

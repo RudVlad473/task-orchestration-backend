@@ -1,0 +1,17 @@
+DRIFT (46 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 15 workloads):
+- k8s Deployment/source-controller has no element carrying metadata workload 'Deployment/source-controller'
+- k8s Deployment/kustomize-controller has no element carrying metadata workload 'Deployment/kustomize-controller'
+- k8s Deployment/helm-controller has no element carrying metadata workload 'Deployment/helm-controller'
+- k8s Deployment/notification-controller has no element carrying metadata workload 'Deployment/notification-controller'
+- k8s Deployment/image-reflector-controller has no element carrying metadata workload 'Deployment/image-reflector-controller'
+- k8s Deployment/image-automation-controller has no element carrying metadata workload 'Deployment/image-automation-controller'
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+exit=1
+--- runner architecture, deploy.yml run 40499205436 (gh run view --log, lines matching x64) ---
+run-tests	UNKNOWN STEP	2026-10-27T11:51:09.2275790Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/21.0.12-1/x64
+run-tests	UNKNOWN STEP	2026-10-27T11:51:09.5669415Z Cache hit for: setup-java-Linux-x64-gradle-5944fa8f97901735d03293a20bd6c871a19da0c5f0d0e9ca233f58c7d381bd7a
+run-tests	UNKNOWN STEP	2026-10-27T11:51:11.9465768Z Cache restored from key: setup-java-Linux-x64-gradle-5944fa8f97901735d03293a20bd6c871a19da0c5f0d0e9ca233f58c7d381bd7a
+--- green: Flux element and delivery view added ---
+OK (50 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 15 workloads)
+package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+exit=0

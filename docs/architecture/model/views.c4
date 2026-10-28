@@ -69,6 +69,19 @@ views {
       netcup.k3s.cert-manager.**
   }
 
+  deployment view delivery {
+    #physical
+    title 'Physical view: how an app image reaches the cluster'
+    description 'A push to main starts the workflow on a GitHub-hosted runner, which pushes the image to Docker Hub. Flux scans the tags, commits the bump to the manifests over Git and applies the overlays, and the app pod pulls the image.'
+    include
+      github, github.**,
+      docker-hub, docker-hub.**,
+      netcup, netcup.k3s,
+      netcup.k3s.flux-system.*,
+      netcup.k3s.prod.kanban,
+      netcup.k3s.nonprod.kanban
+  }
+
   dynamic view signin-ok {
     #scenarios
     variant sequence
