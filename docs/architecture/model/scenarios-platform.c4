@@ -1,0 +1,14 @@
+views {
+  dynamic view push-to-image {
+    #scenarios
+    variant sequence
+    title 'Scenario: a push to main becomes an image on Docker Hub'
+    description 'A push to main starts deploy.yml unless it changes only docs, markdown, planning files or k8s manifests. The tests gate the other jobs, the tag is derived from the run number and the short commit sha, and one amd64 build is pushed to the production and nonprod repositories. The Flyway check runs beside the build, not after it, and reaches Postgres through an SSH forward with a pinned host key.'
+
+    repo -> ci 'push to main starts deploy.yml, a push that changes only docs, markdown, planning files or k8s manifests is ignored'
+    ci -> ci 'the tests and the formatting check run first, the image build and the Flyway check wait for them'
+    ci -> ci 'derive the image tag from the run number and the short commit sha'
+    ci -> dockerhub 'build the amd64 image once and push it to the production and nonprod repositories'
+    ci -> postgres 'Flyway check that the migrations apply, through an SSH forward with a pinned host key'
+  }
+}
