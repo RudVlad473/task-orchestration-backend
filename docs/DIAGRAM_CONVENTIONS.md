@@ -64,13 +64,20 @@ the `verify/` folder.
 ### Entities and rules
 
 - **Element.** A runtime thing with identity. The kinds are a closed set: `actor`, `system`,
-  `container`, `component`, `thread`, `datastore`, `table`, `topic`, `job`.
+  `container`, `component`, `thread`, `datastore`, `table`, `topic`, `job`, `external`, `note`.
+  `job` covers anything that runs to completion, a CronJob and an init container alike, so its
+  notation reads "Run-to-completion job". `external` is a thing outside this repository or outside
+  the cluster (a registry, a certificate authority, a provider firewall, an off-cluster bucket).
+  `note` is documentation attached to an
+  element, not a runtime thing: it carries a `source` and renders as a document.
 - **Relationship.** A runtime interaction between two Elements, of kind `sync` or `async`, labelled
   with a protocol-level fact. Two structural kinds exist besides, and only `sync.mjs generate`
   writes them: `fk`, a foreign key from a child table to its parent, and `imports`, one top-level
   package importing another. The one authored `fk` edge, between the two Spring Session tables, is
   the exception.
-- **Deployment node and Instance.** The nodes are `server`, `cluster` and `namespace`. An Instance is
+- **Deployment node and Instance.** The nodes are `server`, `cluster`, `namespace` and `provider`
+  (a SaaS or a network outside the server: GitHub, Docker Hub, Let's Encrypt, the provider
+  firewall, the internet). An Instance is
   an Element placed on one node through `instanceOf`. Prod and nonprod are two Instances of one
   Element, not two copies. Instances inherit all logical relationships, so the physical view re-draws
   no edges.
@@ -99,11 +106,11 @@ the `verify/` folder.
 
 | Kruchten view | LikeC4 construct | Represents | Does not represent | Provenance |
 |---|---|---|---|---|
-| Logical | plain `view` over `table` elements | tables and the FK ownership chain | columns, entity classes, DTOs | tables and `fk` edges generated from the migrations by a statement-level regex (see V4 and note (a)); the two Spring Session tables authored |
-| Process | `view ... of kanban` | request threads, named executors, topics, consumer groups, DB writes | method calls, class names | topics checked; executors and groups authored |
+| Logical | plain `view` over `table` elements | tables and the FK ownership chain | columns, entity classes, DTOs | tables and `fk` edges generated from the migrations by a statement-level regex (see V4 and note (a)); the two Spring Session tables authored; two `note` elements (on `activity_log` and on the Avro subjects) carry a `source` whose existence is checked, and their text is authored |
+| Process | `view ... of kanban` | request threads, named executors, topics, consumer groups, DB writes; the Schema Registry, the schema-registering init job, the management server and the nightly backup flow to the off-cluster bucket | method calls, class names | topics checked; the backup job's CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored |
 | Development | `view ... of kanban`, packages as `component` | top-level packages and their dependency direction | classes, third-party libraries | components and `imports` edges generated from import lines (see V5 and note (d)); cycles printed by the check, not gated |
-| Physical | `deployment` model and `deployment view` | servers (arch in title), cluster, namespaces, workloads | pods, replicas, secrets, the monitoring stack (excluded, as in `production-host.mmd`) | workloads checked against `k8s/base`, `k8s/data` and `k8s/platform`; namespace nodes and instance placement checked against the manifests under `k8s`; the server and cluster nodes authored |
-| Scenarios | `dynamic view`, one per outcome | client-visible facts: method and path, status and `code`, cookie, SQL action, topic | internal calls | authored |
+| Physical | `deployment` model and `deployment view`: three views, `production`, `delivery` and `monitoring` | `production`: the server and the provider nodes (arch in the server titles), the cluster, namespaces, workloads, the cluster-scoped ClusterIssuers, and the inbound path with the provider firewall and the host filter as external elements. `delivery`: GitHub and its runner (arch in the title), Docker Hub, Flux and the image path into the cluster. `monitoring`: the monitoring workloads and what they scrape and query | pods, replicas, secrets, objects a chart renders | workloads checked (`Deployment`, `StatefulSet`, `CronJob`, `HelmRelease` and `ClusterIssuer` under `k8s/base`, `k8s/data`, `k8s/platform` and `k8s/monitoring`, plus the Flux controller Deployments in `k8s/flux-system/gotk-components.yaml`); routed hosts checked against every `IngressRoute`; namespace nodes and instance placement checked against the manifests under `k8s`; the firewall, host filter, ServiceLB, provider nodes, the runner and the scrape edges authored |
+| Scenarios | `dynamic view`, one per outcome, at most 5 participants | client-visible facts: method and path, status and `code`, cookie, SQL action, topic; also the internal steps of `activity-log-row` (the AFTER_COMMIT hand-off, the publish executor, the topic, the consumer group, the idempotent insert) and of the delivery scenarios `push-to-image` and `image-to-rollout` (workflow jobs, Flux controllers, the init container); class-level calls and branches inside one view are still not drawn | class-level calls, branches inside one view | authored: every step is cited in `.planning/workstreams/architecture-views/phases/02-model-completion/02-SCENARIO-EVIDENCE.md`, or marked authored with its reason; at most 5 participants checked; `error-401` draws no SQL step, which is authored and unmeasured (note (b2)) |
 
 Three notes on the table.
 
@@ -137,10 +144,17 @@ returns the identical 401 body right after the `SELECT` by id that `signin-ceili
 SQL actions are a prefix of that view and nothing would be undrawn. Branches inside one view were
 not tested and are not adopted.
 
-**(c) Scenario layout.** Sequence is adopted. All three scenario views carry `variant sequence`,
+**(b2) The 401 view.** `error-401` draws no SQL step. That absence is authored, not measured: the
+live measurement of what a request with no session cookie issues did not run in Phase 2 (port 5433
+was held by another project's Postgres), so whether such a request writes a `spring_session` row or
+issues any SQL is unknown. The view's description says so, and `02-04-401-measure.txt` in the Phase 2
+folder records the verdict `not measured`.
+
+**(c) Scenario layout.** Sequence is adopted. Every scenario view carries `variant sequence`,
 and `likec4.fish png` passes `--seq`, without which the export draws the ordinary layout (V1). The
 natural widths, from `261027-if9-T4-png.txt`, are 1838 px for `signin-ok`, 1500 for
-`signin-bad-credentials` and 1838 for `signin-ceiling`. The Mermaid width bound of 1117 px is not
+`signin-bad-credentials` and 1838 for `signin-ceiling` (the Phase 2 scenario widths are in the
+table at the end of this section). The Mermaid width bound of 1117 px is not
 applied to them, because the LikeC4 legibility rule is still undefined (see below). Those widths
 are recorded, not judged.
 
@@ -190,26 +204,58 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
     - An element with no `workload` metadata and no `source` under `k8s` has no anchor document and is
       skipped, so a moved instance of it passes. Every element added to the Physical view, starting
       with the architecture-views Phase 2 elements, must carry a workload or k8s source anchor,
-      or be recorded here as not placement-checked. The Phase 1 model has no such element;
-  - the metadata-key rule: `METADATA_KEYS` in `sync.mjs` (`source` and `workload`) is checked on
-    elements, deployment nodes, instances and relationships;
+      or be recorded here as not placement-checked. The Phase 1 model had no such element; the
+      Phase 2 ones are listed in the Phase 2 bullet below;
+  - the metadata-key rule: `METADATA_KEYS` in `sync.mjs` (`source`, `workload` and, since Phase 2,
+    `host`) is checked on elements, deployment nodes, instances and relationships;
   - the view-membership rule: every deployment instance is drawn in at least one deployment view
     (namespace nodes with no instances are not required to be drawn);
   - workloads are read with the `yaml` parser, not a regex;
   - fail-closed fact sources: a missing tree among `k8s/base`, `k8s/data`, `k8s/platform`,
     `k8s/overlays`, `k8s/monitoring` and `k8s/flux-system`, or a manifest that does not parse, exits
     4, which the hook reports as not run to completion and never as drift.
+- **Built in the architecture-views workstream, Phase 2:**
+  - the label rule: no deployment view has an edge whose label is the merged `[...]`. A deployment
+    edge merges every logical relationship between its instance pair, so every relationship on one
+    pair carries one shared protocol-level title, and the views that want a specific label
+    override it. A merged edge that mixes `sync` and `async` relationships under one title has no
+    kind and is drawn with LikeC4's default dashed line (measured while planning Phase 2);
+  - the participant rule: a dynamic view has at most 5 participants;
+  - the workload-instance rule (Phase 1 review WR-03): an element that claims a workload must have
+    at least one instance, so deleting its `instanceOf` is caught;
+  - the readers: `HelmRelease` and `ClusterIssuer` objects are read as workloads, `k8s/monitoring` is
+    a workload tree, and the six Flux controller Deployments are read from
+    `k8s/flux-system/gotk-components.yaml` alone, because `controller-resources.yaml` repeats their
+    names as a patch. A rename made only in that patch file is therefore not caught;
+  - the hosts rule: every `Host(...)` literal in the `match` of an `IngressRoute` is claimed in the
+    `host` metadata of an element, and every claimed host is routed. Which instance serves which
+    host stays authored;
+  - `METADATA_KEYS` in `sync.mjs` is the one place the key vocabulary lives: `source`, `workload`
+    and `host`.
+
+  Not placement-checked, so a moved instance of any of them passes: `svclb` (no manifest declares
+  it), the host filter (its `source` is a script outside `k8s`), and the instances on provider nodes
+  or on the server: `repo`, `ci`, `dockerhub`, `acme`, `firewall` and `client`. Three monitoring
+  elements share one `HelmRelease/kube-prometheus-stack` claim, so the check proves that release
+  exists and where it lands, not what the chart renders. The scrape edges in `monitoring` are
+  authored from the repo's PodMonitor and ServiceMonitor settings, not from live targets. Scenario
+  steps are authored prose that LikeC4 does not validate against the model; only the participant cap
+  is checked, and each step is tied to a line, or marked authored, in the evidence file.
 - **Drills:** `docs/architecture/drill.fish` runs on a scratch copy (`--model DIR`), never on the
-  real model. It records 27 sections: the baseline, 23 drills that introduce a break and are caught
-  (exit 1 for drift in 20, exit 4 for a fact source in D14, D14b and D14c), and the controls D5,
-  D13b and D16b, which stay clean. D6 to D9 were each seen not caught before their rule existed
-  (`261027-if9-T1-red.txt` to `261027-if9-T4-red.txt`). Each drill from D10 on was recorded not caught
-  by the pre-phase `sync.mjs` in
+  real model; the `SYNC` and `MODEL` environment variables point it at another script and another
+  model folder, which is how a drill is recorded against the code that preceded its rule. Its
+  sections are the baseline, the drills that introduce a break and are caught (exit 1 for drift,
+  exit 4 for a fact source in D14, D14b and D14c), and the controls D5, D13b, D16b and D17b, which
+  stay clean. D6 to D9 were each seen not caught before their rule existed
+  (`261027-if9-T1-red.txt` to `261027-if9-T4-red.txt`). Each drill from D10 on was recorded not
+  caught by the script and model that preceded it: Phase 1's in
   `.planning/workstreams/architecture-views/phases/01-foundations-edge-fix-and-honesty-gates/01-drills-before.txt`
-  (all 13 sections, D10 to D16b, show `exit=0` there). D5, a renamed controller class, is the
-  negative control: it is not caught, by design. The result is `docs/architecture/drill-output.txt`.
-  The hook's self-test `scripts/pre-commit-likec4-selftest.py` runs 16 cases, 10 of them drift
-  refusals, and passes 16/16.
+  and Phase 2's in
+  `.planning/workstreams/architecture-views/phases/02-model-completion/02-drills-before.txt`
+  (D17 to D24, controls included, show `exit=0` there). D5, a renamed controller class, is the negative control: it
+  is not caught, by design. The result is `docs/architecture/drill-output.txt`. The hook's
+  self-test `scripts/pre-commit-likec4-selftest.py` runs the hook's refusal and acceptance cases and
+  passes them all.
 - **Wired:** the pre-commit hook runs `node docs/architecture/sync.mjs check` when a staged path is
   under `src/main/resources/db/migration`, `k8s` or `docs/architecture`, or is `KafkaTopics.java`,
   and refuses the commit when Node or the install is missing. The
@@ -219,7 +265,8 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
   would make Node and a per-worktree install a prerequisite of every Java commit. Such a commit
   passes the hook and fails CI.
 - **Key vocabulary:** the DSL cannot declare allowed metadata keys (V2 below), so the drift script
-  owns the key vocabulary: `METADATA_KEYS` in `sync.mjs`.
+  owns the key vocabulary: `METADATA_KEYS` in `sync.mjs`, which holds three keys, `source`,
+  `workload` and `host`.
 - **Proposed by this standard, not built:**
   - an "every `server` node title names an architecture" check.
 
@@ -277,6 +324,31 @@ only by their arrowheads, since edges carry no label. Two other layouts were tri
 200 160` (12500 x 6552, the same topology as the default, only farther apart). Grouping the
 packages into layers was not tried.
 
+### Built in the architecture-views workstream, Phase 2
+
+Every view added or changed in Phase 2. Sizes are the PNG size divided by 2 (V6), from a fresh
+`likec4.fish png` export on 2026-10-28, and are recorded without a verdict against any bound: the
+LikeC4 legibility rule is still undefined. `production`, `process` and `data` are changed views, so
+their sizes replace the Phase 1 ones above. The other views in the Phase 1 table are unchanged.
+
+| View id | Tag | Provenance | Natural size |
+|---|---|---|---|
+| `data` | `#logical` | as before, plus two `note` elements whose `source` is checked and whose text is authored | 1148 x 1392 |
+| `process` | `#process` | topics checked; the backup CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored | 3280 x 1536 |
+| `production` | `#physical` | workloads, ClusterIssuers, routed hosts, namespaces and placement checked; nodes, provider firewall, host filter and ServiceLB authored | 3427 x 2566 |
+| `delivery` | `#physical` | Flux controller Deployments checked as workloads; repository, CI, Docker Hub and the runner authored | 1862 x 1556 |
+| `monitoring` | `#physical` | HelmReleases checked as workloads; scrape and query edges authored from the repo's monitor settings | 3490 x 1574 |
+| `signup-ok` | `#scenarios` | authored, steps cited | 1838 x 960 |
+| `error-401` | `#scenarios` | authored, steps cited; no SQL step, authored and unmeasured | 1180 x 530 |
+| `error-403` | `#scenarios` | authored, steps cited | 1820 x 656 |
+| `error-409` | `#scenarios` | authored, steps cited | 1533 x 582 |
+| `activity-log-row` | `#scenarios` | authored, steps cited | 1926 x 567 |
+| `push-to-image` | `#scenarios` | authored, steps cited | 1780 x 933 |
+| `image-to-rollout` | `#scenarios` | authored, steps cited | 2205 x 960 |
+| `inbound-packet-path` | `#scenarios` | authored, steps cited; the provider firewall and ServiceLB steps rest on a doc, not on a repo line | 2148 x 665 |
+| `ingress-to-pod` | `#scenarios` | authored, steps cited; the response step authored | 1346 x 884 |
+| `nightly-backup` | `#scenarios` | authored, steps cited | 1344 x 920 |
+
 ### Undefined, not adopted, and outside this change
 
 **Undefined.** The legibility rule for LikeC4 is undefined.
@@ -304,8 +376,10 @@ packages into layers was not tried.
 **Outside this change.** This change leaves out:
 
 - migrating any of the seven Mermaid diagrams;
-- the four diagrams with no LikeC4 counterpart yet: `signup`, `error-status-split`, `push-to-image`
-  and `inbound-packet-path`;
+- the Mermaid files themselves. Their LikeC4 counterparts are now built: `signup` as `signup-ok`,
+  `error-status-split` as `error-401`, `error-403` and `error-409`, `push-to-image`,
+  `image-to-rollout`, `inbound-packet-path`, `ingress-to-pod`, `delivery-nodes` as `delivery` and
+  `monitoring-nodes` as `monitoring`. Migrating the Mermaid files and retiring them stay outside;
 - retiring `render-diagrams.sh`, `verify-diagrams.py`, `mermaid-config.json` and
   `render-manifest.tsv`, because a migration ends when its old home is gone, and that is a later
   change;
