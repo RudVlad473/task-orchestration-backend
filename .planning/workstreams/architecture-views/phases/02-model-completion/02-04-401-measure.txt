@@ -156,3 +156,93 @@ The SecurityConfiguration.java line numbers this record cites are pre-fix, becau
 lines above them. For example SessionCreationPolicy.IF_REQUIRED, cited here at 127, is now at 138.
 
 The VERDICT line above remains this measurement's verdict, taken at 82775fa.
+
+=== Post-fix re-measure (HEAD 7bccf71) ===
+
+Checked at (UTC): 2026-10-28T16:44Z to 16:46Z (app up at 16:43:55Z per its own log; first request
+at 16:44:28Z per the Postgres log; the host clock shows +01:00 against these UTC stamps).
+App commit: 7bccf71 (main), which contains 17a94cb (`git merge-base --is-ancestor 17a94cb HEAD` true). `git status --short -- src build.gradle` was empty, so the running code was the committed code. No Java, no .c4 file, no tracked docker-compose.yml was changed.
+
+Method (same as the pre-fix run, with the deviations listed):
+- Postgres: this repo's compose `postgres` service (postgres:16) under a private compose project
+  (`kbmeasure2`), a temp override file under /tmp that published it on 127.0.0.1:15433 and started it
+  with `-c log_statement=all`. Fresh volume, Flyway built the schema. Redpanda was NOT started.
+- App: `./gradlew bootRun` on the host, DB_PORT=15433, SPRING_JPA_HIBERNATE_DDL_AUTO=validate,
+  local-only throwaway credentials (not recorded here). Deviation from the pre-fix run: port 8080 was
+  held by another service on this machine (not touched), so the app ran with SERVER_PORT=18080 and
+  MANAGEMENT_SERVER_PORT=19081 and the requests went to http://localhost:18080/api/boards.
+- Per request: `select count(*) from spring_session` before and after, `curl -s -o /dev/null -D`, no
+  Cookie header, status line, Set-Cookie NAMES only (no value recorded), and the Postgres log lines
+  that appeared between the request and one second after it.
+- Excluded from the statement list: the harness's own `select count(*) from spring_session` queries,
+  tagged with a `/* HARNESS */` comment and dropped by that marker; the `DETAIL: parameters` lines
+  are dropped so no session id, serialized request or hash is recorded. Capture sanity: 18 HARNESS
+  lines were logged for the 9 requests before the burst (2 each), so the logging and the line-window
+  capture were working; an empty statement list is therefore a real "nothing logged", not a dead
+  capture. The log tail read after rows A to I held only harness counts. The whole log was not
+  re-read at the end, so a statement outside every request window is not ruled out.
+
+Results (no request carried a session cookie; every one answered 401 with content-type
+application/problem+json):
+
+| Req | Method and route | Accept | Status | Set-Cookie | spring_session rows before -> after | Statements Postgres logged for it |
+|-----|------------------|--------|--------|-----------|-------------------------------------|-----------------------------------|
+| A | GET /api/boards | application/json | 401 | no | 0 -> 0 | none |
+| B | GET /api/boards | */* (curl default) | 401 | no | 0 -> 0 | none |
+| C | POST /api/boards, JSON body {"name":"Gating Sweep Board"} | application/json | 401 | no | 0 -> 0 | none |
+| D | POST /api/boards, same body | */* | 401 | no | 0 -> 0 | none |
+| E | GET /api/boards | text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8 (browser navigation) | 401 | no | 0 -> 0 | none |
+| F | GET /api/boards | application/json, text/plain, */* (axios default) | 401 | no | 0 -> 0 | none |
+| G | GET /api/boards | no Accept header (`-H 'Accept:'`) | 401 | no | 0 -> 0 | none |
+| H | POST /api/boards, same body | no Accept header | 401 | no | 0 -> 0 | none |
+| I | POST /api/boards, same body | browser-navigation Accept | 401 | no | 0 -> 0 | none |
+
+Rows A to F are the same six requests as the pre-fix table, same route, methods and Accept values
+(the pre-fix POST body was recorded only as "JSON body"; this run used the body that
+AuthorizationGatingTest uses). Rows G to I are additions: the pre-fix run sent no request without an
+Accept header, but 17a94cb's test covers that case, so it was measured live as well. Pre-fix
+rows B, D and E had Set-Cookie JSESSIONID and one new row each; post-fix they have neither.
+
+Burst: 10 further cookie-less `Accept: */*` GETs: all 401, no Set-Cookie header on any (counted per
+response), spring_session 0 -> 0, zero non-harness statements in the Postgres log for the window.
+Pre-fix the same burst took the table from 4 to 14 rows. A separate extra check of the 401's
+content-type: `application/problem+json;charset=ISO-8859-1`.
+
+Signin check (throwaway user created through POST /api/signup on this run's own Postgres; the
+password and email are not recorded here):
+- spring_session rows before signup: 0. POST /api/signup answered 201, Set-Cookie name JSESSIONID,
+  rows 0 -> 1, and that row has a non-null principal_name (signup signs the new user in).
+- POST /api/signin with the same credentials, Accept application/json: 200, Set-Cookie name
+  JSESSIONID, rows 1 -> 2, so exactly one new row; the Postgres log for that request held one
+  INSERT INTO SPRING_SESSION and one INSERT INTO SPRING_SESSION_ATTRIBUTES.
+- After both: 2 rows with a non-null principal_name, 0 rows with a null principal_name, and every
+  attribute row is SPRING_SECURITY_CONTEXT (2 of 2; no SPRING_SECURITY_SAVED_REQUEST). So 17a94cb did
+  not remove authenticated sessions, and no anonymous row exists anywhere in the table.
+
+POST-FIX RESULT: at 7bccf71 a cookie-less request to a protected route gets 401 with no Set-Cookie,
+no spring_session row and no logged SQL statement for every Accept value tried (application/json,
+wildcard, browser navigation, axios default, none), on GET and POST, and the 10-request wildcard burst
+added no rows; a genuine signin still creates exactly one principal-bearing row and sets JSESSIONID.
+The pre-fix finding (`*/*`, browser and absent Accept created a row and a cookie) no longer
+reproduces. The earlier VERDICT line above stays as the verdict taken at 82775fa.
+
+Unverified / limits:
+- Only /api/boards (GET and POST) was driven for the anonymous 401; other protected routes share the
+  filter chain but were not each tried, and PUT, PATCH and DELETE were not tried.
+- One machine, one run, no proxy: nothing like traefik was in the path, so an Accept or cookie header
+  that a proxy adds or rewrites was not exercised. Local port 18080 rather than 8080.
+- No Redpanda: the app ran without a Kafka broker, as in the pre-fix run, so nothing that depends on
+  the activity-log consumer was observed.
+- The running app used http (not TLS) and the configured `Secure` cookie attribute was not exercised
+  by a browser; cookie NAMES were read from the Set-Cookie headers, not values or attributes.
+- The statement capture is Postgres `log_statement=all` over a 1 second window after each request; a
+  statement the app sent later than that, for example a background cleanup, would be outside the
+  window. None appeared in the windows read or in the log tail checked after rows A to I.
+- A request sent with a stale or foreign JSESSIONID cookie was not tried (this record covers the
+  cookie-less case only).
+
+Cleanup: bootRun and its gradle wrapper stopped by PID, `./gradlew --stop` run, the `kbmeasure2`
+compose project removed with its volume and network; ports 18080, 19081 and 15433 free again;
+`docker ps -a` shows no kbmeasure, Testcontainers, Ryuk or Redpanda container; `datastore-postgres`
+(port 5433), the freehire containers (including the listener on 8080) and every other container were
+untouched.
