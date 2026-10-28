@@ -4,6 +4,10 @@
 # Decisions:
 # `email` is deliberately omitted on both: the Caddy edge this replaces registered with ACME without
 # one, and an operator address should not be sent to the CA unless the operator supplies it.
+#
+# Both issuers set serviceType ClusterIP under http01.ingress. cert-manager creates the challenge
+# Service at runtime and defaults it to NodePort when the type is unset, which no rendered-manifest
+# check can see, so both issuers ask for ClusterIP and the challenge never opens a node port.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -17,6 +21,7 @@ spec:
       - http01:
           ingress:
             ingressClassName: traefik
+            serviceType: ClusterIP
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -31,3 +36,4 @@ spec:
       - http01:
           ingress:
             ingressClassName: traefik
+            serviceType: ClusterIP
