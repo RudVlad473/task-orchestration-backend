@@ -7,12 +7,13 @@ views {
 
   view process of kanban {
     #process
-    title 'Process view: how a committed mutation becomes an activity_log row'
-    description 'Thread and messaging boundaries. The request thread never waits on Kafka.'
+    title 'Process view: threads, jobs and messaging around the app'
+    description 'The request thread never waits on Kafka, and the init job registers the schemas before the app starts. The management server is scraped by Prometheus and never routed, and the backup dumps, encrypts and uploads off-cluster.'
     include
       client,
       kanban.api, kanban.publisher, kanban.consumer,
-      postgres,
+      kanban.init, kanban.management,
+      postgres, backup, b2, prometheus,
       redpanda.*
 
     include kanban.api -> postgres with {
@@ -27,13 +28,25 @@ views {
     include kanban.consumer -> redpanda.dlt with {
       title 'after retries'
     }
+    include kanban.init -> redpanda.registry with {
+      title 'register schemas, set BACKWARD compatibility'
+    }
+    include kanban.publisher -> redpanda.registry with {
+      title 'look up schema ids, auto-register off'
+    }
+    include kanban.consumer -> redpanda.registry with {
+      title 'fetch schemas by id'
+    }
+    include backup -> postgres with {
+      title 'pg_dump, custom format'
+    }
   }
 
   view data of postgres {
     #logical
     title 'Logical view: tables and the foreign keys that own them'
-    description 'The tables tagged generated and every fk edge between them come from the Flyway migrations through sync.mjs. The two spring_session tables are authored: Spring Session creates them outside Flyway.'
-    include postgres.*
+    description 'The tables tagged generated and every fk edge between them come from the Flyway migrations through sync.mjs. The two spring_session tables are authored: Spring Session creates them outside Flyway. The two notes are authored and each names its source: the activity_log migration and the Avro schema directory.'
+    include postgres.*, avro_subjects
   }
 
   view development of kanban {

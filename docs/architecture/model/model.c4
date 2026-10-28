@@ -39,6 +39,22 @@ model {
         source 'src/main/java/com/vrudenko/kanban_board/activitylog'
       }
     }
+
+    management = container 'Management server' {
+      technology 'Spring Boot actuator'
+      description 'Unrouted port that serves the health probes and the Prometheus endpoint.'
+      metadata {
+        source 'src/main/resources/application.properties'
+      }
+    }
+
+    init = job 'register-schemas' {
+      technology 'init container'
+      description 'Registers each Avro record schema under its full name and sets BACKWARD compatibility before the app container starts.'
+      metadata {
+        source 'k8s/base/app/app.yaml'
+      }
+    }
   }
 
   postgres = datastore 'Postgres 16' {
@@ -62,6 +78,27 @@ model {
         source 'src/main/resources/application.properties'
       }
     }
+
+    activity_log_note = note 'activity_log: no foreign key, unique event_id' {
+      description 'Authored. board_id is a plain column with no REFERENCES clause, and the unique event_id is the idempotency key the consumer relies on.'
+      metadata {
+        source 'src/main/resources/db/migration/V3__add_activity_log.sql'
+      }
+    }
+  }
+
+  avro_subjects = note 'Avro subjects' {
+    description 'Authored. One subject per Avro record, named by its full name, registered by the init job and only looked up by the producer.'
+    metadata {
+      source 'src/main/avro'
+    }
+  }
+
+  b2 = external 'Off-cluster backup bucket' {
+    description 'Authored. Object storage outside the cluster whose key can write but not read or delete.'
+    metadata {
+      source 'k8s/data/postgres/backup/postgres-backup.sh'
+    }
   }
 
   backup = job 'Postgres backup' {
@@ -79,6 +116,12 @@ model {
       workload 'StatefulSet/redpanda'
     }
 
+    registry = component 'Schema Registry' {
+      description 'Redpanda built-in registry that holds the Avro schemas and their compatibility setting.'
+      metadata {
+        source 'k8s/base/redpanda/redpanda.yaml'
+      }
+    }
     activity = topic 'kanban.activity' {
       description 'Avro, keyed by event id'
     }
@@ -97,6 +140,10 @@ model {
   redpanda.activity -[async]-> kanban.consumer 'poll, group activity-log'
   kanban.consumer -[sync]-> postgres 'SQL over JDBC'
   kanban.consumer -[async]-> redpanda.dlt 'Kafka protocol and Schema Registry API'
+  kanban.init -[sync]-> redpanda.registry 'Kafka protocol and Schema Registry API'
+  kanban.publisher -[sync]-> redpanda.registry 'Kafka protocol and Schema Registry API'
+  kanban.consumer -[sync]-> redpanda.registry 'Kafka protocol and Schema Registry API'
+  backup -[sync]-> b2 'age-encrypted dump, S3 put'
 
   // Authored foreign key: Spring Session's own schema (schema-postgresql.sql in spring-session-jdbc 3.5.7).
   postgres.spring_session_attributes -[fk]-> postgres.spring_session 'session_primary_id'

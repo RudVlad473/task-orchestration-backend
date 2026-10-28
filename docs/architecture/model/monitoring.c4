@@ -50,6 +50,7 @@ model {
   prometheus -[sync]-> node-exporter 'scrape metrics'
   prometheus -[sync]-> postgres-exporter 'scrape metrics'
   prometheus -[sync]-> certmanager 'scrape metrics'
+  prometheus -[sync]-> kanban.management 'scrape metrics'
   postgres-exporter -[sync]-> postgres 'read statistics over SQL'
   grafana -[sync]-> prometheus 'PromQL queries'
   grafana -[sync]-> loki 'LogQL queries'
