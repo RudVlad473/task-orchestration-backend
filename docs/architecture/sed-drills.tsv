@@ -7,10 +7,3 @@ D9	the only development view is retagged	model/views.c4	s|^    #development$|   
 D10	a namespace node is deleted from the model (cert-manager)	model/deployment.c4	/^      cert-manager = namespace .cert-manager. {$/,/^      }$/d
 D10b	a manifest namespace is misspelled (kube-sytem)	k8s/platform/traefik/helmchartconfig.yaml	s|namespace: kube-system|namespace: kube-sytem|
 D12	a metadata key is misspelled on an element (sourc)	model/model.c4	s|^      source 'k8s/platform/traefik'|      sourc 'k8s/platform/traefik'|
-D18	a scenario view gets a sixth participant	model/views.c4	s|^\(    client <- traefik '200 {id, email, displayName, theme}'\)$|\1\n    kanban.api -> redpanda.activity 'probe'|
-D19	the only instance of a workload element is deleted (backup)	model/deployment.c4	/^        instanceOf backup$/d
-D20	a claimed HelmRelease is renamed (loki)	k8s/monitoring/controllers/loki.yaml	s|^  name: loki$|  name: lokix|
-D21	a claimed namespace changes (loki moved to kanban-data)	k8s/monitoring/controllers/loki.yaml	s|^  namespace: monitoring$|  namespace: kanban-data|
-D22	a Flux controller is renamed in the generator file (source-controller)	k8s/flux-system/gotk-components.yaml	s|^  name: source-controller$|  name: source-controllerx|
-D23	a ClusterIssuer is renamed (letsencrypt-staging)	k8s/platform/edge/clusterissuers.yaml	s|^  name: letsencrypt-staging$|  name: letsencrypt-stagingx|
-D24	a claimed host is changed in an IngressRoute (nonprod)	k8s/overlays/nonprod/ingressroute.yaml	s|kanban-board-rud-vlad-473-nonprod|kanban-board-rud-vlad-473-nonprodx|g

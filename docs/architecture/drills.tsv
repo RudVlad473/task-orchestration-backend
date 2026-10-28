@@ -1,0 +1,18 @@
+drill	title	kind	file	value
+D12b	unknown metadata keys on a deployment node, an instance and a relationship	sed	model/deployment.c4	s|^\(      kube-system = namespace .*{\)$|\1\n        metadata { nodekey 'x' }|
+D12b	unknown metadata keys on a deployment node, an instance and a relationship	sed	model/deployment.c4	s|^        instanceOf traefik$|        instanceOf traefik {\n          metadata { instkey 'y' }\n        }|
+D12b	unknown metadata keys on a deployment node, an instance and a relationship	sed	model/model.c4	s|^  client -\[sync\]-> traefik 'HTTPS :443'$|  client -[sync]-> traefik 'HTTPS :443' {\n    metadata { relkey 'z' }\n  }|
+D13	an instance with no relationship (lonely)	lonely_into	-	unlinked
+D13b (control)	the same instance with a relationship	lonely_into	-	linked
+D14	a k8s fact source directory is missing (k8s/overlays)	delete	k8s/overlays	-
+D14b	a k8s fact source directory is missing (k8s/monitoring)	delete	k8s/monitoring	-
+D14c	a k8s manifest does not parse	write	k8s/platform/broken.yaml	a: [1, 2\nb: 3\n
+D17	a drawn instance pair gains a relationship with a different title	labeldrill	-	probe
+D17b (control)	the same pair gains a relationship with the shared title	labeldrill	-	SQL over JDBC
+D18	a scenario view gets a sixth participant	sed	model/views.c4	s|^\(    client <- traefik '200 {id, email, displayName, theme}'\)$|\1\n    kanban.api -> redpanda.activity 'probe'|
+D19	the only instance of a workload element is deleted (backup)	sed	model/deployment.c4	/^        instanceOf backup$/d
+D20	a claimed HelmRelease is renamed (loki)	sed	k8s/monitoring/controllers/loki.yaml	s|^  name: loki$|  name: lokix|
+D21	a claimed namespace changes (loki moved to kanban-data)	sed	k8s/monitoring/controllers/loki.yaml	s|^  namespace: monitoring$|  namespace: kanban-data|
+D22	a Flux controller is renamed in the generator file (source-controller)	sed	k8s/flux-system/gotk-components.yaml	s|^  name: source-controller$|  name: source-controllerx|
+D23	a ClusterIssuer is renamed (letsencrypt-staging)	sed	k8s/platform/edge/clusterissuers.yaml	s|^  name: letsencrypt-staging$|  name: letsencrypt-stagingx|
+D24	a claimed host is changed in an IngressRoute (nonprod)	sed	k8s/overlays/nonprod/ingressroute.yaml	s|kanban-board-rud-vlad-473-nonprod|kanban-board-rud-vlad-473-nonprodx|g

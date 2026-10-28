@@ -5,9 +5,10 @@
 # D13b, D16b and D17b, controls that must stay clean. A drill on a k8s fact source is caught with exit 4.
 # The real model is never edited: a drill that changes a view changes the scratch copy.
 #
-# A drill that is one sed edit on one file is a row of sed-drills.tsv, run by a sed_drills call at
-# its place below, so the drills run in the order drill-output.txt records. Drills that write or
-# delete a file, edit more than once or call a helper are written out in full.
+# Drills from D12b on are rows of drills.tsv, run by run_drills in row order after the drills before
+# them. Before D12b, a drill that is one sed edit on one file is a row of sed-drills.tsv, run by a
+# sed_drills call at its place below, and the others are written out in full. Either way the drills
+# run in the order drill-output.txt records.
 #
 # SYNC names another sync.mjs to run. Running the harness once with the script from before a
 # rule existed and once with the current one records the drill as not caught and then caught.
@@ -64,6 +65,67 @@ end
 # kanban to postgres instance pair, which already carries the shared title SQL over JDBC.
 function labeldrill --inherit-variable scratch
     printf '%s\n' 'model {' "  kanban.publisher -[sync]-> postgres '$argv[1]'" '}' >$scratch/model/labeldrill.c4
+end
+
+# Runs every drill of the table named by $argv[1], in row order.
+#
+# The columns are drill, title, kind, file and value, and a column the kind does not use holds a
+# dash. Consecutive rows with the same drill and title are one drill: one header, one fresh copy,
+# each row's edit in turn and one run. Paths in file and value are relative to the scratch root.
+# The kinds are:
+#
+# - sed: sed --sandbox edits file in place with value as the expression, so the e, r and w commands are refused
+# - write: printf writes value to file as its format, so \n is a newline and a percent sign is written %%
+# - delete: trash-put removes file, which may be a file or a directory
+# - lonely_into, labeldrill: the helper of that name, with value as its one argument
+#
+# Each field reaches its command as one argument from a variable that fish never parses again, so
+# quotes, dollar signs and backslashes arrive as written. The rows are read whole before the loop,
+# so no command in it can read a row from stdin. A missing or empty table, a row that is not five
+# non-empty fields, an unknown kind or a drill whose rows are not one block exits 2.
+function run_drills --inherit-variable scratch
+    set rows (tail -n +2 $argv[1] 2>/dev/null)
+    and set -q rows[1]
+    or begin
+        echo "run_drills: no drill rows in $argv[1]" >&2
+        exit 2
+    end
+    set seen
+    set prev
+    for row in $rows
+        set f (string split \t -- $row)
+        if test (count $f) -ne 5 || contains -- '' $f
+            echo "run_drills: not 5 non-empty tab-separated fields: $row" >&2
+            exit 2
+        end
+        if test "$f[1]: $f[2]" != "$prev"
+            if contains -- $f[1] $seen
+                echo "run_drills: $f[1] is not one block of consecutive rows with one title" >&2
+                exit 2
+            end
+            set -a seen $f[1]
+            set -q prev[1]; and run
+            set prev "$f[1]: $f[2]"
+            echo "== $prev"
+            fresh
+        end
+        switch $f[3]
+            case sed
+                sed -i --sandbox -e $f[5] $scratch/$f[4]
+            case write
+                printf $f[5] >$scratch/$f[4]
+            case delete
+                trash-put $scratch/$f[4]
+            case lonely_into
+                lonely_into $f[5]
+            case labeldrill
+                labeldrill $f[5]
+            case '*'
+                echo "run_drills: unknown kind $f[3] in drill $f[1]" >&2
+                exit 2
+        end
+    end
+    run
 end
 
 # Runs the named drills from their rows in sed-drills.tsv, whose columns are id, title, the file
@@ -161,48 +223,6 @@ run
 
 sed_drills D12
 
-echo "== D12b: unknown metadata keys on a deployment node, an instance and a relationship"
-fresh
-sed -i "s|^\(      kube-system = namespace .*{\)\$|\1\n        metadata { nodekey 'x' }|" $scratch/model/deployment.c4
-sed -i "s|^        instanceOf traefik\$|        instanceOf traefik {\n          metadata { instkey 'y' }\n        }|" $scratch/model/deployment.c4
-sed -i "s|^  client -\[sync\]-> traefik 'HTTPS :443'\$|  client -[sync]-> traefik 'HTTPS :443' {\n    metadata { relkey 'z' }\n  }|" $scratch/model/model.c4
-run
-
-echo "== D13: an instance with no relationship (lonely)"
-fresh
-lonely_into
-run
-
-echo "== D13b (control): the same instance with a relationship"
-fresh
-lonely_into linked
-run
-
-echo "== D14: a k8s fact source directory is missing (k8s/overlays)"
-fresh
-trash-put $scratch/k8s/overlays
-run
-
-echo "== D14b: a k8s fact source directory is missing (k8s/monitoring)"
-fresh
-trash-put $scratch/k8s/monitoring
-run
-
-echo "== D14c: a k8s manifest does not parse"
-fresh
-printf '%s\n' 'a: [1, 2' 'b: 3' >$scratch/k8s/platform/broken.yaml
-run
-
-echo "== D17: a drawn instance pair gains a relationship with a different title"
-fresh
-labeldrill probe
-run
-
-echo "== D17b (control): the same pair gains a relationship with the shared title"
-fresh
-labeldrill 'SQL over JDBC'
-run
-
-sed_drills D18 D19 D20 D21 D22 D23 D24
+run_drills $here/drills.tsv
 
 trash-put $scratch
