@@ -132,3 +132,27 @@ volume, port 8080 and 15433 free again, `datastore-postgres` and all other conta
 
 WRITES: yes
 VERDICT: b a request with Accept: application/json gets a clean 401 (no SQL, no row, no cookie), but a default-Accept (*/*) request creates a spring_session row and a JSESSIONID Set-Cookie via Spring Security's default request cache
+
+=== Follow-up (2026-10-28, quick task 261028-n5v): fixed in 17a94cb ===
+
+Commit 17a94cb sets a request cache that saves nothing on the main chain
+(SecurityConfiguration.java:129, `http.requestCache(cache -> cache.requestCache(new
+NullRequestCache()));`).
+
+Pinned by AuthorizationGatingTest, nested class NoSessionSweep, method
+shouldCreateNoSessionAndSetNoCookie_whenNoSessionIsPresent: GET and POST /boards, each with an
+Accept of application/json, a bare wildcard, a browser navigation header and none. Red with 6 of 8
+cases failing on the unfixed code (261028-m6k-red.txt), green with 0 failures
+(261028-m6k-green.txt), both in the 261028-m6k quick task folder. The test runs in process
+(MockMvc) and asserts the status, the new spring_session primary ids and the Set-Cookie names. It
+does not count statements.
+
+No live re-measurement was run after the fix, so rows A to F above describe the code at 82775fa.
+That no statement is sent after the fix is inferred from the code, not observed: the request cache
+was the only statement source this record found, and rows A, C and F, which it did not save, sent
+none.
+
+The SecurityConfiguration.java line numbers this record cites are pre-fix, because 17a94cb added
+lines above them. For example SessionCreationPolicy.IF_REQUIRED, cited here at 127, is now at 138.
+
+The VERDICT line above remains this measurement's verdict, taken at 82775fa.

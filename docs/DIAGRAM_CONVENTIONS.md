@@ -110,7 +110,7 @@ the `verify/` folder.
 | Process | `view ... of kanban` | request threads, named executors, topics, consumer groups, DB writes; the Schema Registry, the schema-registering init job, the management server and the nightly backup flow to the off-cluster bucket | method calls, class names | topics checked; the backup job's CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored |
 | Development | `view ... of kanban`, packages as `component` | top-level packages and their dependency direction | classes, third-party libraries | components and `imports` edges generated from import lines (see V5 and note (d)); cycles printed by the check, not gated |
 | Physical | `deployment` model and `deployment view`: three views, `production`, `delivery` and `monitoring` | `production`: the server and the provider nodes (arch in the server titles), the cluster, namespaces, workloads, the cluster-scoped ClusterIssuers, and the inbound path with the provider firewall and the host filter as external elements. `delivery`: GitHub and its runner (arch in the title), Docker Hub, Flux and the image path into the cluster. `monitoring`: the monitoring workloads and what they scrape and query | pods, replicas, secrets, objects a chart renders | workloads checked (`Deployment`, `StatefulSet`, `CronJob`, `HelmRelease` and `ClusterIssuer` under `k8s/base`, `k8s/data`, `k8s/platform` and `k8s/monitoring`, plus the Flux controller Deployments in `k8s/flux-system/gotk-components.yaml`); routed hosts checked against every `IngressRoute`; namespace nodes and instance placement checked against the manifests under `k8s`; the firewall, host filter, ServiceLB, provider nodes, the runner and the scrape edges authored |
-| Scenarios | `dynamic view`, one per outcome, at most 5 participants | client-visible facts: method and path, status and `code`, cookie, SQL action, topic; also the internal steps of `activity-log-row` (the AFTER_COMMIT hand-off, the publish executor, the topic, the consumer group, the idempotent insert) and of the delivery scenarios `push-to-image` and `image-to-rollout` (workflow jobs, Flux controllers, the init container); class-level calls and branches inside one view are still not drawn | class-level calls, branches inside one view | authored: every step is cited in `.planning/workstreams/architecture-views/phases/02-model-completion/02-SCENARIO-EVIDENCE.md`, or marked authored with its reason; at most 5 participants checked; `error-401` draws no SQL step, which is authored and unmeasured (note (b2)) |
+| Scenarios | `dynamic view`, one per outcome, at most 5 participants | client-visible facts: method and path, status and `code`, cookie, SQL action, topic; also the internal steps of `activity-log-row` (the AFTER_COMMIT hand-off, the publish executor, the topic, the consumer group, the idempotent insert) and of the delivery scenarios `push-to-image` and `image-to-rollout` (workflow jobs, Flux controllers, the init container); class-level calls and branches inside one view are still not drawn | class-level calls, branches inside one view | authored: every step is cited in `.planning/workstreams/architecture-views/phases/02-model-completion/02-SCENARIO-EVIDENCE.md`, or marked authored with its reason; at most 5 participants checked; `error-401` draws no SQL step; measured before the fix, and after it a test checks session rows and cookies while the absence of SQL is inferred from the code (note (b2)) |
 
 Three notes on the table.
 
@@ -144,11 +144,16 @@ returns the identical 401 body right after the `SELECT` by id that `signin-ceili
 SQL actions are a prefix of that view and nothing would be undrawn. Branches inside one view were
 not tested and are not adopted.
 
-**(b2) The 401 view.** `error-401` draws no SQL step. That absence is authored, not measured: the
-live measurement of what a request with no session cookie issues did not run in Phase 2 (port 5433
-was held by another project's Postgres), so whether such a request writes a `spring_session` row or
-issues any SQL is unknown. The view's description says so, and `02-04-401-measure.txt` in the Phase 2
-folder records the verdict `not measured`.
+**(b2) The 401 view.** `error-401` draws no SQL step. On 2026-10-28 one live run (verdict b, recorded
+in `02-04-401-measure.txt` in the Phase 2 folder) found that a request with no session cookie got a
+clean 401 when its Accept header named `application/json`, but a bare wildcard or a browser
+navigation header had the refused request saved in a new session: one `spring_session` row and a
+`JSESSIONID` cookie per request. Commit `17a94cb` set a request cache that saves nothing, and
+`AuthorizationGatingTest` (GET and POST `/boards`, four Accept variants) failed 6 of 8 cases before
+it and passes after. The limits: no live re-measurement followed the fix, the test runs in process
+and checks session rows and cookie names, not statements, and that no SQL is sent after the fix is
+inferred from the code (the removed request cache was the only statement source measured), not
+observed.
 
 **(c) Scenario layout.** Sequence is adopted. Every scenario view carries `variant sequence`,
 and `likec4.fish png` passes `--seq`, without which the export draws the ordinary layout (V1). The
@@ -339,7 +344,7 @@ their sizes replace the Phase 1 ones above. The other views in the Phase 1 table
 | `delivery` | `#physical` | Flux controller Deployments checked as workloads; repository, CI, Docker Hub and the runner authored | 1862 x 1556 |
 | `monitoring` | `#physical` | HelmReleases checked as workloads; scrape and query edges authored from the repo's monitor settings | 3490 x 1574 |
 | `signup-ok` | `#scenarios` | authored, steps cited | 1838 x 960 |
-| `error-401` | `#scenarios` | authored, steps cited; no SQL step, authored and unmeasured | 1180 x 530 |
+| `error-401` | `#scenarios` | authored, steps cited; no SQL step, measured before the fix; after it a test checks rows and cookies and the absence of SQL is inferred from the code (note (b2)) | 1180 x 530 |
 | `error-403` | `#scenarios` | authored, steps cited | 1820 x 656 |
 | `error-409` | `#scenarios` | authored, steps cited | 1533 x 582 |
 | `activity-log-row` | `#scenarios` | authored, steps cited | 1926 x 567 |
