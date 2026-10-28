@@ -1,0 +1,22 @@
+# Plan 03-07 model-only push record, 2026-10-28. Authorization: DECISION Q6: 1 in 03-DECISIONS.txt
+FLUSH RANGE ahead=3 behind=0 after the Flux merge (git rev-list --count origin/main..HEAD, after git fetch origin; origin was 1 ahead: fe3466b fluxcdbot)
+FLUSH COMMITS 82a5dee (c) Flux merge beneath the flush; 3f86bb3 (b) planning-only, plan 06 summary, roadmap, state, requirements; c789fed (b) planning-only, plan 06 live record
+FLUSH DIFF .planning=5 (git diff --name-only origin/main HEAD, top-level directories; every path under .planning/workstreams/architecture-views/)
+FLUSHED 82a5dee6c12202cbfac7f6efaa42768e2b08d207 commits=3
+CONTROL flush push 82a5dee6c12202cbfac7f6efaa42768e2b08d207: architecture-site runs=0 deploy runs=0 witness=secret-scan:40773919680
+DEEPLINK_BEFORE /view/publish-the-site/ nav_status=200 svg_nodes=11
+NOTE DEEPLINK_BEFORE measured, not expected: nginx answers 200 with the app shell for any path, and the 11 SVG nodes are the shell page; its body text was "The diagram publish-the-site does not exist or contains errors" / "Go to overview" / "Share" / "Export"
+ORIGIN BEFORE 82a5dee6c12202cbfac7f6efaa42768e2b08d207
+MODEL-ONLY COMMITS: a26694f
+MODEL-ONLY DIFF: docs/architecture/model/scenarios-platform.c4
+PUSHED a26694fa4388b8e2736a3bf5117a5bc80178c21c at 2026-10-28T21:44:44Z
+SITE RUN 40774467920 event=push conclusion=success tag=main-5-a26694f (run number 5, jobs build:success,publish:success; Docker Hub lists the tag, last_updated 2026-10-28T21:45:37Z)
+DEPLOY RUNS 0
+NOTE DEPLOY RUNS counts deploy.yml runs for a26694f; witness: Invariant Checks run 40774467949 exists for the SHA (event push, success), so GitHub processed the push
+FLUX BUMP 6a82ddef8ff77b4ea35f9f680e4cd2b5e13a3e13 newTag=main-5-a26694f (committed 2026-10-28T21:48:11Z by fluxcdbot; only k8s/overlays/architecture/kustomization.yaml)
+ROLLED image=main-5-a26694f restarts=0 (pod started 2026-10-28T21:49:40Z)
+CONTROL flux-bump 6a82ddef8ff77b4ea35f9f680e4cd2b5e13a3e13: architecture-site runs=0
+CONTROL witness Invariant Checks run 40774959670 exists for 6a82ddef8ff77b4ea35f9f680e4cd2b5e13a3e13 (event push, success)
+DEEPLINK /view/publish-the-site/ nav_status=200 svg_nodes=162
+NOTE DEEPLINK after the roll: the body text begins with step 1 of the new view ("a push to main that changes the model, the site directory, ..."), where before the push it read "The diagram publish-the-site does not exist or contains errors"
+LATENCY site tag 2026-10-28T21:45:37Z to bump commit 21:48:11Z, to new pod 21:49:40Z (minutes: 2.6 and 4.1)
