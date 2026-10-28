@@ -1,0 +1,46 @@
+# Plan 03-06 live record, 2026-10-28. Host: kanban-board-rud-vlad-473-architecture.duckdns.org
+BASELINE TLS issuer=CN=TRAEFIK DEFAULT CERT
+BASELINE GET / status=404 marker=0
+BASELINE DEEPLINK /view/signin-ok/ nav_status=404 svg_nodes=0
+BASELINE DEEPLINK_CURL /view/signin-ok/ status=404
+BASELINE OTHERS prod=200 nonprod=200 monitoring=302
+BASELINE TRAEFIK restarts=2
+PUSH RANGE ahead=8 behind=0 (git rev-list --count origin/main..HEAD, after git fetch origin; no Flux merge needed)
+PUSH DIRS .planning=10 docs/architecture=6 k8s/overlays=3 k8s/flux-system=3 k8s/base=2 k8s/platform=1 docs/INFRA_ARCHITECTURE.md=1 (git diff --name-only origin/main HEAD, top two path levels)
+PUSH CLASSES b1aa8c5 (a) DECISION Q5 and Q6 lines, 03-DECISIONS.txt only
+PUSH CLASSES c2e0be4 (b) planning-only, plan 05 summary, roadmap, state
+PUSH CLASSES 0728e51 (a) plan 05 drills D26 and D27, docs/architecture/drill-output.txt and drills.tsv
+PUSH CLASSES 5377803 (a) plan 05 drill D25, docs/architecture/drill-output.txt and drills.tsv
+PUSH CLASSES 03ca15a (b) planning-only, plan 04 summary, roadmap, state
+PUSH CLASSES 8e531d0 (a) plan 04 site commit, k8s manifests, Flux wiring, model, INFRA_ARCHITECTURE.md, three records
+PUSH CLASSES 18bb910 (b) planning-only, plan 03 summary, roadmap, state
+PUSH CLASSES 68999af (b) planning-only, plan 03 solver record
+PUSHED b1aa8c581f2380c70f911fb18a70833f6ee355b2 at 2026-10-28T21:28:02Z
+SOLVER_SVC cm-acme-http-solver-749lj type=ClusterIP
+CERT architecture ready=True issuer=letsencrypt-staging
+KUSTOMIZATION apps-architecture ready=True revision=main@sha1:b1aa8c581f2380c70f911fb18a70833f6ee355b2
+ROLLOUT ready=1/1 image=main-1-5d44dac restarts=0
+TLS issuer=C=US, O=Let's Encrypt, CN=(STAGING) Dastardly Durum YR1
+GET / status=200 marker=1
+OTHERS prod=200 nonprod=200 monitoring=302
+I11 architecture-https {"kustomize.toolkit.fluxcd.io/name":"apps-architecture","kustomize.toolkit.fluxcd.io/namespace":"flux-system"}
+I11 architecture-http {"kustomize.toolkit.fluxcd.io/name":"apps-architecture","kustomize.toolkit.fluxcd.io/namespace":"flux-system"}
+NONCLUSTERIP kube-system/traefik
+SITE RUN 40772184020 conclusion=success tag=main-4-b1aa8c5 (run number 4, published 2026-10-28T21:28:59Z)
+FLUX BUMP fe3466b015517641282f4031c01a9fba077b0bb8 newTag=main-4-b1aa8c5 (committed 2026-10-28T21:33:09Z by fluxcdbot)
+ROLLED image=main-4-b1aa8c5 restarts=0 (pod started 2026-10-28T21:35:08Z)
+CONTROL flux-bump fe3466b015517641282f4031c01a9fba077b0bb8: architecture-site runs=0
+CONTROL witness Invariant Checks run 40772915022 exists for fe3466b015517641282f4031c01a9fba077b0bb8 (event push, success)
+LATENCY push_to_ready=1.6 tag_to_rollout=6.2 (minutes; push 21:28:02Z to certificate Ready 21:29:39Z; tag 21:28:59Z to new pod 21:35:10Z)
+CI invariant-checks conclusion=success (run 40772183789)
+CI k8s-invariants conclusion=success
+CI k8s-manifests-valid conclusion=success
+CI likec4-model-drift conclusion=success
+CI comment-lint conclusion=success
+FSREAD status=200 same_as_root=yes (sha256 8847aa37427db4c70cdeb1f47ac63738c5462786bf7674c3c0ea95d24e9cb7eb for both, 816 bytes of HTML)
+DEEPLINK /view/signin-ok/ nav_status=200 svg_nodes=184
+DEEPLINK_CURL /view/signin-ok/ status=200
+MISSING_ASSET status=404 content_type=text/html immutable=no (no cache-control header; server nginx/1.30.6; content-length 153)
+ROBOTS disallow=yes
+TRAEFIK restarts_before=2 restarts_after=2 (22 files, 6895680 bytes, all 200, 10 concurrent via xargs -P 10; read again at least 28 s after the load ended)
+CT crt.sh entries=0 issuers=none (HTTP 200, body [])
