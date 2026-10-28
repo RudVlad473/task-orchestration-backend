@@ -1,0 +1,23 @@
+Mutation proving the replay oracle reads docs/architecture/sed-drills.tsv (run 2026-10-28, after commit 49f95d4)
+
+mutation command:
+sed -i 's/nonprodx|g$/nonprod|g/' docs/architecture/sed-drills.tsv
+(the D24 row now replaces the host with itself)
+
+replay:
+fish docs/architecture/drill.fish < /dev/null > docs/architecture/out/rlq-mut.txt 2>&1   (script exit 0)
+
+cmp exit: 1
+
+diff docs/architecture/out/rlq-mut.txt docs/architecture/drill-output.txt
+178,179c178,181
+<   exit=0
+<   OK (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads)
+---
+>   exit=1
+>   DRIFT (61 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 17 workloads):
+>   - k8s IngressRoute routes host kanban-board-rud-vlad-473-nonprodx.duckdns.org, which no element claims in metadata host
+>   - model claims host kanban-board-rud-vlad-473-nonprod.duckdns.org but no IngressRoute routes it
+
+restore:
+git checkout -- docs/architecture/sed-drills.tsv
