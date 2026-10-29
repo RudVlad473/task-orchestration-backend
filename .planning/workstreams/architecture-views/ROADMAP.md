@@ -151,7 +151,24 @@ Plans:
   3. `uptime-check.yml` probes the site for a body marker, and `timeout-minutes` is raised to cover the extra URL (ARCHITECTURE 3.4 arithmetic). A drill against a wrong marker or URL fails the probe (red), and the restored entry passes (green). The runbook's list of probed URLs includes the site.
   4. On the production hostname, a cold deep link to `/view/<id>/` and a refresh of it both render the view in a headless browser. `curl -I` of a missing `/assets/*.js` does not answer 200 with `text/html`. The README and `docs/INFRA_ARCHITECTURE.md` link the public address, which `rg` finds in both files.
 
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+**Wave 1**
+- [ ] 04-01-PLAN.md — leak scan `docs/architecture/site/leak-scan.mjs` (12 targets, four-host allow-list, robots check) run by architecture-site.yml before the image; baseline per target, planted IP red then green; fixture tests with three mutants; issuer descriptions and the publish-the-site scan step rewritten before any review
+
+**Wave 2** *(blocked on Wave 1 completion)*
+- [ ] 04-02-PLAN.md — drill D30/D30b through a new `scan` kind with drill-output.txt regenerated; hook runs the scan's fixture tests, self-test case 20 red without the step and green with it
+
+**Wave 3** *(blocked on Wave 2 completion)*
+- [ ] 04-03-PLAN.md — blocking-human Q1 (push and draft pull-request proof); CI scan, publish and Flux rollout on staging; workflow step red on a planted IP then green; blocking-human Q2 review of the scan report and live staging site, APPROVED_TAG recorded
+
+**Wave 4** *(blocked on Wave 3 completion)*
+- [ ] 04-04-PLAN.md — blocking-human Q3 (flip, one-way) and Q4 (probe push and drill) behind a three-way tag check; one-commit flip to letsencrypt-production verified without `-k`, revert on failure; README and INFRA_ARCHITECTURE links after Ready
+
+**Wave 5** *(blocked on Wave 4 completion)*
+- [ ] 04-05-PLAN.md — uptime probe of the site root for the likec4-root marker, timeout 10; main green, wrong-marker drill red, recovery green; production deep link, reload, missing asset and robots.txt measured
+
 **Planning notes**: The "review gate" in PUB-05 is read as a human checkpoint, because only the repo owner can judge what counts as sensitive (PITFALLS 11). Let's Encrypt allows 5 certificates per exact name per 7 days with no override, so the flip happens once, after staging is `Ready`.
 
 ## Structure Decisions
