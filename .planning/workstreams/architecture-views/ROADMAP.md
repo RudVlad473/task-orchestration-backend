@@ -151,7 +151,7 @@ Plans:
   3. `uptime-check.yml` probes the site for a body marker, and `timeout-minutes` is raised to cover the extra URL (ARCHITECTURE 3.4 arithmetic). A drill against a wrong marker or URL fails the probe (red), and the restored entry passes (green). The runbook's list of probed URLs includes the site.
   4. On the production hostname, a cold deep link to `/view/<id>/` and a refresh of it both render the view in a headless browser. `curl -I` of a missing `/assets/*.js` does not answer 200 with `text/html`. The README and `docs/INFRA_ARCHITECTURE.md` link the public address, which `rg` finds in both files.
 
-**Plans**: 4/5 plans executed
+**Plans**: 5/5 plans executed
 
 Plans:
 **Wave 1**
@@ -167,7 +167,7 @@ Plans:
 - [x] 04-04-PLAN.md — blocking-human Q3 (flip, one-way) and Q4 (probe push and drill) behind a three-way tag check; one-commit flip to letsencrypt-production verified without `-k`, revert on failure; README and INFRA_ARCHITECTURE links after Ready
 
 **Wave 5** *(blocked on Wave 4 completion)*
-- [ ] 04-05-PLAN.md — uptime probe of the site root for the likec4-root marker, timeout 10; main green, wrong-marker drill red, recovery green; production deep link, reload, missing asset and robots.txt measured
+- [x] 04-05-PLAN.md — uptime probe of the site root for the likec4-root marker, timeout 10; main green, wrong-marker drill red, recovery green; production deep link, reload, missing asset and robots.txt measured
 
 **Planning notes**: The "review gate" in PUB-05 is read as a human checkpoint, because only the repo owner can judge what counts as sensitive (PITFALLS 11). Let's Encrypt allows 5 certificates per exact name per 7 days with no override, so the flip happens once, after staging is `Ready`.
 
@@ -225,4 +225,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
 | 2. Model Completion | 5/5 | Complete    | 2026-10-28 |
 | 3. Build and Serve on a Staging Certificate | 8/8 | Complete    | 2026-10-29 |
-| 4. Leak Review and Production Go-Live | 4/5 | In Progress | - |
+| 4. Leak Review and Production Go-Live | 5/5 | In Progress | - |
