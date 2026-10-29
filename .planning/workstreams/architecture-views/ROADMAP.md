@@ -155,7 +155,7 @@ Plans:
 
 Plans:
 **Wave 1**
-- [ ] 04-01-PLAN.md — leak scan `docs/architecture/site/leak-scan.mjs` (12 targets, four-host allow-list, robots check) run by architecture-site.yml before the image; baseline per target, planted IP red then green; fixture tests with three mutants; issuer descriptions and the publish-the-site scan step rewritten before any review
+- [ ] 04-01-PLAN.md — leak scan `docs/architecture/site/leak-scan.mjs` (13 targets, four-host allow-list, robots check) run by architecture-site.yml before the image; baseline per target, planted IP red then green; fixture tests with three mutants; issuer descriptions and the publish-the-site scan step rewritten before any review
 
 **Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 04-02-PLAN.md — drill D30/D30b through a new `scan` kind with drill-output.txt regenerated; hook runs the scan's fixture tests, self-test case 20 red without the step and green with it
