@@ -4,18 +4,18 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: "3.1"
 current_phase_name: Model description pass (INSERTED)
-current_plan: 2
+current_plan: 3
 status: executing
-stopped_at: Completed 03.1-01-PLAN.md
-last_updated: "2026-10-29T12:46:50.078Z"
+stopped_at: Completed 03.1-02-PLAN.md
+last_updated: "2026-10-29T12:57:16.701Z"
 last_activity: 2026-10-29
 last_activity_desc: Phase 3.1 execution started
-state_head: 6b7f09fc8cd874b6d93abb733633d16b915a0270
+state_head: b8ce1202655275346b87f5fae2dd26976ca6d5dc
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -31,7 +31,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 ## Current Position
 
 Phase: 3.1 (Model description pass (INSERTED)) — EXECUTING
-Current Plan: 2
+Current Plan: 3
 Total Plans in Phase: 3
 Status: Ready to execute
 Last activity: 2026-10-29 — Phase 3.1 execution started
@@ -79,6 +79,7 @@ Progress: [████████░░] 75%
 | Phase 03 P07 | 23min | 3 tasks | 7 files |
 | Phase 03 P08 | 10 min | 2 tasks | 4 files |
 | Phase 03.1 P01 | 25 min | 2 tasks | 9 files |
+| Phase 03.1 P02 | 25 min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-08: no standing regression test for the model prose fix — No gate reads prose; a sync.mjs rule would hold only workflow-name lists and key on wording. Guard would need a sync.mjs rule reading push: true, a drill row, regenerated drill-output.txt and a hook selftest case
 - [Phase 03.1]: Definition-form noun phrases pass the description sentence rule; noun lists, colon lists and semicolon-joined clauses are defects
 - [Phase 03.1]: Generated elements get description text from the generator (extend cannot carry one at likec4 1.60.0)
+- [Phase 03.1]: VIEW_FOLDERS repeats the views block labels and is kept in step by hand; sync.mjs check fails until they agree
 
 ### Pending Todos
 
@@ -146,6 +148,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T12:46:49.740Z
-Stopped at: Completed 03.1-01-PLAN.md
+Last session: 2026-10-29T12:57:16.264Z
+Stopped at: Completed 03.1-02-PLAN.md
 Resume file: None
