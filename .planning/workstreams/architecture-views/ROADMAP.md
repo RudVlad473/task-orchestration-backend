@@ -25,7 +25,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundations, Edge Fix and Honesty Gates** - Traefik moves out of the nonexistent `edge` namespace, and the namespace, placement, metadata-key and view-membership checks are built and proven red then green (completed 2026-10-27)
 - [x] **Phase 2: Model Completion** - Delivery, monitoring, cert-manager and edge facts in Physical; Schema Registry, backup and Avro subjects in Process and Logical; seven scenarios; the YAML fact reader; the standard amended (completed 2026-10-28)
 - [x] **Phase 3: Build and Serve on a Staging Certificate** - CI builds the site image on model changes, Flux serves the static build at the architecture hostname on a staging certificate, and the publish path is modelled as built (completed 2026-10-29)
-- [ ] **Phase 4: Leak Review and Production Go-Live** - Leak scan of the built artifact and the user's review, then the production certificate flip, the uptime probe and the public links
+- [x] **Phase 4: Leak Review and Production Go-Live** - Leak scan of the built artifact and the user's review, then the production certificate flip, the uptime probe and the public links (completed 2026-10-29)
 
 ## Phase Details
 
@@ -151,7 +151,7 @@ Plans:
   3. `uptime-check.yml` probes the site for a body marker, and `timeout-minutes` is raised to cover the extra URL (ARCHITECTURE 3.4 arithmetic). A drill against a wrong marker or URL fails the probe (red), and the restored entry passes (green). The runbook's list of probed URLs includes the site.
   4. On the production hostname, a cold deep link to `/view/<id>/` and a refresh of it both render the view in a headless browser. `curl -I` of a missing `/assets/*.js` does not answer 200 with `text/html`. The README and `docs/INFRA_ARCHITECTURE.md` link the public address, which `rg` finds in both files.
 
-**Plans**: 5/5 plans executed
+**Plans**: 5/5 plans complete
 
 Plans:
 **Wave 1**
@@ -225,4 +225,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
 | 2. Model Completion | 5/5 | Complete    | 2026-10-28 |
 | 3. Build and Serve on a Staging Certificate | 8/8 | Complete    | 2026-10-29 |
-| 4. Leak Review and Production Go-Live | 5/5 | In Progress | - |
+| 4. Leak Review and Production Go-Live | 5/5 | Complete    | 2026-10-29 |
