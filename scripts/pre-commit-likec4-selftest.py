@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Self-test for .githooks/pre-commit's LikeC4 drift step: the real hook runs in scratch repos against every commit shape that touches, or avoids, the model's fact sources.
+"""Self-test for .githooks/pre-commit's LikeC4 steps: the real hook runs in scratch repos against every commit shape that touches, or avoids, the model's fact sources.
 
-The cases cover ten refusals for drift, three matching commits that pass the check, two refusals
-for missing tooling and one commit of an unrelated path that must not run the step at all.
+The cases cover thirteen refusals for drift, three matching commits that pass the check, two refusals
+for missing tooling, one refusal of a commit that weakens the leak scan and one commit of an unrelated
+path that must not run the step at all.
 
 Exit codes: 0 when every case passes, 1 when any fails, 2 when the environment is unusable (no hook,
 no node or git, no installed likec4, or likec4 resolvable from outside a scratch repo), so "could
@@ -36,6 +37,9 @@ NOT_RUN_TEXT = "LikeC4 drift check did not run to completion"
 NO_NODE_TEXT = "Node is not on PATH"
 INSTALL_COMMAND = "pnpm --dir docs/architecture install"
 STALE_TEXT = "generated.c4 is stale"
+LEAK_SCAN = "docs/architecture/site/leak-scan.mjs"
+LEAK_BANNER = "Checking the leak scan against its fixtures..."
+LEAK_REFUSED_TEXT = "The leak scan's fixture tests failed"
 
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
 OK_TALLY = re.compile(r"^OK \(\d+ elements(, \d+ [a-z ]+)+\)$", re.MULTILINE)
@@ -249,6 +253,15 @@ def refused_for_drift(code, out, repo, head_before, finding):
     assert BANNER in plain, "the drift step did not run: " + tail(out)
     assert DRIFT_REFUSED_TEXT in plain, "the commit failed but not as drift: " + tail(out)
     assert finding in plain, "the DRIFT list lacks %r: %s" % (finding, tail(out))
+    assert head_of(repo) == head_before, "HEAD moved although the commit was refused"
+
+
+def refused_for_leak_tests(code, out, repo, head_before, finding):
+    plain = strip_ansi(out)
+    assert code != 0, "the commit succeeded; expected a refusal. Output: " + tail(out)
+    assert LEAK_BANNER in plain, "the leak scan step did not run: " + tail(out)
+    assert LEAK_REFUSED_TEXT in plain, "the commit failed but not for the leak scan's tests: " + tail(out)
+    assert finding in plain, "the failing tests do not name %r: %s" % (finding, tail(out))
     assert head_of(repo) == head_before, "HEAD moved although the commit was refused"
 
 
@@ -478,6 +491,16 @@ def test_19_platform_scenario_in_the_application_folder_is_refused():
     before = head_of(repo)
     code, out = commit(case_dir, repo)
     refused_for_drift(code, out, repo, before, "view push-to-image is in folder '5a Application behaviour', expected '5b Platform and delivery'")
+
+
+def test_20_a_weakened_leak_scan_is_refused():
+    case_dir, repo = make_repo("weakened-leak-scan", True)
+    ipv4_row = "  ['ipv4', new RegExp(`(?<![0-9.])${IPV4_OCTET}(?:\\\\.${IPV4_OCTET}){3}(?![0-9])`, 'g')],\n"
+    replace_in(repo, LEAK_SCAN, ipv4_row, "")
+    git(repo, "add", LEAK_SCAN)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_leak_tests(code, out, repo, before, "ipv4")
 
 
 def preflight(hook):

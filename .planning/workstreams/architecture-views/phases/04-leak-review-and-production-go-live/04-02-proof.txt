@@ -1,0 +1,4 @@
+SELFTEST without-step exit=1 failed=test_20_a_weakened_leak_scan_is_refused
+SELFTEST with-step exit=0 passed=20/20
+DRILL D30 scan_exit=1 sync_exit=0
+DRILL D30b scan_exit=0 sync_exit=0

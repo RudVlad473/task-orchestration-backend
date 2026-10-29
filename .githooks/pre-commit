@@ -194,6 +194,10 @@ fi
 # of one of the roots.
 # It sits after the cheap checks and before Gradle, so a stale model is refused in about a second instead
 # of after the ~4 minutes that spotlessCheck and fastTest take.
+# After the drift check it runs the leak scan's fixture tests (docs/architecture/site/leak-scan.test.mjs),
+# about a second. The hook cannot see a built site, because a build takes about 26 seconds and runs likec4,
+# so it holds the scan's logic: a commit that weakens a target is refused here. That the current model is
+# clean is held by the scan step of CI's architecture-site workflow, not by this hook.
 #
 # Known holes:
 # sync.mjs reads the working tree, not the index, so a regenerated file left unstaged passes here while the
@@ -204,7 +208,8 @@ fi
 # not a trigger path, so CI's likec4-model-drift job catches it. A trigger would make Node and a
 # per-worktree install a prerequisite of every Java commit.
 #
-# Falsified if scripts/pre-commit-likec4-selftest.py passes with --hook pointed at a copy without this step.
+# Falsified if scripts/pre-commit-likec4-selftest.py passes with --hook pointed at a copy without this step,
+# or at a copy without the leak scan step (case 20).
 LIKEC4_TRIGGERS=$(git diff --cached --name-only --no-renames -- \
   src/main/resources/db/migration k8s docs/architecture \
   ':(glob)src/main/java/**/constant/KafkaTopics.java') || {
@@ -230,6 +235,13 @@ if [ -n "$LIKEC4_TRIGGERS" ]; then
     echo "LikeC4 drift check did not run to completion (exit ${LIKEC4_STATUS}, node $(node --version 2>&1))."
     echo "If its tooling is not installed, run: pnpm --dir docs/architecture install"
     echo "Commit refused rather than skipping the check."
+    exit 1
+  fi
+  echo "Checking the leak scan against its fixtures..."
+  node --test docs/architecture/site/leak-scan.test.mjs < /dev/null
+  if [ $? -ne 0 ]; then
+    echo "The leak scan's fixture tests failed (see above). Fix docs/architecture/site/leak-scan.mjs or its test, then re-stage."
+    echo "Commit refused."
     exit 1
   fi
 fi
