@@ -85,7 +85,11 @@ the `verify/` folder.
   exactly one Viewpoint. A View projects Elements and never owns one. The five tags are `#logical`,
   `#process`, `#development`, `#physical` and `#scenarios`, declared in `spec.c4`. The `index` view
   carries none. `sync.mjs check` refuses a view with no tag or with more than one, and refuses a
-  viewpoint that no view carries.
+  viewpoint that no view carries. Each View sits in its Viewpoint's navigation folder, a `views`
+  block labelled `1 Logical`, `2 Process`, `3 Development`, `4 Physical` or `5 Scenarios`. The
+  numbers are there because LikeC4 sorts folders alphabetically. `index` stays at the root.
+  `order` sets the place inside a folder and goes after the tag line. `sync.mjs check` refuses a
+  View outside its folder.
 - **Provenance.** Exactly one per fact, on a ladder of three rungs:
   - `generated`: written from code, never edited;
   - `checked`: hand-written, and carries `metadata` that a script compares with the code;
@@ -111,7 +115,9 @@ the `verify/` folder.
   `generated.c4` is never edited. In a deployment node the description is the first line of its
   block, because LikeC4 1.60.0 refuses a description after an `instanceOf` (measured while planning
   Phase 3.1). LikeC4's own `summary` (at most 150 characters) parses on Elements and deployment
-  nodes but not on Views, and is optional here.
+  nodes but not on Views, and is optional here. `sync.mjs check` refuses an Element, deployment
+  node or View with no description or with one not ending in a period. The cap, the sentence shape
+  and the leak clause are held by review.
 - **CPU architecture.** Every physical node carries its CPU architecture in its title, because the
   `technology` field does not render on deployment nodes (measured in spike 006). This is the LikeC4
   form of the Physical View rule at the top of this document.
@@ -277,6 +283,13 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
   live target list is not read either. Scenario
   steps are authored prose that LikeC4 does not validate against the model; only the participant cap
   is checked, and each step is tied to a line, or marked authored, in the evidence file.
+- **Built in the architecture-views workstream, Phase 3.1:**
+  - the description rule: every element, deployment node and view has a description that ends with
+    a period;
+  - the folder rule: a view sits in the navigation folder of its viewpoint, and a view with no
+    viewpoint tag or with two is left to the tag rule;
+  - `sync.mjs generate` writes a provenance-only description on every generated Element, so a new
+    table or package passes the description rule after `generate`.
 - **Drills:** `docs/architecture/drill.fish` runs on a scratch copy (`--model DIR`), never on the
   real model; the `SYNC` and `MODEL` environment variables point it at another script and another
   model folder, which is how a drill is recorded against the code that preceded its rule. The
@@ -295,6 +308,10 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
   host and a moved namespace for the site (exit 1 each in `drill-output.txt`); plan 04's red record (the manifests with no model claim) is where the checks
   were seen to fail on the site, at
   `.planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-04-model-red.txt`.
+  D28 to D29b were recorded not caught by the script that preceded both rules, in
+  `.planning/workstreams/architecture-views/phases/03.1-model-description-pass/03.1-drills-before.txt`.
+  That run used the final model with generated.c4 re-rendered by that script, because the old script
+  writes no descriptions and would otherwise call the file stale.
   D5, a renamed controller class, is the negative control: it
   is not caught, by design. The result is `docs/architecture/drill-output.txt`. The hook's
   self-test `scripts/pre-commit-likec4-selftest.py` runs the hook's refusal and acceptance cases and
