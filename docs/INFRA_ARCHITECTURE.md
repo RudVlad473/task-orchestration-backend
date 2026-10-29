@@ -293,8 +293,12 @@ Plans 13-05/13-06's removal of every SSH-based deploy/health-check/cleanup-unuse
 13-10's removal of the Caddy image job). Also tracked: `.github/workflows/architecture-site.yml`, which
 builds the static LikeC4 site into an nginx image and pushes it to its own Docker Hub repository; its
 trigger is a paths list over the model, the site directory and the LikeC4 manifest and lockfile, so
-Flux's tag bumps never start it. Namespace `architecture` serves that site at the fourth DuckDNS
-hostname, on a Let's Encrypt staging certificate until the built site has passed the leak review. If any of those facts changes — a job renamed or added, a
+Flux's tag bumps never start it. The workflow scans the build for leaks before it builds the image.
+Namespace `architecture` serves the site at `https://kanban-board-rud-vlad-473-architecture.duckdns.org/`
+(the fourth DuckDNS hostname) on a Let's Encrypt production certificate, issued after the build passed
+the leak scan and the owner's review.
+The site's `robots.txt` answers `Disallow: /`, which asks crawlers to stay away and is not access control.
+If any of those facts changes — a job renamed or added, a
 build platform changed, a new `k8s/` root added — update this document, and the diagrams it links
 to, in the same change: it is the single checked-in description of what actually runs where.
 

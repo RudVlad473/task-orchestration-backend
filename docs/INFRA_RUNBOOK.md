@@ -484,8 +484,8 @@ and can run its own HTTP-01 challenge against this hostname.
 
 The architecture site has its own subdomain, `kanban-board-rud-vlad-473-architecture.duckdns.org`:
 an A record to the same VPS, no AAAA record, created outside the repo, with no updater running for
-it either. It is served on a Let's Encrypt staging certificate until the built site has passed the
-leak review, so a browser warns about the certificate on purpose.
+it either. It has been served on a Let's Encrypt production certificate since 2026-10-29; the
+staging Certificate it started on is in git history.
 
 ## Observability on k3s — Plan 13-07 (2026-09-26)
 

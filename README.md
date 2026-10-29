@@ -46,6 +46,9 @@ comment/PR/issue text box on this repo. Paste that URL on its own line below (no
 to replace this placeholder link.
 -->
 
+[**Architecture views**](https://kanban-board-rud-vlad-473-architecture.duckdns.org/) — the LikeC4
+model of this system, rebuilt from the repository when the model changes.
+
 [**Watch the dashboards**](./docs/demo/kanban-board-backend-dashboards-demo.mp4) — a walkthrough
 of the live Grafana dashboards below, both public and reachable with no login.
 
