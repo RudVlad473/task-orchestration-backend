@@ -5,17 +5,17 @@ milestone_name: Architecture Views
 current_phase: "3.1"
 current_phase_name: Model description pass (INSERTED)
 current_plan: 3
-status: executing
-stopped_at: Completed 03.1-02-PLAN.md
-last_updated: "2026-10-29T12:57:16.701Z"
+status: verifying
+stopped_at: Completed 03.1-03-PLAN.md
+last_updated: "2026-10-29T13:15:21.903Z"
 last_activity: 2026-10-29
 last_activity_desc: Phase 3.1 execution started
-state_head: b8ce1202655275346b87f5fae2dd26976ca6d5dc
+state_head: 9c9f4e1b4f1e5343b50479144e572d85171f4211
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 19
-  completed_plans: 18
+  completed_plans: 19
 ---
 
 # Project State
@@ -33,7 +33,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 Phase: 3.1 (Model description pass (INSERTED)) — EXECUTING
 Current Plan: 3
 Total Plans in Phase: 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-29 — Phase 3.1 execution started
 
 Progress: [████████░░] 75%
@@ -80,6 +80,7 @@ Progress: [████████░░] 75%
 | Phase 03 P08 | 10 min | 2 tasks | 4 files |
 | Phase 03.1 P01 | 25 min | 2 tasks | 9 files |
 | Phase 03.1 P02 | 25 min | 3 tasks | 10 files |
+| Phase 03.1 P03 | 65 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,8 @@ Recent decisions affecting current work:
 - [Phase 03.1]: Definition-form noun phrases pass the description sentence rule; noun lists, colon lists and semicolon-joined clauses are defects
 - [Phase 03.1]: Generated elements get description text from the generator (extend cannot carry one at likec4 1.60.0)
 - [Phase 03.1]: VIEW_FOLDERS repeats the views block labels and is kept in step by hand; sync.mjs check fails until they agree
+- [Phase 03.1]: Relationships stay label-only (D-02): held at phase end by a verify gate, not a sync.mjs rule, since D-05 limits the script to presence and final period
+- [Phase 03.1]: The drill before-record runs the BASE script on the final model with generated.c4 re-rendered by it, so the old script does not call the file stale
 
 ### Pending Todos
 
@@ -148,6 +151,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T12:57:16.264Z
-Stopped at: Completed 03.1-02-PLAN.md
+Last session: 2026-10-29T13:15:19.731Z
+Stopped at: Completed 03.1-03-PLAN.md
 Resume file: None

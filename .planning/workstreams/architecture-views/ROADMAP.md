@@ -128,7 +128,7 @@ Plans:
 **Goal:** Every element, deployment node and view description in the published model is complete (relationships keep their label as their only text, per D-02), worded to the LikeC4 standard and grouped consistently, so the Phase 4 leak review reads a stable artifact. Opens with an audit that lists each defect with the element it sits on.
 **Requirements**: TBD (plans trace to CONTEXT decisions D-01 to D-06)
 **Depends on:** Phase 3
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans executed
 
 Plans:
 **Wave 1**
@@ -138,7 +138,7 @@ Plans:
 - [x] 03.1-02-PLAN.md — views grouped into `views '1 Logical'` to `'5 Scenarios'` folders with `order`, ids and URLs unchanged; checkViewFolders red on BASE and on a moved copy; view descriptions fixed per the audit; deployment-node descriptions with the D11 and certmgr_into drill anchors moved after the namespace description line, in one commit
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 03.1-03-PLAN.md — generator template for table and package descriptions; checkDescriptions red on the audit's 42 BASE defects, then green; drills D28 to D29b, self-test cases 17 and 18; drill record regenerated, before-record against the BASE script; the standard updated; label-only relationships checked at phase end
+- [x] 03.1-03-PLAN.md — generator template for table and package descriptions; checkDescriptions red on the audit's 42 BASE defects, then green; drills D28 to D29b, self-test cases 17 and 18; drill record regenerated, before-record against the BASE script; the standard updated; label-only relationships checked at phase end
 
 ### Phase 4: Leak Review and Production Go-Live
 
