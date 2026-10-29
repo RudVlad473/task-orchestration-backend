@@ -112,8 +112,9 @@ the `verify/` folder.
   counted by splitting on whitespace. The cap is 35 for an Element or deployment node and 70 for a
   View. A fact that does not fit moves to the prose or evidence file that already holds it, and is
   not dropped. A description names no identifier that the leak scan of the published site targets:
-  hostname, IP address, Secret name, key path, in-cluster service name. Existing ones are left to
-  that scan. A generated Element's text comes from `sync.mjs generate` and says only where the
+  hostname, IP address, Secret name, key path, in-cluster service name. The scan is
+  `docs/architecture/site/leak-scan.mjs`, run by architecture-site.yml before the image is built.
+  Existing ones are left to that scan. A generated Element's text comes from `sync.mjs generate` and says only where the
   element was read from, because `extend` cannot carry a description at likec4 1.60.0 and
   `generated.c4` is never edited. In a deployment node the description is the first line of its
   block, because LikeC4 1.60.0 refuses a description after an `instanceOf` (measured while planning
@@ -415,7 +416,7 @@ cause was not investigated.
 | `inbound-packet-path` | `#scenarios` | authored, steps cited; the provider firewall and ServiceLB steps rest on a doc, not on a repo line | 2166 x 680 |
 | `ingress-to-pod` | `#scenarios` | authored, steps cited; the response step authored | 1346 x 884 |
 | `nightly-backup` | `#scenarios` | authored, steps cited | 1344 x 920 |
-| `publish-the-site` | `#scenarios` | authored, steps cited | 2360 x 1401 |
+| `publish-the-site` | `#scenarios` | authored, steps cited | 2356 x 1637 |
 
 The sizes of `production`, `delivery`, `push-to-image` and `index` were re-measured on 2026-10-28
 in the architecture-views workstream, Phase 3 (a fresh `likec4.fish png` export, PNG size divided by
@@ -424,6 +425,10 @@ in the architecture-views workstream, Phase 3 (a fresh `likec4.fish png` export,
 recorded, the cause not investigated. `index` now reads 911 x 1204 against the 836 x 1204 in the
 Phase 1 table above, and its change was not investigated either. The other rows were re-measured
 and match.
+
+`publish-the-site` was re-measured on 2026-10-29 in Phase 4, plan 01, because the leak scan step was
+added to it: the export printed 4712 x 3274, which is 2356 x 1637 after dividing by 2, against 2360 x
+1401 before. No other row was re-measured then.
 
 ### Undefined, not adopted, and outside this change
 

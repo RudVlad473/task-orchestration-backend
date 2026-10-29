@@ -7,7 +7,7 @@ model {
     }
 
     staging = component 'ClusterIssuer letsencrypt-staging' {
-      description 'A staging issuer, defined in the repo and referenced today only by the Certificate of the architecture site. The prod, nonprod and monitoring Certificates all name the production issuer.'
+      description 'Issuer for trial certificates from the staging environment of the certificate authority, which browsers do not trust.'
       metadata {
         source 'k8s/platform/edge/clusterissuers.yaml'
         workload 'ClusterIssuer/letsencrypt-staging'
@@ -15,7 +15,7 @@ model {
     }
 
     production = component 'ClusterIssuer letsencrypt-production' {
-      description 'Issuer for the trusted certificates, which the prod, nonprod and monitoring Certificates all reference.'
+      description 'Issuer for the trusted certificates that browsers accept.'
       metadata {
         source 'k8s/platform/edge/clusterissuers.yaml'
         workload 'ClusterIssuer/letsencrypt-production'

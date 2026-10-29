@@ -62,3 +62,5 @@ TESTS pass=81 fail=0
 MUTANT ipv4-row-removed tests_failed=30 first_failing=ipv4: host 10.20.30.40 here fails the scan
 MUTANT allowlist-widened tests_failed=4 first_failing=hostname: https://evil-kanban.duckdns.org/ fails the scan
 MUTANT robots-removed tests_failed=5 first_failing=robots: a build with no robots.txt fails the scan
+# Scan of a build with the three model text edits of the last task
+MODEL_EDIT scan exit=0 last=OK targets=13
