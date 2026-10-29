@@ -21,7 +21,7 @@
     {
       "number": "4",
       "name": "Leak Review and Production Go-Live",
-      "status": "pending"
+      "status": "in_progress"
     }
   ],
   "next": {
@@ -29,5 +29,5 @@
     "label": "Advance to the next step",
     "reason": "Phase 5 of 5 · executing"
   },
-  "updated_at": "2026-10-29T16:00:53.843Z"
+  "updated_at": "2026-10-29T16:14:46.565Z"
 }

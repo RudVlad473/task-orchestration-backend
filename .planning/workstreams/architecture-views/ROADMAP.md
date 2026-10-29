@@ -151,14 +151,14 @@ Plans:
   3. `uptime-check.yml` probes the site for a body marker, and `timeout-minutes` is raised to cover the extra URL (ARCHITECTURE 3.4 arithmetic). A drill against a wrong marker or URL fails the probe (red), and the restored entry passes (green). The runbook's list of probed URLs includes the site.
   4. On the production hostname, a cold deep link to `/view/<id>/` and a refresh of it both render the view in a headless browser. `curl -I` of a missing `/assets/*.js` does not answer 200 with `text/html`. The README and `docs/INFRA_ARCHITECTURE.md` link the public address, which `rg` finds in both files.
 
-**Plans**: 1/5 plans executed
+**Plans**: 2/5 plans executed
 
 Plans:
 **Wave 1**
 - [x] 04-01-PLAN.md — leak scan `docs/architecture/site/leak-scan.mjs` (13 targets, four-host allow-list, robots check) run by architecture-site.yml before the image; baseline per target, planted IP red then green; fixture tests with three mutants; issuer descriptions and the publish-the-site scan step rewritten before any review
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 04-02-PLAN.md — drill D30/D30b through a new `scan` kind with drill-output.txt regenerated; hook runs the scan's fixture tests, self-test case 20 red without the step and green with it
+- [x] 04-02-PLAN.md — drill D30/D30b through a new `scan` kind with drill-output.txt regenerated; hook runs the scan's fixture tests, self-test case 20 red without the step and green with it
 
 **Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 04-03-PLAN.md — blocking-human Q1 (push and draft pull-request proof); CI scan, publish and Flux rollout on staging; workflow step red on a planted IP then green; blocking-human Q2 review of the scan report and live staging site, APPROVED_TAG recorded
@@ -225,4 +225,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundations, Edge Fix and Honesty Gates | 3/3 | Complete    | 2026-10-27 |
 | 2. Model Completion | 5/5 | Complete    | 2026-10-28 |
 | 3. Build and Serve on a Staging Certificate | 8/8 | Complete    | 2026-10-29 |
-| 4. Leak Review and Production Go-Live | 1/5 | In Progress | - |
+| 4. Leak Review and Production Go-Live | 2/5 | In Progress | - |
