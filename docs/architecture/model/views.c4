@@ -4,7 +4,18 @@ views {
     description 'Who talks to the backend, and what it depends on.'
     include client, traefik, kanban, postgres, redpanda
   }
+}
 
+views '1 Logical' {
+  view data of postgres {
+    #logical
+    title 'Logical view: tables and the foreign keys that own them'
+    description 'The tables tagged generated and every fk edge between them come from the Flyway migrations through sync.mjs. The two spring_session tables are authored: Spring Session creates them outside Flyway. The two notes are authored and each names its source: the activity_log migration and the Avro schema directory.'
+    include postgres.*, avro_subjects
+  }
+}
+
+views '2 Process' {
   view process of kanban {
     #process
     title 'Process view: threads, jobs and messaging around the app'
@@ -41,23 +52,21 @@ views {
       title 'pg_dump, custom format'
     }
   }
+}
 
-  view data of postgres {
-    #logical
-    title 'Logical view: tables and the foreign keys that own them'
-    description 'The tables tagged generated and every fk edge between them come from the Flyway migrations through sync.mjs. The two spring_session tables are authored: Spring Session creates them outside Flyway. The two notes are authored and each names its source: the activity_log migration and the Avro schema directory.'
-    include postgres.*, avro_subjects
-  }
-
+views '3 Development' {
   view development of kanban {
     #development
     title 'Development view: top-level packages and the direction they import'
     description 'The components and the edges between them are generated from import statements by sync.mjs. Package cycles are reported by sync.mjs check and are never gated.'
     include kanban.* where kind is component
   }
+}
 
+views '4 Physical' {
   deployment view production {
     #physical
+    order 1
     title 'Physical view: what runs where'
     description 'Inbound traffic goes from the internet through the provider firewall and the host filter to ServiceLB and Traefik, which routes to the app and to the architecture site, and cert-manager obtains the certificates from Let\'s Encrypt through its two issuers. The VPS is x86_64.'
     include
@@ -77,6 +86,7 @@ views {
 
   deployment view delivery {
     #physical
+    order 2
     title 'Physical view: how an app image reaches the cluster'
     description 'A push to main starts the workflows that push images on a GitHub-hosted runner, and they push the app, backup and site images to Docker Hub. Flux scans the tags, commits the bump to the manifests over Git and applies the overlays, and the app and site pods pull the images.'
     include
@@ -88,9 +98,12 @@ views {
       netcup.k3s.nonprod.kanban,
       netcup.k3s.architecture.archsite
   }
+}
 
+views '5 Scenarios' {
   dynamic view signin-ok {
     #scenarios
+    order 2
     variant sequence
     title 'Scenario: signin succeeds'
     description 'POST /api/signin through to a session cookie. The signin reads the user by email, reads it again by id while the credentials are checked, reads the live sessions for the user, then rotates the session id and saves the security context.'
@@ -108,6 +121,7 @@ views {
 
   dynamic view signin-bad-credentials {
     #scenarios
+    order 3
     variant sequence
     title 'Scenario: signin with bad credentials'
     description 'The unknown-email branch: no row for the email, so a 401 with code BAD_CREDENTIALS. A wrong password for a known email returns the identical body right after the SELECT user by id drawn in signin-ceiling, so its SQL is a prefix of that view and has no view of its own.'
@@ -122,6 +136,7 @@ views {
 
   dynamic view signin-ceiling {
     #scenarios
+    order 4
     variant sequence
     title 'Scenario: signin refused at the live-session ceiling'
     description 'The credentials are right, but the user already holds the maximum number of live sessions. The response is the same 401 body as bad credentials, on purpose, so a client cannot tell a valid password from a wrong one.'

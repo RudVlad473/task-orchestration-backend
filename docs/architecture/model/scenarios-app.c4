@@ -1,6 +1,7 @@
-views {
+views '5 Scenarios' {
   dynamic view signup-ok {
     #scenarios
+    order 1
     variant sequence
     title 'Scenario: signup succeeds'
     description 'POST /api/signup through to a session cookie. The body is validated, the email is checked for a duplicate and the user inserted, then the new account is authenticated in the same request: the user is read by id, the live sessions are read, and the security context is saved in a new session.'
@@ -18,6 +19,7 @@ views {
 
   dynamic view error-401 {
     #scenarios
+    order 5
     variant sequence
     title 'Scenario: 401 with no session cookie'
     description 'A request to a protected route with no session cookie is answered 401 with code UNAUTHENTICATED by the authentication entry point, before any controller runs. No SQL step is drawn. Measured once before the fix at 82775fa (02-04-401-measure.txt, GET and POST /api/boards): a client asking for JSON got this 401 with no SQL, while a client whose Accept header did not name application/json (a bare wildcard, or a browser navigation header) had its refused request saved in a new session, one spring_session row and a JSESSIONID cookie per request. A header that names application/json alongside a wildcard was not saved. Since commit 17a94cb the main security chain saves no refused request. AuthorizationGatingTest checks GET and POST /boards in process (MockMvc) with four Accept variants for no new session row and no cookie; it failed 6 of 8 cases before the fix and passes after. After the fix it was observed at 7bccf71 (the same record, commit 2fbe8ff, a live run on GET and POST /api/boards) that, with JSON, wildcard, browser navigation, axios-style and absent Accept headers, and in a burst of 10 wildcard GETs, the 401 set no cookie and created no spring_session row, no statement appeared in the Postgres capture windows, and a real signin still created exactly one session row. Not observed: other routes and methods, a proxy in the path, Redpanda, a stale session cookie and TLS, all in one run on one machine; a statement outside the capture windows (one second after each request, plus one log-tail read after rows A to I; the whole log was not re-read).'
@@ -30,6 +32,7 @@ views {
 
   dynamic view error-403 {
     #scenarios
+    order 6
     variant sequence
     title 'Scenario: 403 on a board the caller does not own'
     description 'The caller is signed in, but the board in the path belongs to another user. The ownership check reads the user and the board, compares the owner, and refuses with code ACCESS_DENIED. The session lookup that authenticates the request is not drawn.'
@@ -44,6 +47,7 @@ views {
 
   dynamic view error-409 {
     #scenarios
+    order 7
     variant sequence
     title 'Scenario: 409 on a stale task version'
     description 'A task update carries the version the client last read, and another request has changed the task since. The ownership chain (task, column, board, user) passes and the task is loaded, the version check fails, and the request ends with code OPTIMISTIC_LOCK_CONFLICT. Only the tasks table is drawn: the other ownership reads are named in the step title. Nothing is written and no activity event is published.'
@@ -57,6 +61,7 @@ views {
 
   dynamic view activity-log-row {
     #scenarios
+    order 8
     variant sequence
     title 'Scenario: a committed mutation becomes an activity_log row'
     description 'Starts after the HTTP request: a task update has committed. The domain event is handed to the publish executor after commit, so the request never waits on Kafka, then it is sent keyed by event id, polled by the activity-log consumer group and inserted once, idempotent on event_id. The dead-letter path is not drawn.'

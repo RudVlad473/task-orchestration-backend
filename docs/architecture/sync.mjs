@@ -48,6 +48,19 @@ async function loadTooling() {
 // set, and the check below is what keeps a view from sitting outside it.
 const VIEWPOINTS = ['logical', 'process', 'development', 'physical', 'scenarios']
 
+// The navigation folder of each viewpoint, the label of its `views '<label>'` block in model/*.c4.
+//
+// - This map and those block heads are one set, kept in step by hand like VIEWPOINTS and spec.c4.
+// - The numbers make LikeC4's alphabetical folder sort give Kruchten order.
+// - The view index stays in an unlabelled block at the root.
+const VIEW_FOLDERS = {
+  logical: '1 Logical',
+  process: '2 Process',
+  development: '3 Development',
+  physical: '4 Physical',
+  scenarios: '5 Scenarios',
+}
+
 // The metadata keys the checks read. The DSL cannot declare metadata keys, so this list is the
 // vocabulary: a key outside it is reported, and adding a key means editing it here.
 const METADATA_KEYS = ['source', 'workload', 'host']
@@ -488,6 +501,20 @@ function checkDeployedWorkloads(computed, problems) {
   }
 }
 
+// A view sits in the folder of its viewpoint. A view in an unlabelled or mislabelled block leaves
+// its folder while every other rule stays green, so this rule is the only guard.
+//
+// A view with no viewpoint tag or with two is skipped, because the tag rule already reports it.
+function checkViewFolders(computed, problems) {
+  const views = [...computed.views()].sort((a, b) => a.id.localeCompare(b.id))
+  for (const view of views) {
+    const own = [...view.tags].filter((t) => VIEWPOINTS.includes(t))
+    if (view.id !== 'index' && own.length !== 1) continue
+    const want = view.id === 'index' ? '' : VIEW_FOLDERS[own[0]]
+    if (view.folder.path !== want) problems.push(`view ${view.id} is in folder '${view.folder.path}', expected '${want}'`)
+  }
+}
+
 // --- generation -----------------------------------------------------------------------
 
 // One function per fact source, each returning the lines it contributes, so a source added
@@ -625,6 +652,7 @@ async function check() {
   checkEdgeLabels(computed, problems)
   checkParticipants(computed, problems)
   checkDeployedWorkloads(computed, problems)
+  checkViewFolders(computed, problems)
 
   const pkgs = packages()
   const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${manifestWorkloads.size} workloads`

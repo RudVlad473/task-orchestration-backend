@@ -1,6 +1,7 @@
-views {
+views '5 Scenarios' {
   dynamic view push-to-image {
     #scenarios
+    order 9
     variant sequence
     title 'Scenario: a push to main becomes an image on Docker Hub'
     description 'A push to main starts deploy.yml unless it changes only docs, markdown, planning files or k8s manifests. The tests gate the other jobs, the tag is derived from the run number and the short commit sha, and one amd64 build is pushed to the production and nonprod repositories. The Flyway check runs beside the build, not after it, and reaches Postgres through an SSH forward with a pinned host key.'
@@ -14,6 +15,7 @@ views {
 
   dynamic view image-to-rollout {
     #scenarios
+    order 10
     variant sequence
     title 'Scenario: a new image tag becomes a running pod'
     description 'Flux scans the image repositories, picks the highest run number, commits the tag bump under k8s/overlays and later pulls that commit back from Git. Deploy.yml ignores k8s paths, so the bump starts no build. Applying the overlay rolls the Deployment with Recreate, and the init container registers the schemas before the app container starts.'
@@ -28,6 +30,7 @@ views {
 
   dynamic view publish-the-site {
     #scenarios
+    order 11
     variant sequence
     title 'Scenario: a model change becomes the published architecture site'
     description 'The workflow runs for changes to the model, the site directory, the LikeC4 manifest or lockfile, and the workflow itself, and a pull request runs only the build. The drift check gates the build, the publish job is the only job of this workflow that holds the registry token, and Flux rolls the highest run number into the architecture namespace, where only the static build is served.'
@@ -44,6 +47,7 @@ views {
 
   dynamic view inbound-packet-path {
     #scenarios
+    order 12
     variant sequence
     title 'Scenario: a client connection reaches Traefik'
     description 'The first two hops are authored: the provider firewall is configured outside this repository, and the hostPort forward to the ServiceLB pod rests on a claim in INFRA_ARCHITECTURE.md, with no manifest in the repo. Only the host filter script is in the repo, and the check proves only that it exists.'
@@ -57,6 +61,7 @@ views {
 
   dynamic view ingress-to-pod {
     #scenarios
+    order 13
     variant sequence
     title 'Scenario: Traefik routes a request to the app'
     description 'From the connection reaching Traefik to the response. The route is chosen by the Host rule, and the rate-limit Middleware of that route is applied before the request is forwarded to the app Service. The production routes carry a Middleware, the nonprod routes do not.'
@@ -70,6 +75,7 @@ views {
 
   dynamic view nightly-backup {
     #scenarios
+    order 14
     variant sequence
     title 'Scenario: the nightly backup reaches the off-cluster bucket'
     description 'The backup job waits for Postgres, dumps and checks the archive, encrypts it with the public age recipient and uploads the ciphertext under a daily prefix. On Sundays the same ciphertext is uploaded a second time under a weekly prefix. The key can write to the bucket but not read it, so the script never reads the upload back.'
