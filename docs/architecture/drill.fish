@@ -46,9 +46,11 @@ end
 
 # Adds the element certmgr, anchored on the real k8s/platform/cert-manager directory and linked
 # to traefik so it stays drawn, and places its one instance in the namespace node named by $argv[1].
+# The instance goes on the line after the node's description, because LikeC4 refuses a description
+# after a child.
 function certmgr_into --inherit-variable scratch
     printf '%s\n' 'model {' "  certmgr = system 'cert-manager' {" '    metadata {' "      source 'k8s/platform/cert-manager'" '    }' '  }' "  traefik -[sync]-> certmgr 'probe'" '}' >$scratch/model/certmgr.c4
-    sed -i "s|^\(      $argv[1] = namespace .*{\)\$|\1\n        instanceOf certmgr|" $scratch/model/deployment.c4
+    sed -i "/^      $argv[1] = namespace .*{\$/{n;s|\$|\n        instanceOf certmgr|}" $scratch/model/deployment.c4
 end
 
 # Adds the element lonely and one instance of it in the data namespace. With the argument

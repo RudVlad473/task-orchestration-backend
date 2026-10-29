@@ -16,7 +16,7 @@ D9	the only development view is retagged	sed	model/views.c4	s|^    #development$
 D10	a namespace node is deleted from the model (cert-manager)	sed	model/deployment.c4	/^      cert-manager = namespace .cert-manager. {$/,/^      }$/d
 D10b	a manifest namespace is misspelled (kube-sytem)	sed	k8s/platform/traefik/helmchartconfig.yaml	s|namespace: kube-system|namespace: kube-sytem|
 D11	an instance is moved into the wrong namespace (backup to kanban-prod)	sed	model/deployment.c4	/^        instanceOf backup$/d
-D11	an instance is moved into the wrong namespace (backup to kanban-prod)	sed	model/deployment.c4	s|^\(      prod = namespace .*{\)$|\1\n        instanceOf backup|
+D11	an instance is moved into the wrong namespace (backup to kanban-prod)	sed	model/deployment.c4	/^      prod = namespace .*{$/{n;s|$|\n        instanceOf backup|}
 D15	a new k8s Deployment under k8s/platform	write	k8s/platform/worker.yaml	apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: worker\n
 D16	a HelmRelease-backed element is drawn where the HelmRelease object lives (cert-manager in flux-system)	certmgr_into	-	flux-system
 D16b (control)	the same element drawn in its targetNamespace (cert-manager)	certmgr_into	-	cert-manager

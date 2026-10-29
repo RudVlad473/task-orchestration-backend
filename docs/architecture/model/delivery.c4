@@ -51,6 +51,7 @@ model {
 
 deployment {
   github = provider 'GitHub (SaaS)' {
+    description 'GitHub hosts the Git repository. Its hosted runner executes the workflows.'
     instanceOf repo
 
     runner = server 'GitHub-hosted runner (x86_64)' {
@@ -61,6 +62,7 @@ deployment {
   }
 
   docker-hub = provider 'Docker Hub (SaaS)' {
+    description 'Docker Hub is the SaaS registry that holds the images the workflows push and the cluster pulls.'
     instanceOf dockerhub
   }
 

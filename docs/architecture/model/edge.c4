@@ -53,14 +53,17 @@ model {
 
 deployment {
   letsencrypt = provider "Let's Encrypt (SaaS)" {
+    description 'Let\'s Encrypt is the SaaS certificate authority that issues the certificates.'
     instanceOf acme
   }
 
   internet = provider 'Internet' {
+    description 'The public network from which clients reach the server over HTTPS.'
     instanceOf client
   }
 
   netcup-cloud = provider 'Netcup Cloud' {
+    description 'The hosting provider\'s network, which holds the Cloud Firewall. Its rules are configured outside this repository.'
     instanceOf firewall
   }
 

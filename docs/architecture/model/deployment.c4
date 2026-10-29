@@ -1,40 +1,48 @@
 deployment {
   netcup = server 'Netcup VPS (x86_64)' {
-    description 'x86_64. KANBAN-INGRESS filter behind the Netcup Cloud Firewall.'
+    description 'The x86_64 server runs the KANBAN-INGRESS filter, which sits behind the Netcup Cloud Firewall.'
     technology 'x86_64'
 
     k3s = cluster 'k3s (single node)' {
       description 'Flux reconciles this cluster from the k8s directory of the repository.'
 
       kube-system = namespace 'kube-system' {
+        description 'This namespace holds Traefik, the ServiceLB pod and CoreDNS.'
         instanceOf traefik
       }
 
       prod = namespace 'kanban-prod' {
+        description 'This namespace holds the production Kanban backend and its Redpanda broker.'
         instanceOf kanban
         instanceOf redpanda
       }
 
       nonprod = namespace 'kanban-nonprod' {
+        description 'This namespace holds the nonprod Kanban backend and its Redpanda broker.'
         instanceOf kanban
         instanceOf redpanda
       }
 
       data = namespace 'kanban-data' {
+        description 'This namespace holds the Postgres instance for both environments and the nightly backup job.'
         instanceOf postgres
         instanceOf backup
       }
 
       flux-system = namespace 'flux-system' {
+        description 'This namespace holds the Flux controllers.'
       }
 
       cert-manager = namespace 'cert-manager' {
+        description 'This namespace holds the cert-manager controller.'
       }
 
       monitoring = namespace 'monitoring' {
+        description 'This namespace holds Prometheus, Grafana, Loki, Alloy, the Prometheus Operator and the exporters.'
       }
 
       architecture = namespace 'architecture' {
+        description 'This namespace holds the static architecture site.'
         instanceOf archsite
       }
     }
