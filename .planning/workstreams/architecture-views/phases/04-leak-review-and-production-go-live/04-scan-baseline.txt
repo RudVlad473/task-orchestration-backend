@@ -1,0 +1,58 @@
+# Leak scan baseline, plan 04-01. Measured on 2026-10-29 at fc88613 (model files unchanged since 4e2a7a1).
+# Secret names: every name k8s/ references as a Secret, plus grafana-admin. model_hits counts word matches in docs/architecture/model.
+SECRET_NAME app-tls model_hits=0 listed=yes
+SECRET_NAME grafana-tls model_hits=0 listed=yes
+SECRET_NAME architecture-tls model_hits=0 listed=yes
+SECRET_NAME postgres-init model_hits=0 listed=yes
+SECRET_NAME app-env model_hits=0 listed=yes
+SECRET_NAME grafana-admin model_hits=0 listed=yes
+SECRET_NAME postgres-backup model_hits=3 listed=no
+SECRET_NAME letsencrypt-staging model_hits=2 listed=no
+SECRET_NAME letsencrypt-production model_hits=2 listed=no
+SECRET_NAME flux-system model_hits=5 listed=no
+# User names: model_hits counts regex matches in docs/architecture/model; listed follows the table in the plan context.
+USER_NAME rudenkovladimir model_hits=0 listed=yes
+USER_NAME rudvlad473 model_hits=0 listed=yes
+USER_NAME andre model_hits=0 listed=yes
+USER_NAME deploy-nonprod model_hits=0 listed=yes
+USER_NAME root@ model_hits=0 listed=yes
+USER_NAME deploy@ model_hits=0 listed=yes
+USER_NAME vrudenko model_hits=17 listed=no
+USER_NAME rud-vlad-473 model_hits=4 listed=no
+USER_NAME root model_hits=0 listed=no
+USER_NAME deploy model_hits=9 listed=no
+USER_NAME runner model_hits=5 listed=no
+USER_NAME monitoring model_hits=18 listed=no
+# Scan of a fresh local build, made with the workflow's own command
+BUILD likec4 1.60.0 use-dot=false at fc88613
+TARGET ipv4 hits=0
+TARGET ipv6 hits=0
+TARGET ssh-command hits=0
+TARGET kubectl hits=0
+TARGET secret-word hits=0
+TARGET key-path hits=0
+TARGET ssh-host hits=0
+TARGET credential hits=0
+TARGET in-cluster-host hits=0
+TARGET secret-name hits=0
+TARGET user-name hits=0
+TARGET hostname hits=0
+TARGET robots hits=0
+HOSTS kanban-board-rud-vlad-473-architecture.duckdns.org,kanban-board-rud-vlad-473-monitoring.duckdns.org,kanban-board-rud-vlad-473-nonprod.duckdns.org,kanban-board-rud-vlad-473.duckdns.org
+ROBOTS disallow=yes
+FILES 22 BYTES 6988094
+OK targets=13
+DEFAULT secret-word kept, owner to confirm at Q2 hits=0
+# Case note: the model says 'SSH forward' in prose, and vendored code holds an uppercase 'SSH ' label (16 matches in 6 files, measured with rg -i). ssh-command is case-sensitive as the plan words it, so neither is a hit.
+TRAP ssh-command SSH 
+# Plant: a copy of the model whose acme description carries 10.20.30.40, built with the same command
+PLANT 10.20.30.40 in acme description exit=1 targets=ipv4
+PLANT_HIT ipv4 assets/dot-_7KyurXW.js count=2 first=10.20.30.40
+PLANT_HIT ipv4 assets/model-7b1TMbJz.js count=2 first=10.20.30.40
+PLANT_HIT ipv4 assets/puml-uR2I0Jr8.js count=1 first=10.20.30.40
+PLANT_HIT ipv4 likec4-views.js count=2 first=10.20.30.40
+UNPLANT exit=0
+# Exit-code controls
+MISSING exit=4
+EMPTY exit=4
+USAGE exit=2

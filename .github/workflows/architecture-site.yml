@@ -10,6 +10,9 @@
 # - Two jobs: a pull-request run must hold no secret, and the publish job pushes the very bytes the build job
 #   gated and built, handed over as an artifact. The builds are not byte-reproducible, so a rebuild in the
 #   publish job would push something nobody tested.
+# - The leak scan reads the built files in the job that holds no secret, after the build and before the image,
+#   so a pull request runs it too and a hit stops the run before anything is pushed. The script sits under the
+#   site directory, which is already a trigger, and the Dockerfile does not copy it.
 # - The tag is main-<run number>-<short sha>, which the numerical ImagePolicy of the cluster sorts by run number.
 # - The build passes use-dot=false because likec4 build fails without Graphviz in a container, and the runner
 #   should not depend on it either.
@@ -76,6 +79,9 @@ jobs:
 
       - name: Verify the build holds the app shell
         run: grep -q 'id="likec4-root"' docs/architecture/site/out/index.html
+
+      - name: Scan the build for leaks
+        run: node docs/architecture/site/leak-scan.mjs docs/architecture/site/out
 
       - name: Build the image without pushing
         run: docker build docs/architecture/site
