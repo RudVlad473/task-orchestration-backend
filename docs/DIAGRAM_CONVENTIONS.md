@@ -96,6 +96,22 @@ the `verify/` folder.
   `planned`, and one tag per Viewpoint.
 - **Numbers in labels.** A retry count, a schedule or a ceiling is either covered by a check or left
   out of the label.
+- **Description.** Every Element, deployment node and View carries a description. A Relationship
+  carries only its label, under the protocol-level rule in the Relationship bullet. A description is
+  full sentences, one fact per sentence, each ending with a period. A sentence has the thing as its
+  subject, stated or implied, so "Log collector that ships pod logs to Loki." and "Publishes the
+  events." pass, a bare list of nouns does not, and a semicolon between two independent clauses
+  makes two sentences. A description may open with the provenance sentence `Authored.`. Words are
+  counted by splitting on whitespace. The cap is 35 for an Element or deployment node and 70 for a
+  View. A fact that does not fit moves to the prose or evidence file that already holds it, and is
+  not dropped. A description names no identifier that the leak scan of the published site targets:
+  hostname, IP address, Secret name, key path, in-cluster service name. Existing ones are left to
+  that scan. A generated Element's text comes from `sync.mjs generate` and says only where the
+  element was read from, because `extend` cannot carry a description at likec4 1.60.0 and
+  `generated.c4` is never edited. In a deployment node the description is the first line of its
+  block, because LikeC4 1.60.0 refuses a description after an `instanceOf` (measured while planning
+  Phase 3.1). LikeC4's own `summary` (at most 150 characters) parses on Elements and deployment
+  nodes but not on Views, and is optional here.
 - **CPU architecture.** Every physical node carries its CPU architecture in its title, because the
   `technology` field does not render on deployment nodes (measured in spike 006). This is the LikeC4
   form of the Physical View rule at the top of this document.

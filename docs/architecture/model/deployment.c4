@@ -4,7 +4,7 @@ deployment {
     technology 'x86_64'
 
     k3s = cluster 'k3s (single node)' {
-      description 'Reconciled by Flux from k8s/'
+      description 'Flux reconciles this cluster from the k8s directory of the repository.'
 
       kube-system = namespace 'kube-system' {
         instanceOf traefik

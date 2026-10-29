@@ -1,0 +1,100 @@
+surface	id	generated	words	period	text
+element	acme	N	14	Y	Authored. The certificate authority that issues the certificates and checks each hostname over HTTP.
+element	alloy	N	8	Y	Log collector that ships pod logs to Loki.
+element	archsite	N	12	Y	The static LikeC4 build of this model, served by nginx behind Traefik.
+element	avro_subjects	N	23	Y	Authored. One subject per Avro record, named by its full name, registered by the init job and only looked up by the producer.
+element	b2	N	15	Y	Authored. Object storage outside the cluster whose key can write but not read or delete.
+element	backup	N	9	N	CronJob that runs postgres-backup.sh as the prod DB role
+element	certmanager	N	11	Y	Controller that owns the ACME certificate lifecycle for the public hostnames.
+element	certmanager.production	N	14	Y	Issuer for the trusted certificates, which the prod, nonprod and monitoring Certificates all reference.
+element	certmanager.staging	N	24	Y	A staging issuer, defined in the repo but referenced by no Certificate today. The prod, nonprod and monitoring Certificates all name the production issuer.
+element	ci	N	68	Y	The workflows that push images to Docker Hub are deploy.yml, which tests and pushes the app image when main changes outside k8s/, the docs and the planning files; backup-image.yml, which builds and pushes the image of the nightly backup job when its Dockerfile changes; and architecture-site.yml, which checks the model, builds the site and pushes its image when the model, the site directory or the LikeC4 manifest change.
+element	client	N	6	N	Holds a JSESSIONID cookie after signin
+element	coredns	N	27	Y	Authored. The cluster DNS that k3s deploys in kube-system; infra/vm/k3s/config.yaml leaves it on (its disable list names only metrics-server) and no manifest in the repo declares it.
+element	dockerhub	N	30	Y	Authored. Registry that holds the app image repositories, the backup job image repository and the architecture site image repository; the workflows push to it and the cluster pulls from it.
+element	firewall	N	18	Y	Authored. Provider-side firewall configured outside this repository; its rules are not drawn and cannot be checked from here.
+element	flux	N	23	Y	GitOps controllers in flux-system that apply the manifests, scan the registry for new image tags and commit the tag bump back to main.
+element	grafana	N	7	Y	Dashboards over the Prometheus and Loki datasources.
+element	hostfilter	N	35	Y	Authored. Host firewall chain ahead of k3s that admits new connections only as TCP on an allow-listed port or as ICMP, and drops every other new connection; only the existence of its script is checked.
+element	kanban	N	11	N	Spring Boot REST API with session auth and per-user ownership checks
+element	kanban.api	N	10	Y	Signin/signup, boards, columns, tasks, subtasks. 401/403/400/409 answered by distinct layers.
+element	kanban.consumer	N	9	Y	Idempotent insert into activity_log; retries, then the dead-letter topic.
+element	kanban.init	N	18	Y	Registers each Avro record schema under its full name and sets BACKWARD compatibility before the app container starts.
+element	kanban.management	N	11	Y	Unrouted port that serves the health probes and the Prometheus endpoint.
+element	kanban.pkg_activitylog	Y	0	-	
+element	kanban.pkg_base	Y	0	-	
+element	kanban.pkg_config	Y	0	-	
+element	kanban.pkg_constant	Y	0	-	
+element	kanban.pkg_controller	Y	0	-	
+element	kanban.pkg_dto	Y	0	-	
+element	kanban.pkg_entity	Y	0	-	
+element	kanban.pkg_event	Y	0	-	
+element	kanban.pkg_exception	Y	0	-	
+element	kanban.pkg_handler	Y	0	-	
+element	kanban.pkg_mapper	Y	0	-	
+element	kanban.pkg_repository	Y	0	-	
+element	kanban.pkg_security	Y	0	-	
+element	kanban.pkg_service	Y	0	-	
+element	kanban.publisher	N	29	Y	Publishes the Avro events of committed board, column, task and subtask mutations. The AFTER_COMMIT listener only submits to this pool, so the request thread does not wait on Kafka.
+element	kube-apiserver	N	20	Y	Authored. The API server runs inside the k3s server process that infra/vm/k3s/install.sh installs; no manifest in the repo declares it.
+element	kube-state-metrics	N	14	Y	Exposes the state of Kubernetes objects as metrics; a subchart of the kube-prometheus-stack release.
+element	kubelet	N	24	Y	Authored. The node agent and its built-in cAdvisor run inside the k3s server process that infra/vm/k3s/install.sh installs; no manifest in the repo declares them.
+element	loki	N	8	Y	Log store, single binary on a filesystem volume.
+element	node-exporter	N	8	Y	Host-level metrics exporter that runs on the node.
+element	postgres	N	11	N	Single instance in ns kanban-data, holding the prod and nonprod databases
+element	postgres-exporter	N	6	Y	Exposes Postgres statistics as Prometheus metrics.
+element	postgres.activity_log_note	N	22	Y	Authored. board_id is a plain column with no REFERENCES clause, and the unique event_id is the idempotency key the consumer relies on.
+element	postgres.spring_session	N	11	Y	Authored. Spring Session creates this table at startup (initialize-schema=always), outside Flyway.
+element	postgres.spring_session_attributes	N	11	Y	Authored. Spring Session creates this table at startup (initialize-schema=always), outside Flyway.
+element	postgres.table_activity_log	Y	0	-	
+element	postgres.table_boards	Y	0	-	
+element	postgres.table_columns	Y	0	-	
+element	postgres.table_subtasks	Y	0	-	
+element	postgres.table_tasks	Y	0	-	
+element	postgres.table_users	Y	0	-	
+element	prometheus	N	45	Y	Metrics store and scraper. Its scrape edges are drawn from the PodMonitor and ServiceMonitor settings in the repo and from the default monitors of the kube-prometheus-stack chart that the values file leaves on, not from live targets. It also scrapes itself, which is not drawn.
+element	prometheus-operator	N	11	Y	Reconciles the Prometheus, ServiceMonitor and PodMonitor objects of the kube-prometheus-stack release.
+element	redpanda	N	5	N	Kafka-compatible broker, one per environment
+element	redpanda.activity	N	5	N	Avro, keyed by event id
+element	redpanda.dlt	N	13	N	Dead-letter topic for events the consumer still failed to process after its retries
+element	redpanda.registry	N	12	Y	Redpanda built-in registry that holds the Avro schemas and their compatibility setting.
+element	repo	N	17	Y	Authored. The GitHub repository whose main branch holds the code and the k8s manifests that Flux reconciles.
+element	svclb	N	26	Y	Authored. The pod that k3s ServiceLB creates for the Traefik LoadBalancer Service and the only pod with a hostPort; no manifest in the repo declares it.
+element	traefik	N	10	N	Public edge: TLS termination, routes to the app by host
+deployment node	docker-hub	-	0	-	
+deployment node	github	-	0	-	
+deployment node	github.runner	-	18	Y	The runner architecture is read from a workflow run log, where the Java toolchain path ends in x64.
+deployment node	internet	-	0	-	
+deployment node	letsencrypt	-	0	-	
+deployment node	netcup	-	8	Y	x86_64. KANBAN-INGRESS filter behind the Netcup Cloud Firewall.
+deployment node	netcup-cloud	-	0	-	
+deployment node	netcup.k3s	-	5	N	Reconciled by Flux from k8s/
+deployment node	netcup.k3s.architecture	-	0	-	
+deployment node	netcup.k3s.cert-manager	-	0	-	
+deployment node	netcup.k3s.data	-	0	-	
+deployment node	netcup.k3s.flux-system	-	0	-	
+deployment node	netcup.k3s.kube-system	-	0	-	
+deployment node	netcup.k3s.monitoring	-	0	-	
+deployment node	netcup.k3s.nonprod	-	0	-	
+deployment node	netcup.k3s.prod	-	0	-	
+view	activity-log-row	-	54	Y	Starts after the HTTP request: a task update has committed. The domain event is handed to the publish executor after commit, so the request never waits on Kafka, then it is sent keyed by event id, polled by the activity-log consumer group and inserted once, idempotent on event_id. The dead-letter path is not drawn.
+view	data	-	47	Y	The tables tagged generated and every fk edge between them come from the Flyway migrations through sync.mjs. The two spring_session tables are authored: Spring Session creates them outside Flyway. The two notes are authored and each names its source: the activity_log migration and the Avro schema directory.
+view	delivery	-	51	Y	A push to main starts the workflows that push images on a GitHub-hosted runner, and they push the app, backup and site images to Docker Hub. Flux scans the tags, commits the bump to the manifests over Git and applies the overlays, and the app and site pods pull the images.
+view	development	-	25	Y	The components and the edges between them are generated from import statements by sync.mjs. Package cycles are reported by sync.mjs check and are never gated.
+view	error-401	-	263	Y	A request to a protected route with no session cookie is answered 401 with code UNAUTHENTICATED by the authentication entry point, before any controller runs. No SQL step is drawn. Measured once before the fix at 82775fa (02-04-401-measure.txt, GET and POST /api/boards): a client asking for JSON got this 401 with no SQL, while a client whose Accept header did not name application/json (a bare wildcard, or a browser navigation header) had its refused request saved in a new session, one spring_session row and a JSESSIONID cookie per request. A header that names application/json alongside a wildcard was not saved. Since commit 17a94cb the main security chain saves no refused request. AuthorizationGatingTest checks GET and POST /boards in process (MockMvc) with four Accept variants for no new session row and no cookie; it failed 6 of 8 cases before the fix and passes after. After the fix it was observed at 7bccf71 (the same record, commit 2fbe8ff, a live run on GET and POST /api/boards) that, with JSON, wildcard, browser navigation, axios-style and absent Accept headers, and in a burst of 10 wildcard GETs, the 401 set no cookie and created no spring_session row, no statement appeared in the Postgres capture windows, and a real signin still created exactly one session row. Not observed: other routes and methods, a proxy in the path, Redpanda, a stale session cookie and TLS, all in one run on one machine; a statement outside the capture windows (one second after each request, plus one log-tail read after rows A to I; the whole log was not re-read).
+view	error-403	-	42	Y	The caller is signed in, but the board in the path belongs to another user. The ownership check reads the user and the board, compares the owner, and refuses with code ACCESS_DENIED. The session lookup that authenticates the request is not drawn.
+view	error-409	-	67	Y	A task update carries the version the client last read, and another request has changed the task since. The ownership chain (task, column, board, user) passes and the task is loaded, the version check fails, and the request ends with code OPTIMISTIC_LOCK_CONFLICT. Only the tasks table is drawn: the other ownership reads are named in the step title. Nothing is written and no activity event is published.
+view	image-to-rollout	-	54	Y	Flux scans the image repositories, picks the highest run number, commits the tag bump under k8s/overlays and later pulls that commit back from Git. Deploy.yml ignores k8s paths, so the bump starts no build. Applying the overlay rolls the Deployment with Recreate, and the init container registers the schemas before the app container starts.
+view	inbound-packet-path	-	51	Y	The first two hops are authored: the provider firewall is configured outside this repository, and the hostPort forward to the ServiceLB pod rests on a claim in INFRA_ARCHITECTURE.md, with no manifest in the repo. Only the host filter script is in the repo, and the check proves only that it exists.
+view	index	-	10	Y	Who talks to the backend, and what it depends on.
+view	ingress-to-pod	-	45	Y	From the connection reaching Traefik to the response. The route is chosen by the Host rule, and the rate-limit Middleware of that route is applied before the request is forwarded to the app Service. The production routes carry a Middleware, the nonprod routes do not.
+view	monitoring	-	131	Y	The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo, and from the default monitors of kube-prometheus-stack at the pinned version 91.5.2 that the values file leaves on: the kubelet with cAdvisor, the API server, CoreDNS, kube-state-metrics, the operator and Grafana. Each of those was read from the chart values and is recorded line by line in 261028-opl-chart-values.txt. Not drawn are the controller-manager, scheduler, etcd and kube-proxy monitors and Alertmanager, which the values file turns off, and the scrape Prometheus makes of itself, because LikeC4 rejects a relationship from an element to itself. The check proves each HelmRelease exists and lands in monitoring, not what its chart renders; the kubelet, the API server and CoreDNS are authored, and the live target list is not read.
+view	nightly-backup	-	59	Y	The backup job waits for Postgres, dumps and checks the archive, encrypts it with the public age recipient and uploads the ciphertext under a daily prefix. On Sundays the same ciphertext is uploaded a second time under a weekly prefix. The key can write to the bucket but not read it, so the script never reads the upload back.
+view	process	-	36	Y	The request thread never waits on Kafka, and the init job registers the schemas before the app starts. The management server is scraped by Prometheus and never routed, and the backup dumps, encrypts and uploads off-cluster.
+view	production	-	44	Y	Inbound traffic goes from the internet through the provider firewall and the host filter to ServiceLB and Traefik, which routes to the app and to the architecture site, and cert-manager obtains the certificates from Let's Encrypt through its two issuers. The VPS is x86_64.
+view	publish-the-site	-	67	Y	The workflow runs for changes to the model, the site directory, the LikeC4 manifest or lockfile, and the workflow itself, and a pull request runs only the build. The drift check gates the build, the publish job is the only job of this workflow that holds the registry token, and Flux rolls the highest run number into the architecture namespace, where only the static build is served.
+view	push-to-image	-	70	Y	A push to main starts deploy.yml unless it changes only docs, markdown, planning files or k8s manifests. The tests gate the other jobs, the tag is derived from the run number and the short commit sha, and one amd64 build is pushed to the production and nonprod repositories. The Flyway check runs beside the build, not after it, and reaches Postgres through an SSH forward with a pinned host key.
+view	signin-bad-credentials	-	51	Y	The unknown-email branch: no row for the email, so a 401 with code BAD_CREDENTIALS. A wrong password for a known email returns the identical body right after the SELECT user by id drawn in signin-ceiling, so its SQL is a prefix of that view and has no view of its own.
+view	signin-ceiling	-	39	Y	The credentials are right, but the user already holds the maximum number of live sessions. The response is the same 401 body as bad credentials, on purpose, so a client cannot tell a valid password from a wrong one.
+view	signin-ok	-	41	Y	POST /api/signin through to a session cookie. The signin reads the user by email, reads it again by id while the credentials are checked, reads the live sessions for the user, then rotates the session id and saves the security context.
+view	signup-ok	-	53	Y	POST /api/signup through to a session cookie. The body is validated, the email is checked for a duplicate and the user inserted, then the new account is authenticated in the same request: the user is read by id, the live sessions are read, and the security context is saved in a new session.
