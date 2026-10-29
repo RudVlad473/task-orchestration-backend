@@ -78,7 +78,7 @@ views {
   deployment view delivery {
     #physical
     title 'Physical view: how an app image reaches the cluster'
-    description 'A push to main starts the workflow on a GitHub-hosted runner, which pushes the app and site images to Docker Hub. Flux scans the tags, commits the bump to the manifests over Git and applies the overlays, and the app and site pods pull the images.'
+    description 'A push to main starts the workflows that push images on a GitHub-hosted runner, and they push the app, backup and site images to Docker Hub. Flux scans the tags, commits the bump to the manifests over Git and applies the overlays, and the app and site pods pull the images.'
     include
       github, github.**,
       docker-hub, docker-hub.**,
