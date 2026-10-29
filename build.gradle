@@ -1,9 +1,9 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.16'
-    id 'io.spring.dependency-management' version '1.1.6'
-    id 'com.diffplug.spotless' version '7.0.2'
-    id 'net.ltgt.errorprone' version '5.1.0'
+    id 'org.springframework.boot' version '4.1.2'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '8.10.4'
+    id 'net.ltgt.errorprone' version '5.1.1'
 
     // JaCoCo coverage tracking, enforced as a ratchet (jacocoTestCoverageVerification).
     //
@@ -43,7 +43,7 @@ plugins {
     // evidence. The first complete scan of runtimeClasspath and the OSV counts beside it are recorded in
     // docs/learning/09-build-quality-and-ci.md, section "Scheduled and manual workflows".
     // TODO: .planning/todos/pending/2026-08-13-ratchet-failbuildoncvss-after-a-real-dependency-check-baseline.md - pick a failBuildOnCVSS rung once a real dependencyCheckAnalyze baseline exists and its false positives are suppressed with cited evidence.
-    id 'org.owasp.dependencycheck' version '12.2.2'
+    id 'org.owasp.dependencycheck' version '13.0.0'
 }
 
 group = 'com.vrudenko'
@@ -162,7 +162,7 @@ ext['opentelemetry.version'] = '1.62.0'
 // ext properties above feed, instead of a Gradle constraint the plugin could override.
 dependencyManagement {
     dependencies {
-        dependency 'at.yawk.lz4:lz4-java:1.11.4'
+        dependency 'at.yawk.lz4:lz4-java:1.12.1'
     }
 }
 
@@ -172,10 +172,10 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
-    compileOnly 'org.projectlombok:lombok:1.18.36'
-    annotationProcessor 'org.projectlombok:lombok:1.18.36'
-    testCompileOnly 'org.projectlombok:lombok:1.18.36'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
+    testCompileOnly 'org.projectlombok:lombok:1.18.48'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.48'
 
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -232,10 +232,10 @@ dependencies {
     // unused to a dependency audit; it is not. Do not remove it.
     implementation 'org.springframework.session:spring-session-jdbc'
 
-    implementation 'com.google.guava:guava:32.0.1-android'
+    implementation 'com.google.guava:guava:33.7.2-android'
 
-    implementation 'org.mapstruct:mapstruct:1.5.3.Final'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
 
     // commons-lang3 3.18.0, `implementation` scope: a floor against two separate regressions.
     //
@@ -255,21 +255,21 @@ dependencies {
     // 3.18.0. Research found it, not any gate, which is why `verifyRuntimeDependencyFloor` below exists: it fails
     // the build if this line regresses to test-only scope. One declaration, not two: `implementation` already
     // extends into the test compile and runtime configurations.
-    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    implementation 'org.apache.commons:commons-lang3:3.21.0'
 
     testImplementation 'org.fluttercode.datafactory:datafactory:0.8'
 
-    implementation 'io.vavr:vavr:0.10.4'
+    implementation 'io.vavr:vavr:1.1.0'
 
     testImplementation 'org.springframework.security:spring-security-test'
 
-    implementation("org.apache.commons:commons-collections4:4.5.0")
+    implementation("org.apache.commons:commons-collections4:4.6.0")
 
-    implementation 'com.github.f4b6a3:ulid-creator:5.2.0'
+    implementation 'com.github.f4b6a3:ulid-creator:5.2.4'
 
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
 
-    testImplementation("io.rest-assured:rest-assured:5.5.5")
+    testImplementation("io.rest-assured:rest-assured:6.3.0")
 
     // InMemorySpanExporter, so the tracing tests read the spans the app finished instead of calling a collector.
     //
@@ -284,7 +284,7 @@ dependencies {
 
     // Avro core: schema model, binary encoder/decoder, SpecificRecord/SpecificRecordBase
     // runtime support -- required at runtime by every class the avro plugin generates.
-    implementation 'org.apache.avro:avro:1.12.1'
+    implementation 'org.apache.avro:avro:1.12.2'
 
     // Confluent's KafkaAvroSerializer/KafkaAvroDeserializer + Schema Registry REST client.
     //
@@ -317,9 +317,9 @@ dependencies {
     // is the only datasource left for the whole suite.
     testImplementation 'org.testcontainers:postgresql'
 
-    testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.2'
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.5.1'
 
-    errorprone 'com.google.errorprone:error_prone_core:2.50.0'
+    errorprone 'com.google.errorprone:error_prone_core:2.51.0'
 }
 
 // The `rehearsal` tag (HistoricalSchemaRehearsalE2ETest) is excluded from `test`.
@@ -512,7 +512,7 @@ jacocoTestCoverageVerification {
 // A module absent from `runtimeClasspath` entirely fails loudly rather than silently matching nothing: a floor
 // that can no longer find its target has quietly stopped checking.
 def runtimeDependencyFloors = [
-        'org.apache.commons:commons-lang3': '3.18.0',
+        'org.apache.commons:commons-lang3': '3.21.0',
         'org.apache.tomcat.embed:tomcat-embed-core': '10.1.61',
         'com.fasterxml.jackson.core:jackson-core': '2.21.7',
         'com.fasterxml.jackson.core:jackson-databind': '2.21.7',
@@ -520,7 +520,7 @@ def runtimeDependencyFloors = [
         'org.apache.logging.log4j:log4j-api': '2.25.5',
         'io.opentelemetry:opentelemetry-api': '1.62.0',
         'io.opentelemetry:opentelemetry-extension-trace-propagators': '1.62.0',
-        'at.yawk.lz4:lz4-java': '1.11.4'
+        'at.yawk.lz4:lz4-java': '1.12.1'
 ]
 
 tasks.register('verifyRuntimeDependencyFloor') {
