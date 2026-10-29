@@ -24,7 +24,7 @@ model {
   }
 
   acme = external "Let's Encrypt ACME" {
-    description 'Authored. The certificate authority that issues the certificates and checks each hostname over HTTP.'
+    description 'Authored. The certificate authority that issues the certificates and checks each hostname over HTTP from 10.20.30.40.'
   }
 
   hostfilter = external 'KANBAN-INGRESS host filter' {
