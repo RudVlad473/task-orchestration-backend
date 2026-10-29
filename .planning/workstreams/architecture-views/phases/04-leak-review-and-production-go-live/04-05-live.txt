@@ -11,3 +11,16 @@ CI secret-scan conclusion=success (run 40935047415)
 FLUX fluxcdbot 918f8bf (nonprod) and 2efee74 (prod) bumped both overlays to main-163-f4a11fb; Recreate rollout seen between 19:03:02Z and 19:03:34Z; prod and nonprod answered 503 at 19:03:34Z, 200 at 19:04:06Z
 OTHERS prod=200 nonprod=200 monitoring=302 (deployments on main-163-f4a11fb, pod app-55bc9b46fc-p92d5 in kanban-prod, read-only ssh)
 UPTIME baseline run=40936698753 conclusion=success head=918f8bf026771a7deeac8a6dd8e31939ff914215 site_line=https://kanban-board-rud-vlad-473-architecture.duckdns.org/: OK (200, marker present)
+DRILL branch uptime-site-drill commit 47899c8 (SITE_MARKER 'id="likec4-root-drill"', pushed with --no-verify; no workflow started on the push)
+DRILL run=40936850782 conclusion=failure report=https://kanban-board-rud-vlad-473-architecture.duckdns.org/: 200 without the expected marker (probe job failure, alert job success; the four health and dashboard URLs logged OK; one report line)
+ISSUE opened=23 title="Uptime check failing" createdAt=2026-10-29T19:05:54Z (the only open uptime-alert issue; body lists the site URL alone)
+RECOVERY run=40937007797 conclusion=success (dispatch on main, head=918f8bf026771a7deeac8a6dd8e31939ff914215)
+ISSUE 23 state=CLOSED closedAt=2026-10-29T19:06:33Z (comment: Recovered: every probe passed in run 40937007797)
+BRANCH uptime-site-drill on_origin=no (git ls-remote origin uptime-site-drill printed nothing; git branch --list printed nothing; open uptime-alert issues=0)
+DEEPLINK /view/signin-ok/ nav_status=200 svg_nodes=185
+DEEPLINK_CURL /view/signin-ok/ status=200
+REFRESH /view/signin-ok/ nav_type=reload status=200 svg_nodes_before=185 svg_nodes_after=185
+MISSING_ASSET status=404 content_type=text/html (curl -sI /assets/missing.js, no -k; staging figure 404 text/html, 03-06-live.txt line 43)
+ROBOTS disallow=yes body=User-agent: * / Disallow: /
+LINKS readme=1 infra_architecture=1 (git grep -c -F on origin/main after git fetch origin)
+NOTE all calls above ran without -k or any certificate flag; shot-scraper ran without --browser-arg=--ignore-certificate-errors; svg_nodes 185 here against 184 on staging (03-06-live.txt line 41); the refresh used shot-scraper's own interpreter with Playwright, headless Chromium, page.reload()
