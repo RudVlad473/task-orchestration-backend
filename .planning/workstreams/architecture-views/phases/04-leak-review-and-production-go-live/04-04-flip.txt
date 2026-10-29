@@ -1,1 +1,31 @@
 TAGCHECK before-q3 2026-10-29 approved=main-8-c3c366a overlay=main-8-c3c366a pod=main-8-c3c366a site_runs_after_approval=0 verdict=equal
+BASELINE TLS issuer=C=US, O=Let's Encrypt, CN=(STAGING) Dastardly Durum YR1
+BASELINE CURL_STRICT exit=60 code=000
+BASELINE CERT ready=True issuer=letsencrypt-staging revision=1
+BASELINE SECRET issuer-name=letsencrypt-staging
+BASELINE OTHERS prod=200 nonprod=200 monitoring=302
+TAGCHECK before-commit 2026-10-29 approved=main-8-c3c366a overlay=main-8-c3c366a pod=main-8-c3c366a site_runs_after_approval=0 verdict=equal
+FLIP_COMMIT 26c0e3e0caa27404f65f245937e3fa9b441faaa2
+HISTORY 8e531d0 feat(architecture-site): serve the LikeC4 build at the architecture hostname on a staging certificate, modelled as built
+HISTORY 26c0e3e feat(architecture-site): move the site certificate to letsencrypt-production
+PUSH STEP2 HEAD..origin/main=2 commits, both fluxcdbot "chore(flux): bump images" (ea1855b, efeb3fd); merged as ca9d2e7 (no conflict; it moved the local architecture overlay from main-7-560fc77 to main-8-c3c366a, the tag origin and the pod already ran)
+TAGCHECK before-push 2026-10-29 approved=main-8-c3c366a overlay=main-8-c3c366a pod=main-8-c3c366a site_runs_after_approval=0 verdict=equal
+PUSH RANGE origin/main..HEAD=7 commits (26c0e3e e77fee6 0e5ba30 9e5079e 9354a94 e81c839 plus merge ca9d2e7)
+PUSH DIRS .planning=7 files, k8s=1 file (git diff --name-only origin/main HEAD)
+PUSH CLASSES (a) 26c0e3e the flip commit; (b) planning-only, every path under .planning/: e77fee6 0e5ba30 9e5079e 9354a94 e81c839; (c) ca9d2e7 the step 2 merge
+PUSHED ca9d2e7b49355a80aff4abb0fb91aa089932f2e1 at 2026-10-29T18:46:09Z
+CR architecture-1 issuer=letsencrypt-staging ready=True (seen 18:46:23Z, before Flux applied the new issuerRef)
+CERT ready=False issuer=letsencrypt-production revision=1 (seen 18:48:23Z, Flux applied the issuerRef)
+CR architecture-2 issuer=letsencrypt-production ready=True (seen 18:48:49Z; architecture-1 already pruned)
+SOLVER_SVC cm-acme-http-solver-jqjq5 type=ClusterIP (seen 18:48:23Z, gone by 18:48:49Z)
+CERT ready=True issuer=letsencrypt-production revision=2
+CERT window notBefore=2026-10-29T17:50:09Z notAfter=2027-01-27T17:50:08Z; Ready lastTransitionTime=2026-10-29T18:48:30Z
+SECRET issuer-name=letsencrypt-production
+TLS issuer=C=US, O=Let's Encrypt, CN=YR1
+CURL_STRICT exit=0 code=200
+GET / status=200 marker=1 (strict, no -k; id="likec4-root" count)
+OTHERS prod=200 nonprod=200 monitoring=302
+CI invariant-checks conclusion=success (run 40933917779, all 7 jobs success)
+CI secret-scan conclusion=success (run 40933917815)
+CONTROL flip push ca9d2e7b49355a80aff4abb0fb91aa089932f2e1: architecture-site runs=0 deploy runs=0 witness=invariant-checks:40933917779
+LATENCY push_to_ready=2.4 (minutes; push 18:46:09Z to Ready transition 18:48:30Z; Flux applied the issuerRef between 18:46:23Z and 18:48:23Z)
