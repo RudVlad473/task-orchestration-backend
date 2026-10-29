@@ -1,0 +1,6 @@
+TREE 74e50d4
+STEP4-ENV diff_exit=0
+STEP4-TOKEN diff_exit=0
+SITE-ENV count=1
+SYNC task1 exit=0
+BUILT-STEP4 new_files=3 old_files=0

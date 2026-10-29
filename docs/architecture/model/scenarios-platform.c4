@@ -35,7 +35,7 @@ views {
     repo -> ci 'a push to main that changes the model, the site directory, the LikeC4 manifest or lockfile, or the workflow starts architecture-site.yml, a pull request runs the build job only'
     ci -> ci 'sync.mjs check runs first, and a drifted model stops the run before anything is built'
     ci -> ci 'likec4 build with the dot layout off writes the static site, and the image is built once without pushing'
-    ci -> dockerhub 'the publish job, the only job in the production environment, builds the image from the same build output and pushes the main, run number, short sha tag'
+    ci -> dockerhub 'the publish job, the only job of this workflow in the production environment, whose registry token deploy.yml and backup-image.yml also use, builds the image from the same build output and pushes the main, run number, short sha tag'
     flux -> dockerhub 'list the tags of the site repository on a timer'
     flux -> flux 'the numerical policy picks the highest run number among the tags that match the main run sha pattern'
     flux -> repo 'commit the new tag into the architecture overlay and push it to main, the site workflow does not watch k8s paths so this commit starts no build'
