@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: complete
 phase: 03-build-and-serve-on-a-staging-certificate
 source: [03-VERIFICATION.md]
 started: 2026-10-28T22:30:00Z
-updated: 2026-10-28T22:30:00Z
+updated: 2026-10-29T10:15:01.416Z
 ---
 
 ## Current Test
@@ -35,7 +35,9 @@ blocked: 0
 
 - gap_id: G-03-2
   truth: "scenarios-platform.c4:38 no longer claims the publish job is the only job in the production environment, delivery.c4:7 no longer says Two workflows, and the step 4 evidence row cites a source that supports what it says"
-  status: failed
+  status: resolved
+  resolved_by: 03-08-PLAN.md
+  resolved_at: 2026-10-29
   reason: "User reported: issue (both phrases verified still present in the model on 2026-10-29)"
   severity: major
   test: 2
