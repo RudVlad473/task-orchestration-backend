@@ -4,18 +4,18 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: 04
 current_phase_name: Leak Review and Production Go-Live
-current_plan: 3
+current_plan: 4
 status: executing
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-10-29T16:15:01.345Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-10-29T18:27:43.146Z"
 last_activity: 2026-10-29
 last_activity_desc: Phase 04 execution started
-state_head: 7695303a99bcb4241f7f1a466f11fceb8f846bd2
+state_head: 9354a94064455223028a919fff564b6923669c5d
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 24
-  completed_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -31,7 +31,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 ## Current Position
 
 Phase: 04 (Leak Review and Production Go-Live) — EXECUTING
-Current Plan: 3
+Current Plan: 4
 Total Plans in Phase: 5
 Status: Ready to execute
 Last activity: 2026-10-29 — Phase 04 execution started
@@ -84,6 +84,7 @@ Progress: [████████░░] 75%
 | Phase 03.1 P03 | 65 min | 2 tasks | 8 files |
 | Phase 04 P01 | 25 min | 3 tasks | 8 files |
 | Phase 04 P02 | 30min | 2 tasks | 6 files |
+| Phase 04 P03 | 25min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,7 @@ Recent decisions affecting current work:
 - [Phase 03.1]: Relationships stay label-only (D-02): held at phase end by a verify gate, not a sync.mjs rule, since D-05 limits the script to presence and final period
 - [Phase 03.1]: The drill before-record runs the BASE script on the final model with generated.c4 re-rendered by it, so the old script does not call the file stale
 - [Phase 04]: 04-01: leak-scan.mjs sits beside the site; ssh-command is case-sensitive so the model prose 'SSH forward' passes (owner sees it at review); secret-word is kept by default at 0 hits and the owner confirms at Q2
+- [Phase 04]: 04-03: owner chose Q1 1 (push and prove) and Q2 approve; approved artifact is tag main-8-c3c366a and the secret-word scan target stays (hits=0)
 
 ### Pending Todos
 
@@ -156,6 +158,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T16:15:00.850Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-10-29T18:27:42.654Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None
