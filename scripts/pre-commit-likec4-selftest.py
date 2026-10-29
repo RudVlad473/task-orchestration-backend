@@ -345,7 +345,7 @@ def test_06_migration_with_regenerated_model_passes_the_check():
 def test_07_topic_constant_with_model_topic_passes_the_check():
     case_dir, repo = make_repo("topic-modelled", True)
     add_topic_constant(repo)
-    write_new(repo, "docs/architecture/model/selftest.c4", "model {\n  extend redpanda {\n    selftest = topic 'kanban.selftest'\n  }\n}\n")
+    write_new(repo, "docs/architecture/model/selftest.c4", "model {\n  extend redpanda {\n    selftest = topic 'kanban.selftest' {\n      description 'Selftest topic.'\n    }\n  }\n}\n")
     git(repo, "add", KAFKA_TOPICS, "docs/architecture/model/selftest.c4")
     before = head_of(repo)
     code, out = commit(case_dir, repo)
@@ -361,7 +361,7 @@ def test_08_deployment_with_modelled_workload_passes_the_check():
     write_new(
         repo,
         "docs/architecture/model/selftest.c4",
-        "model {\n  selftest_worker = system 'Selftest worker' {\n    metadata {\n      workload 'Deployment/selftest-worker'\n    }\n  }\n\n"
+        "model {\n  selftest_worker = system 'Selftest worker' {\n    description 'Selftest worker.'\n    metadata {\n      workload 'Deployment/selftest-worker'\n    }\n  }\n\n"
         "  selftest_worker -> postgres 'selftest'\n}\n\n"
         "deployment {\n  extend netcup.k3s.prod {\n    instanceOf selftest_worker\n  }\n}\n",
     )
@@ -449,6 +449,24 @@ def test_16_misspelled_platform_namespace_is_refused():
     before = head_of(repo)
     code, out = commit(case_dir, repo)
     refused_for_drift(code, out, repo, before, "namespace kube-sytem is defined in")
+
+
+def test_17_view_without_description_is_refused():
+    case_dir, repo = make_repo("view-without-description", True)
+    replace_in(repo, VIEWS, "    description 'This view shows who talks to the backend and what it depends on.'\n", "")
+    git(repo, "add", VIEWS)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, "view index has no description")
+
+
+def test_18_view_outside_its_folder_is_refused():
+    case_dir, repo = make_repo("view-outside-folder", True)
+    replace_in(repo, VIEWS, "views '5 Scenarios' {\n", "views {\n")
+    git(repo, "add", VIEWS)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, "view signin-ok is in folder '', expected '5 Scenarios'")
 
 
 def preflight(hook):

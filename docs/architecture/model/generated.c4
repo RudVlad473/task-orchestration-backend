@@ -5,26 +5,32 @@ model {
   extend postgres {
     table_activity_log = table 'activity_log' {
       #generated
+      description 'sync.mjs draws this table from the Flyway migration V3__add_activity_log.sql.'
       metadata { source 'src/main/resources/db/migration/V3__add_activity_log.sql' }
     }
     table_boards = table 'boards' {
       #generated
+      description 'sync.mjs draws this table from the Flyway migration V1__init.sql.'
       metadata { source 'src/main/resources/db/migration/V1__init.sql' }
     }
     table_columns = table 'columns' {
       #generated
+      description 'sync.mjs draws this table from the Flyway migration V1__init.sql.'
       metadata { source 'src/main/resources/db/migration/V1__init.sql' }
     }
     table_subtasks = table 'subtasks' {
       #generated
+      description 'sync.mjs draws this table from the Flyway migration V1__init.sql.'
       metadata { source 'src/main/resources/db/migration/V1__init.sql' }
     }
     table_tasks = table 'tasks' {
       #generated
+      description 'sync.mjs draws this table from the Flyway migration V1__init.sql.'
       metadata { source 'src/main/resources/db/migration/V1__init.sql' }
     }
     table_users = table 'users' {
       #generated
+      description 'sync.mjs draws this table from the Flyway migration V1__init.sql.'
       metadata { source 'src/main/resources/db/migration/V1__init.sql' }
     }
   }
@@ -43,58 +49,72 @@ model {
   extend kanban {
     pkg_activitylog = component 'activitylog' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/activitylog' }
     }
     pkg_base = component 'base' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/base' }
     }
     pkg_config = component 'config' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/config' }
     }
     pkg_constant = component 'constant' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/constant' }
     }
     pkg_controller = component 'controller' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/controller' }
     }
     pkg_dto = component 'dto' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/dto' }
     }
     pkg_entity = component 'entity' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/entity' }
     }
     pkg_event = component 'event' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/event' }
     }
     pkg_exception = component 'exception' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/exception' }
     }
     pkg_handler = component 'handler' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/handler' }
     }
     pkg_mapper = component 'mapper' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/mapper' }
     }
     pkg_repository = component 'repository' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/repository' }
     }
     pkg_security = component 'security' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/security' }
     }
     pkg_service = component 'service' {
       #generated
+      description 'sync.mjs draws this package from its source folder and import lines.'
       metadata { source 'src/main/java/com/vrudenko/kanban_board/service' }
     }
   }

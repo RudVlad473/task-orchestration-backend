@@ -41,3 +41,9 @@ D24	a claimed host is changed in an IngressRoute (nonprod)	sed	k8s/overlays/nonp
 D25	the site Deployment is renamed (architecture-site)	sed	k8s/base/architecture-site/architecture-site.yaml	0,/^  name: architecture-site$/s//  name: architecture-sitex/
 D26	the architecture host is changed in its IngressRoute	sed	k8s/overlays/architecture/ingressroute.yaml	s|kanban-board-rud-vlad-473-architecture|kanban-board-rud-vlad-473-architecturex|g
 D27	the site overlay's namespace changes (architecture to kanban-nonprod)	sed	k8s/overlays/architecture/kustomization.yaml	s|^namespace: architecture$|namespace: kanban-nonprod|
+D28	a view loses its description (index)	sed	model/views.c4	/^  view index {$/,/^  }$/{/^    description /d}
+D28b	an element loses its description (b2)	sed	model/model.c4	/^  b2 = external /,/^  }$/{/^    description /d}
+D28c	a deployment node loses its description (github.runner)	sed	model/delivery.c4	/^    runner = server /,/^    }$/{/^      description /d}
+D28d	a description loses its trailing period (grafana)	sed	model/monitoring.c4	/^  grafana = system /,/^  }$/s|\.'$|'|
+D29	a block of views loses its folder label (the signin views)	sed	model/views.c4	s|^views '5 Scenarios' {$|views {|
+D29b	a view sits in another viewpoint's folder (monitoring)	sed	model/monitoring.c4	s|^views '4 Physical' {$|views '1 Logical' {|

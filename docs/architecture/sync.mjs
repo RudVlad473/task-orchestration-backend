@@ -515,16 +515,41 @@ function checkViewFolders(computed, problems) {
   }
 }
 
+// Holds the presence and trailing-period half of the Description rule in docs/DIAGRAM_CONVENTIONS.md
+// for every element, deployment node and view. The cap and the sentence shape are left to review.
+//
+// Relationships carry a label instead of a description. Deployment instances inherit the text of
+// their element, so they are not iterated.
+function checkDescriptions(computed, problems) {
+  const surfaces = [
+    ['element', [...computed.elements()]],
+    ['deployment node', [...computed.deployment.nodes()]],
+    ['view', [...computed.views()]],
+  ]
+  for (const [surface, items] of surfaces) {
+    for (const item of items.sort((a, b) => a.id.localeCompare(b.id))) {
+      const text = (item.description?.text ?? '').trimEnd()
+      if (text === '') problems.push(`${surface} ${item.id} has no description`)
+      else if (!text.endsWith('.')) problems.push(`${surface} ${item.id} description does not end with a period`)
+    }
+  }
+}
+
 // --- generation -----------------------------------------------------------------------
 
 // One function per fact source, each returning the lines it contributes, so a source added
 // later extends render() with one more call instead of one more block in a long body.
+//
+// The description of a generated element states only where it was read from, because extend
+// cannot carry a hand-written one. The one interpolated value is a migration file name, which is
+// already written to metadata source.
 function renderTables() {
   const lines = []
   for (const [name, file] of [...tables()].sort()) {
     lines.push(
       `    table_${name} = table '${name}' {`,
       '      #generated',
+      `      description 'sync.mjs draws this table from the Flyway migration ${posix.basename(file)}.'`,
       `      metadata { source '${file}' }`,
       '    }',
     )
@@ -546,6 +571,7 @@ function renderPackages(pkgs) {
     lines.push(
       `    pkg_${name} = component '${name}' {`,
       '      #generated',
+      "      description 'sync.mjs draws this package from its source folder and import lines.'",
       `      metadata { source '${APP_PACKAGE_DIR}/${name}' }`,
       '    }',
     )
@@ -653,6 +679,7 @@ async function check() {
   checkParticipants(computed, problems)
   checkDeployedWorkloads(computed, problems)
   checkViewFolders(computed, problems)
+  checkDescriptions(computed, problems)
 
   const pkgs = packages()
   const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${manifestWorkloads.size} workloads`

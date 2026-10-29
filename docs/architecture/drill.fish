@@ -47,16 +47,17 @@ end
 # Adds the element certmgr, anchored on the real k8s/platform/cert-manager directory and linked
 # to traefik so it stays drawn, and places its one instance in the namespace node named by $argv[1].
 # The instance goes on the line after the node's description, because LikeC4 refuses a description
-# after a child.
+# after a child. The element carries a description so the description rule does not fire on it.
 function certmgr_into --inherit-variable scratch
-    printf '%s\n' 'model {' "  certmgr = system 'cert-manager' {" '    metadata {' "      source 'k8s/platform/cert-manager'" '    }' '  }' "  traefik -[sync]-> certmgr 'probe'" '}' >$scratch/model/certmgr.c4
+    printf '%s\n' 'model {' "  certmgr = system 'cert-manager' {" "    description 'Drill element.'" '    metadata {' "      source 'k8s/platform/cert-manager'" '    }' '  }' "  traefik -[sync]-> certmgr 'probe'" '}' >$scratch/model/certmgr.c4
     sed -i "/^      $argv[1] = namespace .*{\$/{n;s|\$|\n        instanceOf certmgr|}" $scratch/model/deployment.c4
 end
 
 # Adds the element lonely and one instance of it in the data namespace. With the argument
-# `linked` it also gets a relationship, which is what keeps an instance drawn in the view.
+# `linked` it also gets a relationship, which is what keeps an instance drawn in the view. The
+# element carries a description so the description rule does not fire on it.
 function lonely_into --inherit-variable scratch
-    set body "  lonely = system 'Lonely'"
+    set body "  lonely = system 'Lonely' {" "    description 'Drill element.'" '  }'
     test "$argv[1]" = linked; and set body $body "  traefik -[sync]-> lonely 'probe'"
     printf '%s\n' 'model {' $body '}' >$scratch/model/lonely.c4
     sed -i "s|^\(        instanceOf backup\)\$|\1\n        instanceOf lonely|" $scratch/model/deployment.c4
