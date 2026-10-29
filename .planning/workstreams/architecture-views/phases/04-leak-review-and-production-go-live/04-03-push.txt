@@ -1,0 +1,44 @@
+# Plan 04-03 push record, Q1 1 (push and prove). Times UTC.
+PUSH RANGE origin/main=ab8bdf17d4439ad9637fa5fd1ab45663df1747b2 (after merging fluxcdbot 4582896 and ab8bdf1) count=16 (15 commits + 1 merge)
+PUSH RANGE commits: c3c366a 28c74bb 9c596db 7695303 06ca6f8 6b17f41 fdc3510 1830879 1301b50 aaa549b fc88613 3a93134 4e2a7a1 e896b5a 04657f7 568bf81
+PUSH DIRS .githooks=1 .github=1 .planning=19 docs=8 scripts=1
+PUSH CLASSES (a) plan 01 and 02 commits named in DECISION Q1: aaa549b 1301b50 1830879 06ca6f8 7695303 (code), fdc3510 6b17f41 9c596db (their planning records)
+PUSH CLASSES (b) planning-only, every path under .planning/: 28c74bb fc88613 3a93134 4e2a7a1 e896b5a 04657f7 568bf81
+PUSH CLASSES (c) step 2 merge: c3c366a (beneath it only fluxcdbot "chore(flux): bump images" 4582896 and ab8bdf1)
+PUSH CLASSES other: none
+PUSHED c3c366a908afbb61a43eab100d2c26414cc8ad2c at 2026-10-29T17:37:31Z
+SITE RUN 40923112448 conclusion=success tag=main-8-c3c366a
+CI_STEP Verify the leak scan catches each target conclusion=success
+CI_STEP Scan the build for leaks conclusion=success
+SCAN_CI TARGET ipv4 hits=0
+SCAN_CI TARGET ipv6 hits=0
+SCAN_CI TARGET ssh-command hits=0
+SCAN_CI TARGET kubectl hits=0
+SCAN_CI TARGET secret-word hits=0
+SCAN_CI TARGET key-path hits=0
+SCAN_CI TARGET ssh-host hits=0
+SCAN_CI TARGET credential hits=0
+SCAN_CI TARGET in-cluster-host hits=0
+SCAN_CI TARGET secret-name hits=0
+SCAN_CI TARGET user-name hits=0
+SCAN_CI TARGET hostname hits=0
+SCAN_CI TARGET robots hits=0
+SCAN_CI HOSTS kanban-board-rud-vlad-473-architecture.duckdns.org,kanban-board-rud-vlad-473-monitoring.duckdns.org,kanban-board-rud-vlad-473-nonprod.duckdns.org,kanban-board-rud-vlad-473.duckdns.org
+SCAN_CI ROBOTS disallow=yes
+SCAN_CI OK targets=13
+CI invariant-checks conclusion=success (run 40923112279)
+CI likec4-model-drift job conclusion=success (job "The LikeC4 model in docs/architecture still describes the code it is checked against")
+CI secret-scan conclusion=success (run 40923112427)
+DEPLOY run=40923112196 conclusion=success
+FLUX BUMP ea1855ba8949e76075f3ce796aaf35f3a53f0bfb newTag=main-8-c3c366a
+ROLLED image=main-8-c3c366a restarts=0
+FLUX BUMP app efeb3fd newTag=main-162-c3c366a (prod and nonprod overlays, from the deploy.yml run)
+ROLLED app kanban-prod=rudenkovladimir/kanban-board-backend:main-162-c3c366a 1/1 kanban-nonprod=rudenkovladimir/kanban-board-backend-nonprod:main-162-c3c366a 1/1
+OTHERS prod=200 nonprod=200 monitoring=302
+OTHERS note: prod and nonprod read at /api/healthz (uptime-check.yml URLs); GET / answered 404 on both when measured after the rollout (not compared with a pre-push reading). monitoring read at /
+PR number=22 plant_commit=6f45bb7ad244c76a556f959f50898b090d34d836
+RED run=40925203236 build=failure failed_step=Scan the build for leaks publish=skipped
+RED_LEAK build Scan the build for leaks LEAK targets=ipv4 (TARGET ipv4 hits=7)
+RESTORE commit=6a81aec75196ef934a4e14533a5758242059a93f
+GREEN run=40925366776 build=success publish=skipped
+CLOSED pr=22 branch_on_origin=no
