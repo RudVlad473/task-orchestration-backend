@@ -128,7 +128,7 @@ Plans:
 **Goal:** Every element, deployment node and view description in the published model is complete (relationships keep their label as their only text, per D-02), worded to the LikeC4 standard and grouped consistently, so the Phase 4 leak review reads a stable artifact. Opens with an audit that lists each defect with the element it sits on.
 **Requirements**: TBD (plans trace to CONTEXT decisions D-01 to D-06)
 **Depends on:** Phase 3
-**Plans:** 3/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 **Wave 1**
