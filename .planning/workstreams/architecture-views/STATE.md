@@ -4,18 +4,18 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: 04
 current_phase_name: Leak Review and Production Go-Live
-current_plan: Not started
+current_plan: 2
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-10-29T15:32:47.631Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-10-29T16:01:39.061Z"
 last_activity: 2026-10-29
-last_activity_desc: Phase 3.1 complete, transitioned to Phase 4
-state_head: 3a93134339bdfd750ac0a17e398dc62ac007637e
+last_activity_desc: Phase 04 execution started
+state_head: fdc35102aa537e1ed750a353cbcc3834b8182542
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 24
-  completed_plans: 19
+  completed_plans: 20
 ---
 
 # Project State
@@ -26,15 +26,15 @@ See: .planning/PROJECT.md (updated 2026-09-30; v1.5 is not yet recorded there)
 Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, ROADMAP.md, research/)
 
 **Core value:** A reader of the public repository can see how the system is built from a model that cannot drift from the code, not from screenshots.
-**Current focus:** Phase 3.1 — Model description pass (INSERTED)
+**Current focus:** Phase 04 — Leak Review and Production Go-Live
 
 ## Current Position
 
-Phase: 04 (Leak Review and Production Go-Live) — READY TO EXECUTE
-Current Plan: Not started
+Phase: 04 (Leak Review and Production Go-Live) — EXECUTING
+Current Plan: 2
 Total Plans in Phase: 5
 Status: Ready to execute
-Last activity: 2026-10-29 — Phase 3.1 complete, transitioned to Phase 4
+Last activity: 2026-10-29 — Phase 04 execution started
 
 Progress: [████████░░] 75%
 
@@ -82,6 +82,7 @@ Progress: [████████░░] 75%
 | Phase 03.1 P01 | 25 min | 2 tasks | 9 files |
 | Phase 03.1 P02 | 25 min | 3 tasks | 10 files |
 | Phase 03.1 P03 | 65 min | 2 tasks | 8 files |
+| Phase 04 P01 | 25 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,7 @@ Recent decisions affecting current work:
 - [Phase 03.1]: VIEW_FOLDERS repeats the views block labels and is kept in step by hand; sync.mjs check fails until they agree
 - [Phase 03.1]: Relationships stay label-only (D-02): held at phase end by a verify gate, not a sync.mjs rule, since D-05 limits the script to presence and final period
 - [Phase 03.1]: The drill before-record runs the BASE script on the final model with generated.c4 re-rendered by it, so the old script does not call the file stale
+- [Phase 04]: 04-01: leak-scan.mjs sits beside the site; ssh-command is case-sensitive so the model prose 'SSH forward' passes (owner sees it at review); secret-word is kept by default at 0 hits and the owner confirms at Q2
 
 ### Pending Todos
 
@@ -153,6 +155,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T14:26:23.358Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/workstreams/architecture-views/phases/04-leak-review-and-production-go-live/04-CONTEXT.md
+Last session: 2026-10-29T16:01:38.255Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
