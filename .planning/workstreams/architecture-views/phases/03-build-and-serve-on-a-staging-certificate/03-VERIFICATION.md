@@ -1,10 +1,12 @@
 ---
 phase: 03-build-and-serve-on-a-staging-certificate
-verified: 2026-10-28T22:25:00Z
+verified: 2026-10-29T00:00:00Z
 status: human_needed
 score: 5/6 must-haves verified
 covered_files:
   - .github/workflows/architecture-site.yml
+  - .github/workflows/backup-image.yml
+  - .github/workflows/deploy.yml
   - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-01-PLAN.md
   - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-01-SUMMARY.md
   - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-02-PLAN.md
@@ -19,184 +21,173 @@ covered_files:
   - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-06-SUMMARY.md
   - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-07-PLAN.md
   - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-07-SUMMARY.md
-  - docs/DIAGRAM_CONVENTIONS.md
-  - docs/INFRA_ARCHITECTURE.md
-  - docs/INFRA_RUNBOOK.md
-  - docs/architecture/drill-output.txt
-  - docs/architecture/drills.tsv
+  - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-08-PLAN.md
+  - .planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-08-SUMMARY.md
   - docs/architecture/model/delivery.c4
-  - docs/architecture/model/deployment.c4
-  - docs/architecture/model/model.c4
   - docs/architecture/model/scenarios-platform.c4
   - docs/architecture/model/views.c4
-  - docs/architecture/site/Dockerfile
-  - docs/architecture/site/nginx.conf
-  - k8s/base/architecture-site/architecture-site.yaml
-  - k8s/base/architecture-site/kustomization.yaml
-  - k8s/flux-system/apps-architecture.yaml
-  - k8s/flux-system/image-automation.yaml
-  - k8s/flux-system/kustomization.yaml
-  - k8s/overlays/architecture/certificate.yaml
-  - k8s/overlays/architecture/ingressroute.yaml
-  - k8s/overlays/architecture/kustomization.yaml
-  - k8s/platform/edge/clusterissuers.yaml
-  - k8s/platform/namespaces.yaml
-  - scripts/verify-k8s-invariants-selftest.py
-  - scripts/verify-k8s-invariants.py
-covered_digest: "v3:sha256:7f8fe8ce916c8d50d95f29e60772a256a08b6a2f8663d252ba8adc2c32367da2"
+covered_digest: "v3:sha256:e14b88f2052c0911ed1abaafe0d8a16d3aa31bdafbda9b9aad372d71cc976b46"
 behavior_unverified: 0
 overrides_applied: 0
+re_verification:
+  previous_status: human_needed
+  previous_score: 5/6
+  gaps_closed:
+    - "G-03-2 (WR-05): the published model no longer says the publish job is the only job in the production environment, no longer counts the workflows, and the step 4 evidence row cites sources for each clause"
+  gaps_remaining: []
+  regressions: []
 human_verification:
-  - test: "Decide how the src-only clause of ROADMAP criterion 1 is closed. Either accept the paths-filter evidence, or leave it pending until a real push that touches only src/ exists on origin/main, then run `gh run list --workflow=architecture-site.yml` and confirm no run for that SHA."
-    expected: "No Architecture Site run for the src-only push (and no run for any Flux bump, already observed three times)."
-    why_human: "DECISION Q4 1 chose passive observation. No src-only push exists on origin/main (checked: none of the 38 non-merge commits after 5d44dac touches only src/), so the literal clause has no observation. Pushing one is an outward action only the user can authorize."
-  - test: "Decide on WR-05 of 03-REVIEW.md before Phase 4's review. Fix, or accept, two false statements in the published model: docs/architecture/model/scenarios-platform.c4:38 says the publish job is 'the only job in the production environment', and docs/architecture/model/delivery.c4:7 says GitHub Actions has 'Two workflows'."
-    expected: "Each statement is true against .github/workflows/*.yml, or the user accepts it knowingly."
-    why_human: "environment: production is also set at deploy.yml:94,161,307 and backup-image.yml:36, and backup-image.yml also pushes an image. The statements are false today, they are served live on the staging host, and no gate checks prose. Whether this blocks closing Phase 3 or is folded into Phase 4's leak review is the user's call."
+  - test: "Decide on WR-01 of the fresh 03-REVIEW.md. docs/architecture/model/views.c4:81, the description of the `delivery` deployment view, still reads 'A push to main starts the workflow on a GitHub-hosted runner, which pushes the app and site images to Docker Hub.' Either fix it now (a quick task: name the workflows and the backup image, as the review suggests) or leave it for Phase 3.1, the model description pass."
+    expected: "The delivery view's caption agrees with its own edge labels (delivery.c4:42 names three workflows, delivery.c4:43 names the app, backup and site images), or the user knowingly defers it."
+    why_human: "Which phase owns the fix is the user's call. It is a Phase 2 view description, outside G-03-2's three listed fixes, and no gate reads prose. Phase 3.1's goal (descriptions complete and consistent) covers it in principle, but no 3.1 plan exists yet."
+  - test: "Push the 14 local commits ahead of origin/main when ready, then confirm the staging site serves the new sentences."
+    expected: "A push touching docs/architecture/model starts architecture-site.yml (not deploy.yml), Flux rolls the new tag, and the served bundle holds 'the only job of this workflow in the production environment' and not 'the only job in the production environment'."
+    why_human: "Pushing is an outward action only the user authorizes. Until then the live host serves the old sentences (the fixed text exists in the repo and in a fresh local build, not on the host)."
 ---
 
 # Phase 3: Build and Serve on a Staging Certificate Verification Report
 
 **Phase Goal:** Every model change on `main` rebuilds the static site. Flux serves the static build at the architecture hostname over HTTPS on a Let's Encrypt staging certificate. The publish path is drawn in the model as it was built, not as planned.
-**Verified:** 2026-10-28T22:25:00Z
+**Verified:** 2026-10-29T00:00:00Z
 **Status:** human_needed
-**Re-verification:** No, initial verification
+**Re-verification:** Yes, after gap closure plan 03-08 (G-03-2). The previous report had no `gaps:` block; G-03-2 came from UAT test 2. I verified G-03-2 in full and re-checked the rest as regressions.
 
-The goal is achieved in the codebase and on the live host. Two items need a human decision: one clause of criterion 1 has no observation yet, and one review warning (WR-05) is a real factual defect in the published model.
+G-03-2 is closed in the repository. No must-have failed. One review warning (WR-01) is open and is a user decision, and the fix is not on the live host until a push.
 
 ## Goal Achievement
 
-ROADMAP criterion 1 is split into 1a (everything observed) and 1b (the src-only clause), so the pending clause is scored on its own and cannot hide inside a pass.
+### G-03-2 (the gap this run closes), verified against `.github/workflows`
+
+UAT test 2 expected three things. All three hold on today's tree.
+
+| UAT expectation | Evidence | Status |
+| --------------- | -------- | ------ |
+| `scenarios-platform.c4:38` no longer says the publish job is "the only job in the production environment" | Line 38 now reads "the publish job, the only job of this workflow in the production environment, whose registry token deploy.yml and backup-image.yml also use...". Source: `environment:` lines are `architecture-site.yml:96` (one only), `deploy.yml:94,161,307` (production) and `:236,380` (staging), `backup-image.yml:36`. The build job at `architecture-site.yml:50-53` has none. The claim is now scoped to its own workflow and is true. `diff` of `rg -l "environment: production"` (minus the site workflow) against the `.yml` names in step 4: exit 0. | VERIFIED |
+| `delivery.c4:7` no longer says "Two workflows" | Line 7 now begins "The workflows that push images to Docker Hub are deploy.yml ...; backup-image.yml ...; and architecture-site.yml ...", with no count. `rg -l "push: true"` gives exactly `architecture-site.yml:128`, `deploy.yml:135`, `backup-image.yml:60`, the same three names as in the description (exit 0) and the repo-to-ci title at `:42` (exit 0). `rg -l "build-push-action\|docker push"` returns the same three files, so no image-pushing workflow is missing. Lines 14, 42 and 43 agree with line 7. | VERIFIED |
+| Step 4 evidence row cites a source that supports it | Re-ran plan 03-08's row 4 gate on today's tree: `ROW4 OK`, exit 0 (step cell equals the model's step, 9 cites and 9 quote groups, every quote equals its cited line, and the clauses cite `build:`, `environment: production` and a `secrets.DOCKERHUB_TOKEN` line from each of the three workflows). The section still has 8 rows (03-07's check, rows unchanged in count). | VERIFIED |
+
+The token claim holds too: `secrets.DOCKERHUB_TOKEN` is read only by `architecture-site.yml:112`, `deploy.yml:107,319,391` and `backup-image.yml:46` (diff against step 4's workflow list: exit 0). The review notes that `deploy.yml:391` sits under `environment: staging` and uses the staging copy of the token, so "also use" is loose for that one job. I agree and do not treat it as false.
+
+All six retired phrases are absent from `docs/architecture/model` (`rg -ni -F`, exit 1). I rebuilt the site with the workflow's own command (`likec4 build --use-dot=false`, `docs/architecture/site/out` absent before, trashed after) and every changed sentence is in the built bundle and no old wording is:
+
+```
+BUILT L38 new_files=3 old_files=0
+BUILT L33 new_files=2 old_files=0
+BUILT L7 new_files=4 old_files=0
+BUILT L14 new_files=4 old_files=0
+BUILT L42 new_files=5 old_files=0
+BUILT L43 new_files=6 old_files=0
+```
+
+`node docs/architecture/sync.mjs check`: `OK (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads)`, exit 0.
+
+The commits touch only what the plan said. `git diff 6386b5f..HEAD -- docs/ scripts/ k8s/ .github/` shows two files: `delivery.c4` (4 lines changed) and `scenarios-platform.c4` (2 lines changed). No code, manifest or workflow moved, so the earlier gates have no reason to change.
 
 ### Observable Truths
 
+ROADMAP criterion 1 stays split into 1a and 1b so the pending clause is scored on its own.
+
 | #  | Truth | Status | Evidence |
 | -- | ----- | ------ | -------- |
-| 1a | A model-only push runs the site workflow, which runs `sync.mjs check` before `likec4 build`, then pushes `main-<run>-<sha7>` to the site's own repo. A drifted model fails before the push (red), the fixed model pushes (green). The PR build holds no secret. No site run for a Flux bump. | VERIFIED | Workflow read: `architecture-site.yml:71-72` (check) precedes `:75` (build); publish job needs build, `if` excludes PRs, is the only job naming `environment: production`. `gh run view 40766223979`: build=failure at step "Verify the model matches the code", publish=skipped (red). Run 40766992838: build=success, publish=skipped (green PR, no push). Run 40774467920 (push a26694f): build and publish success. Docker Hub anonymous API lists tags `main-1-5d44dac`, `main-4-b1aa8c5`, `main-5-a26694f`. `gh run list`: Architecture Site has 5 runs total and none for Flux bumps 673238f, fe3466b, 6a82dde, whose Invariant Checks and Secret Scan runs do exist. |
-| 1b | No site run for a push that touches only `src/`. | UNCERTAIN (PENDING by design) | `git log --no-merges --name-only 5d44dac..origin/main`: no commit touches only `src/`. The mechanism is the `paths:` filter (`architecture-site.yml:24-32`), the same one observed excluding the k8s-only push (03-03-solver.txt:36) and three Flux bumps. Not the literal case; reported as pending, not passed (DECISION Q4 1, 03-DECISIONS.txt:5). |
-| 2  | Flux rolls the tag into the site namespace; `(STAGING)` issuer; Certificate `Ready=True` on `letsencrypt-staging`; `curl -k /` is 200 with `likec4-root`; other hostnames unchanged. | VERIFIED | Probed live today. `openssl s_client`: `issuer=C=US, O=Let's Encrypt, CN=(STAGING) Dastardly Durum YR1`. `curl -sk /`: 200, `text/html`, `likec4-root` count 1. `ssh netcup-prod k3s kubectl`: `certificate/architecture READY True ... letsencrypt-staging`; Deployment image `rudenkovladimir/kanban-board-backend-architecture:main-5-a26694f`, pod 1/1 0 restarts; ImagePolicy resolved `main-5-a26694f`; Kustomization `apps-architecture` Ready at `main@sha1:6a82dde`. Other hosts: prod `/api/healthz` 200, nonprod `/api/healthz` 200, monitoring `/` 302, as in the baseline (03-06-live.txt:6). HTTP on the new host answers 308 to https. |
-| 3  | Only static output is reachable; `/@fs/etc/hostname` does not return the file; the dev-server gate is red on planted lines and green after; a cold deep link renders; the missing-asset response is recorded. | VERIFIED | `curl -sk /@fs/etc/hostname` returns the 816-byte app shell, byte-identical to `/` (`cmp` same), not the host's hostname. `Dockerfile`/`nginx.conf`/Deployment hold no `likec4 start`, `preview` or `--listen`; image is nginx-unprivileged by digest with `COPY out/`. Red/green: 03-01-i12-red.txt:17-20 (three `FAIL: I12`, exit=1, "GATE BEFORE I12 exit=0" with the same plants) and 03-01-i12-green.txt:2 (exit=0); `verify-k8s-invariants-selftest.py` re-run today: "I1-I12 each fire on an engineered violation". Cold deep link: I rendered `/view/publish-the-site/` in headless Chromium (cert errors ignored): status 200, 162 SVG nodes, no "does not exist" text, title "Scenario: a model change becomes the published architecture site". Missing asset: `curl -sk -D- /assets/missing.js` answers `404 text/html`, server nginx/1.30.6 (settles Open Question 1). |
-| 4  | `verify-k8s-invariants.py --no-provisional` green; memory is MEASURED from a VPS ladder (I4); I5 red then green; route has the I10 shape; one owner under I11. | VERIFIED | Re-ran today: `invariants OK -- 14 kustomization root(s)`, exit 0; `verify-k8s-manifests.sh` all 14 roots valid. `architecture-site.yaml:56-65` carries `MEASURED 2026-10-28 on the VPS`; 03-03-ladder.txt has rungs 64/32/16Mi pass, 8Mi OOMKilled, ADOPTED 16Mi/32Mi. I5: 03-04-i5-red.txt exit=1 naming the missing setter marker, 03-04-i5-green.txt exit=0; overlay `kustomization.yaml:13` carries the `$imagepolicy` marker. I10: `architecture-http` match has `!PathPrefix('/.well-known/acme-challenge/')`; the gate checks it. I11 live: both IngressRoutes carry `kustomize.toolkit.fluxcd.io/name: apps-architecture`, read via ssh. CI: `Invariant Checks` success on a26694f and 6a82dde. |
-| 5  | The model contains the site as built: a namespace node, the instance with a `traefik ->` edge, a publish-the-site scenario whose steps cite the workflow and manifest lines; Phase 1 and 2 checks are green and cover the site's workload. | VERIFIED (one clause false, see WR-05 below) | `deployment.c4:37-38` namespace `architecture` with `instanceOf archsite`; `model.c4:143` `traefik -[sync]-> archsite 'HTTP :8080'`. Fresh `likec4 export json`: `publish-the-site` is `#scenarios`, 5 nodes, 8 steps, all 8 titled; 14 scenario views, none above 5 participants; physical views `delivery`, `monitoring`, `production` with 0 `[...]` labels; export has `netcup.k3s.architecture.archsite`. `03-SCENARIO-EVIDENCE.md` has 8 rows for 8 steps; I spot-checked the cited lines of the workflow (71-72, 75, 81, 93, 96, 119, 128), `image-automation.yaml` (22-29, 69-74, 100-104), `apps-architecture.yaml:15` and `architecture-site.yaml:17-18`: all match the quotes. `sync.mjs check` exit 0 with "18 workloads"; drills D25-D27 each exit 1 (drill-output.txt:183-199), and `fish drill.fish | cmp - drill-output.txt` exits 0. |
+| 1a | A model-only push runs the site workflow: `sync.mjs check` before `likec4 build`, then a push of `main-<run>-<sha7>` to the site's own repo; drifted model red, fixed model green; PR build has no secrets; no site run for a Flux bump | VERIFIED (regression check) | No change to `architecture-site.yml` since the previous report (`git diff` empty for `.github/`). Workflow still has one `environment:` line (`:96`, publish only) and `push: true` only at `:128`. Previous report's run ids (40766223979 red, 40774467920 green) and the live tag `main-5-a26694f` are unchanged; the live Deployment tag was read over ssh then, not re-read now. |
+| 1b | No site run for a push that touches only `src/` | UNCERTAIN, accepted: UAT test 1 recorded `pass` for "accept the same-mechanism evidence with the literal case pending" | No src-only push exists on origin/main, so the literal case has no observation. The `paths:` filter (`architecture-site.yml:24-32`) is the mechanism, observed excluding a k8s-only push and three Flux bumps. The user accepted this in UAT; I do not count it as verified because nothing observed it. No override was written. |
+| 2  | Flux rolls the tag into the site namespace; `(STAGING)` issuer; Certificate `Ready=True` on `letsencrypt-staging`; `curl -k /` is 200 with `likec4-root`; other hostnames unchanged | VERIFIED (re-probed today) | `openssl s_client`: `issuer=C=US, O=Let's Encrypt, CN=(STAGING) Dastardly Durum YR1`. `curl -sk /`: 200, `likec4-root` count 1. Certificate Ready and the other hostnames were read over ssh and curl in the previous run; I did not repeat those today. |
+| 3  | Only static output reachable; dev-server gate red then green; deep link renders; missing asset recorded | VERIFIED (re-probed in part) | `curl -sk /assets/missing.js`: `404 text/html` today, as recorded. `verify-k8s-invariants.py --no-provisional` still runs I12 and exits 0. The I12 red/green files and the `/@fs` and deep-link checks are from the previous run and unchanged inputs. |
+| 4  | `verify-k8s-invariants.py --no-provisional` green; MEASURED memory; I5 red then green; I10 shape; one owner under I11 | VERIFIED (re-ran) | `invariants OK -- 14 kustomization root(s) checked ...`, exit 0 today. No `k8s/` or `scripts/` file changed since `6386b5f`. |
+| 5  | The model contains the site as built: namespace node, instance with a `traefik ->` edge, a publish-the-site scenario with cited steps; Phase 1 and 2 checks green and cover the site's workload | VERIFIED | The WR-05 clause that made it "VERIFIED (one clause false)" last time is fixed (G-03-2 above). `sync.mjs check` exit 0 with 18 workloads. The 8-step scenario, `deployment.c4`, `model.c4` and `03-SCENARIO-EVIDENCE.md` were not touched except row 4. One adjacent caption (WR-01) is still stale; see below. |
 
-**Score:** 5/6 truths verified (1b pending, 0 present-but-behavior-unverified).
+**Score:** 5/6 truths verified (1b accepted but unobserved, 0 present-but-behavior-unverified).
 
-### Required Artifacts
+### Required Artifacts (this round)
 
 | Artifact | Expected | Status | Details |
 | -------- | -------- | ------ | ------- |
-| `.github/workflows/architecture-site.yml` | Two-job workflow, drift gate before build, token only in publish | VERIFIED | Read in full. No `pull_request_target`; build job has no `environment`/`secrets`; publish pins actions by SHA. |
-| `docs/architecture/site/Dockerfile`, `nginx.conf` | Static image, extension rule, 404 on missing asset | VERIFIED | Live behaviour matches the config (404 on `/assets/missing.js`, shell on extensionless paths). |
-| `k8s/base/architecture-site/architecture-site.yaml` | Hardened Deployment + Service, MEASURED memory | VERIFIED | readOnlyRootFilesystem, drop ALL, runAsNonRoot, no SA token, 16Mi/32Mi, Recreate. |
-| `k8s/overlays/architecture/*` | Overlay with setter marker, staging Certificate, two IngressRoutes | VERIFIED | Live objects exist and are Ready. |
-| `k8s/flux-system/apps-architecture.yaml`, `image-automation.yaml`, `kustomization.yaml` | Flux wiring, ImagePolicy, one owner | VERIFIED | Kustomization and ImagePolicy Ready live. |
-| `docs/architecture/model/scenarios-platform.c4` | `dynamic view publish-the-site` | VERIFIED | Present in export; see WR-05 for a false clause in step 4. |
-| `03-SCENARIO-EVIDENCE.md`, `03-07-gate.txt`, `03-07-model-only-push.txt` | Per-step citations, gate with PENDING line | VERIFIED | Gate ends `PHASE STATUS: criteria 1 to 5 mapped; pending: src-only push (criterion 1, DECISION Q4 1)`. |
+| `docs/architecture/model/scenarios-platform.c4` | Line 33 and step 4 scoped to this workflow | VERIFIED | Line 33: "the publish job is the only job of this workflow that holds the registry token". Step 4 as above. Numstat 2/2. |
+| `docs/architecture/model/delivery.c4` | `ci` description, `dockerhub` description and two edge titles name every image-pushing workflow and image | VERIFIED | Lines 7, 14, 42, 43 read as the plan specified. Numstat 4/4. Metadata blocks unchanged. |
+| `03-SCENARIO-EVIDENCE.md` | Row 4 re-cited | VERIFIED | `ROW4 OK`, exit 0 against the committed tree. |
+| `03-08-prose-proof.txt` | Source assertions recorded | VERIFIED as a record only | 16 lines, `TREE 74e50d4`, all diffs exit 0, `OLD-PHRASES model_lines=0`, `LEAKWORDS lines=0`. It is the executor's own report; I relied on my own re-runs above, which gave the same numbers. |
 
 ### Key Link Verification
 
 | From | To | Via | Status | Details |
 | ---- | -- | --- | ------ | ------- |
-| `architecture-site.yml` publish | Docker Hub repo | `docker/build-push-action`, tag `main-RUN-SHA7` | WIRED | Three tags exist publicly. |
-| ImagePolicy pattern | overlay setter marker | `^main-(?P<num>[0-9]+)-[a-f0-9]{7}$`, `path: ./k8s/overlays` | WIRED | Tag moved main-4 to main-5 on the live Deployment; bump commits exist. |
-| `apps-architecture` Kustomization | `k8s/overlays/architecture` | `path: ./k8s/overlays/architecture` | WIRED | Ready live. |
-| IngressRoute | Service `architecture-site:8080` | Host rule | WIRED | `curl -k /` returns the site. |
-| Certificate `architecture` | `letsencrypt-staging` ClusterIssuer (ClusterIP solver) | issuerRef | WIRED | Ready True, notAfter 2026-12-31. |
-| Model `archsite` | k8s Deployment | `metadata workload` claim read by `sync.mjs` | WIRED | D25 breaks it and `check` exits 1. |
+| Step 4 workflow names | `.github/workflows/*.yml` `environment: production` users | set diff | WIRED | exit 0 |
+| Step 4 workflow names | `secrets.DOCKERHUB_TOKEN` users | set diff | WIRED | exit 0 |
+| `delivery.c4:7` and `:42` workflow names | `.github/workflows/*.yml` `push: true` | set diff | WIRED | both exit 0 |
+| Evidence row 4 | `architecture-site.yml`, `deploy.yml`, `backup-image.yml` lines | verbatim quotes | WIRED | `ROW4 OK` |
 
 ### Data-Flow Trace (Level 4)
 
-Not applicable: static content, no dynamic data variables. The built site is the data; its bytes reach the browser unmodified (live `/` marker, 162 nodes on the deep link).
+Not applicable: static prose in a model that is built into a static site. The trace that matters is model text to built bundle, covered by the six BUILT lines above.
 
 ### Behavioral Spot-Checks
 
 | Behavior | Command | Result | Status |
 | -------- | ------- | ------ | ------ |
-| Drift check green | `node docs/architecture/sync.mjs check` | OK, 18 workloads, exit 0 | PASS |
-| Drill replay matches record | `fish docs/architecture/drill.fish \| cmp - docs/architecture/drill-output.txt` | exit 0 | PASS |
+| Drift check | `node docs/architecture/sync.mjs check` | OK, 18 workloads, exit 0 | PASS |
+| Set diffs (4) | `diff <(rg -l ...) <(rg ... \| rg -o "[a-z-]+\.yml")` | exit 0 each | PASS |
+| Retired phrases absent | `rg -ni -F` six phrases over `docs/architecture/model` | exit 1 (no match) | PASS |
+| Row 4 gate | plan 03-08 Task 1 python gate | `ROW4 OK`, exit 0 | PASS |
+| Built site holds new wording, not old | plan 03-08 Task 2 build gate | six lines above, exit 0, output dir trashed | PASS |
 | Invariants | `python3 scripts/verify-k8s-invariants.py --no-provisional` | OK, exit 0 | PASS |
-| Invariants selftest | `python3 scripts/verify-k8s-invariants-selftest.py` | "I1-I12 each fire", pass | PASS |
-| Hook selftest | `python3 scripts/pre-commit-likec4-selftest.py` | 16/16 passed | PASS |
-| Manifests render | `bash scripts/verify-k8s-manifests.sh` | all 14 roots valid, exit 0 | PASS |
-| Comment lint | `python3 scripts/verify-comments.py check` | OK, 340 files, exit 0 | PASS |
-| Instruction budget | `python3 scripts/verify-instruction-budget.py` | OK, 4886 of 5100 bytes | PASS |
-| Secrets in the `--no-verify` range | `gitleaks git --log-opts=5d44dac..HEAD -c .gitleaks.toml` | 22 commits scanned, no leaks | PASS |
-| Live TLS, marker, `/@fs`, missing asset, deep link | curl, openssl, headless Chromium | see truths 2 and 3 | PASS |
-| Cluster state | `ssh netcup-prod k3s kubectl get` (read-only) | Certificate, Deployment, ImagePolicy, Kustomizations Ready; 38 containers, 11 namespaces; Traefik restarts 2 | PASS |
+| Live TLS, marker, missing asset | `openssl`, `curl -sk` | STAGING issuer, 200, marker 1, 404 text/html | PASS |
 
-Exit codes for the first three Python/node rows were read after the command, not through a pipe, except the two selftests, where the printed success line was read instead (the pipe hid the exit code). The scripts print their own failure text, and none appeared.
+Not re-run: the drill replay (`fish docs/architecture/drill.fish`), selftests, `verify-comments.py`, `gitleaks`, Java `fastTest` and `spotlessCheck`. The two commits that matter changed two `.c4` files; `rg` over the 03-08 plan found no drill row, selftest or gate that reads those sentences. I did not re-confirm that by running the drills.
 
 ### Probe Execution
 
-Step 7c: no `probe-*.sh` is declared by this phase's plans. SKIPPED (the phase uses named gates and live probes, covered above).
-
-### The `--no-verify` commits
-
-The executor ran the hook's checks by hand for docs-only commits (03-05's drills commits among them). I re-ran the same checks on today's tree: `sync.mjs check` exit 0, `verify-comments.py check` OK, `pre-commit-likec4-selftest.py` 16/16, drill replay identical to the committed `drill-output.txt`, instruction budget OK, gitleaks clean over `5d44dac..HEAD`. `drills.tsv` rows D25 to D27 are sed rows as 03-05 planned, and each drill exits 1 with a DRIFT or placement line naming the break. Nothing the skipped hook would have refused is present. spotlessCheck and `fastTest` are Java-only and `git diff --name-only 5d44dac HEAD` lists no `src/` path (not re-run).
+Step 7c: no `probe-*.sh` is declared by this phase's plans. SKIPPED.
 
 ### Requirements Coverage
 
 | Requirement | Source Plans | Description | Status | Evidence |
 | ----------- | ------------ | ----------- | ------ | -------- |
-| PUB-01 | 03-01, 03-02, 03-06, 03-07 | CI builds the static site into an image pushed to its own Docker Hub repo, rebuilt only on source-path changes | SATISFIED, with the src-only observation pending | Truth 1a. The "only on source-path changes" half rests on the `paths:` filter and four excluded pushes (k8s-only, three Flux bumps) plus the flush push; no literal src-only push exists (truth 1b). |
-| PUB-02 | 03-01, 03-03, 03-04, 03-06 | k8s manifests and Flux wiring serve the image at the DuckDNS architecture hostname; only static output exposed, never `likec4 start` | SATISFIED (confirmed, not contested) | Truths 2, 3, 4: the executor's tick holds. Live host answers 200 with the marker on a staging certificate, the Deployment runs the Flux-selected tag, and `/@fs` returns the shell. |
-| SCEN-08 | 03-04, 03-05, 03-07 | Publish-the-site scenario | SATISFIED | Truth 5. Caveat WR-05: step 4 contains a false clause. |
+| PUB-01 | 03-01, 03-02, 03-06, 03-07 | CI builds the static site into an image pushed to its own Docker Hub repo, rebuilt only on source-path changes | SATISFIED, src-only observation pending (truth 1b) | Truth 1a. REQUIREMENTS.md ticks it. |
+| PUB-02 | 03-01, 03-03, 03-04, 03-06 | Manifests and Flux wiring serve the image at the DuckDNS architecture hostname; only static output exposed | SATISFIED | Truths 2, 3, 4. |
+| SCEN-08 | 03-04, 03-05, 03-07, 03-08 | Publish-the-site scenario | SATISFIED | Truth 5. The WR-05 false clause is gone. |
 
-All three IDs in the phase brief appear in at least one PLAN's `requirements:` frontmatter and in REQUIREMENTS.md. No orphaned requirement: REQUIREMENTS.md maps only PUB-01, PUB-02 and SCEN-08 to Phase 3 (PUB-03 to PUB-06 are Phase 4 and stay unticked).
+All three IDs appear in PLAN `requirements:` frontmatter (`rg` over the eight plans: PUB-01 in 03-01, -02, -06, -07; PUB-02 in 03-01, -03, -04, -06; SCEN-08 in 03-04, -05, -07, -08) and in REQUIREMENTS.md lines 31, 48, 49 and its traceability table (rows 94, 100, 101: Phase 3, Complete). No requirement maps to Phase 3 without a plan, so there is no orphan.
 
 ### Anti-Patterns Found
 
 | File | Line | Pattern | Severity | Impact |
 | ---- | ---- | ------- | -------- | ------ |
-| `docs/architecture/model/scenarios-platform.c4` | 38 | Published statement "the only job in the production environment" is false (`deploy.yml:94,161,307`, `backup-image.yml:36`) | Warning | Public model overstates the token boundary; the evidence row cites only `architecture-site.yml:96`, which cannot prove "only". |
-| `docs/architecture/model/delivery.c4` | 7 | "Two workflows" while `backup-image.yml` also builds and pushes an image | Warning | Same class: prose no gate checks. |
-| `scripts/verify-k8s-invariants.py` | 128 | I12 regex needs `likec4<whitespace>start`; `npx likec4@1.60.0 start`, line continuations and `pnpm run dev` pass unseen (WR-01, confirmed by reading the regex) | Warning | The criterion's literal red/green holds; the gate is narrower than its purpose. Nothing exposed today. |
-| `k8s/platform/edge/clusterissuers.yaml` | 21-24, 36-39 | `serviceType: ClusterIP` on both shared issuers has no regression guard (WR-03) | Warning | The production issuer's stanza is unexercised live; a silent revert reopens a NodePort. |
-| `docs/architecture/site/nginx.conf` | whole | No security headers, `server_tokens` on (WR-04) | Warning | Not a Phase 3 criterion; Roadmap lists CSP/headers as an unowned recommendation (Open Question 8). |
+| `docs/architecture/model/views.c4` | 81 | `delivery` view description says "starts the workflow ... which pushes the app and site images" while the same view's edges (delivery.c4:42-43) now name three workflows and the backup image (review WR-01, confirmed by reading both files) | Warning | Published caption and edge labels disagree. It is incomplete more than false (the app and site images are pushed), though "the workflow" in the singular no longer matches the view's own `repo -> ci` label. Not in G-03-2's three listed fixes; the plan's absence gate searched the exact retired string "push the app and site images", which cannot match "pushes the app and site images". |
+| `docs/architecture/model/delivery.c4` | 7, 14, 43 | IN-01, IN-02, IN-03 and `ci` `source` naming only `deploy.yml` (review info items) | Info | Trigger clauses in line 7 are partial (backup-image.yml also runs on workflow edits and manual dispatch); the backup image has no consumer edge in the delivery view; the repo-to-ci list reads as exhaustive. None is false in the WR-05 sense. |
+| `docs/architecture/model/scenarios-platform.c4` | 38 | IN-04: "whose registry token ... also use" is ambiguous and omits the staging copy of the token | Info | Wording, not truth. |
+| `scripts/verify-k8s-invariants.py` | 128 | I12 regex narrower than its purpose (carried from the earlier review, WR-01 there) | Warning (carried, not re-evaluated) | Unchanged by this round. |
 
-No `TBD`, `FIXME` or `XXX` marker in any phase-touched file (rg over the workflow, site, k8s, model and gate script: none).
+No `TBD`, `FIXME` or `XXX` marker in the files changed by 03-08 (`rg` over the two model files and the plan outputs: none).
 
-### 03-REVIEW.md
+### 03-REVIEW.md (gap-closure review)
 
-0 critical, 6 warnings, 6 info. Read in full. Judgment against the must-haves:
-
-- WR-05 touches truth 5 and PUB/SCEN-08 fidelity ("as built"). I confirmed both statements are false against `.github/workflows/`. Raised as human item 2.
-- WR-01 does not contradict criterion 3, whose wording is a gate that fails on planted `likec4 start`, `preview` or `--listen` lines and passes after. It does mean the gate is weaker than the claim "a gate refuses a dev server". Advisory.
-- WR-02, WR-03, WR-04, WR-06 and the info items have no must-have behind them. IN-06 (the site is public while the leak review is pending) is already the Phase 4 ordering and the user's accepted default (ROADMAP Open Question 4).
-
-### Findings the executors flagged, as I weighed them
-
-- 184 SVG nodes against the plan's 38: the criterion is "renders the view", and my own render of a different view (162 nodes, correct title, no error text) agrees that the view renders. The 184 versus 38 difference is uninvestigated and unexplained; the build differs (`--use-dot=false` in CI) but I did not test that as the cause.
-- Missing `/assets` file answers `404 text/html`: confirmed live. This already satisfies the Phase 4 wording ("does not answer 200 with text/html").
-- crt.sh had no entry 8 minutes after issuance: not re-queried; the gate makes no CT claim, and I make none.
+0 critical, 1 warning, 4 info. I did not take it on trust: I re-derived its WR-05 conclusions from the workflow files (environment, token and `push: true` sets) and confirmed WR-01 by reading `views.c4:81` and `delivery.c4:42-43`. Its statement that WR-05 is closed for the files in scope holds. I did not independently verify its claim that `deploy.yml` pushes both the production and nonprod repositories (`:135-139`) or its reading of `k8s/data/postgres/backup-cronjob.yaml:58` for IN-02; they bear on info items only.
 
 ### Could not verify
 
-- Whether the `production` environment's branch policy still fences `DOCKERHUB_TOKEN` (the 03-02 probe run 40767150747 is the evidence; I did not re-read the environment settings).
-- Whether the pinned action SHAs at `architecture-site.yml:99,102,108,123` match their stated tags (WR review also could not).
-- The `DOCKERHUB_TOKEN` scope (all repositories or one).
-- Why `kanban-data` shows 4 containers against 1 in the earlier INFRA_ARCHITECTURE snapshot (the doc itself says it was not investigated).
-- Not re-run: spotlessCheck and `fastTest` (no Java under `src/` changed in `5d44dac..HEAD`).
+- The live host's current served text. It cannot hold the new sentences: no push has happened (14 commits ahead of origin/main, `git rev-list --count origin/main..HEAD`), and the previous report's live tag is `main-5-a26694f`. I did not fetch the served bundle to confirm the old sentences are still there.
+- The environment branch policy fencing the registry token, the pinned action SHAs against their tags, and the token's scope. Carried from the previous report; nothing in 03-08 touches them.
+- Whether the drill harness or any selftest reads the six edited sentences (judged no from the plan's `rg`, not re-run).
 
 ### Human Verification Required
 
-#### 1. Close or keep pending the src-only clause
+#### 1. Decide on WR-01 (`views.c4:81`)
 
-**Test:** Choose between accepting the paths-filter evidence or leaving the clause pending until a real src-only push exists, then check `gh run list --workflow=architecture-site.yml` for that SHA.
-**Expected:** No Architecture Site run.
-**Why human:** No such push exists, and making one is an outward action (DECISION Q4 1 chose passive observation).
+**Test:** Read `docs/architecture/model/views.c4:81` beside `delivery.c4:42-43`. Fix it now or defer it to Phase 3.1.
+**Expected:** The caption names the workflows and the backup image as the edges do, or the deferral is deliberate.
+**Why human:** Ownership of the fix (this phase, a quick task, or 3.1) is the user's decision. 3.1's goal covers description defects in principle, but it has no plan yet.
 
-#### 2. Fix or accept WR-05
+#### 2. Push when ready, then confirm the site
 
-**Test:** Compare `scenarios-platform.c4:38` and `delivery.c4:7` with `rg -n "environment:" .github/workflows`.
-**Expected:** Both statements true, or knowingly accepted.
-**Why human:** The model is served publicly now, and no drift check reads prose.
+**Test:** Push the local commits to origin/main, wait for `architecture-site.yml` and the Flux bump, then `curl -sk` the served bundle for the new step 4 wording.
+**Expected:** New sentences served, old ones gone. No `deploy.yml` run (the changed paths are under `docs/`, which its `paths-ignore` excludes).
+**Why human:** Pushing is outward; the user decides when.
 
 ### Gaps Summary
 
-No failed truth and no blocker. The phase delivers its goal: the model-only push runs the workflow after the drift check and publishes a tag, Flux rolled that tag, the live host serves static output on a staging certificate, the invariant gates and I12 and I5 reds are on record and re-run green, and the site is in the model with a cited scenario. The status is `human_needed` rather than `passed` because the src-only clause of criterion 1 was never observed and is reported as pending, and because the published model carries two statements that are false today.
+No failed truth and no blocker. G-03-2 is closed: the three false or incomplete statements are fixed in the model, every workflow-name claim equals the workflow files by set diff, the evidence row passes its gate, and a fresh build carries the new wording and none of the old. The status is `human_needed` rather than `passed` because WR-01 is an open, unowned prose defect in a sibling caption that the user should place, because the live site still serves the old sentences until a push, and because the literal src-only observation (1b) remains absent although the user accepted the evidence in UAT.
 
 ---
 
-_Verified: 2026-10-28T22:25:00Z_
+_Verified: 2026-10-29T00:00:00Z_
 _Verifier: Claude (gsd-verifier)_
