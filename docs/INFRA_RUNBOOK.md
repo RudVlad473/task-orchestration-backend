@@ -52,8 +52,9 @@ cause, not a new problem.
 
 ## Uptime alert triage
 
-`.github/workflows/uptime-check.yml` probes both `/api/healthz` endpoints and both README dashboards
-(through Grafana's `/api/public/dashboards/<id>`). When any probe fails, the run goes red and its
+`.github/workflows/uptime-check.yml` probes both `/api/healthz` endpoints, both README dashboards
+(through Grafana's `/api/public/dashboards/<id>`) and the architecture site's root
+(`https://kanban-board-rud-vlad-473-architecture.duckdns.org/`, marker `id="likec4-root"`). When any probe fails, the run goes red and its
 `alert` job opens one GitHub issue titled `Uptime check failing` with the label `uptime-alert`; GitHub
 emails the owner. Each further failing run adds a comment to that issue, and the next passing run
 closes it with a recovery comment. A dispatch with the `drill` input adds one known-wrong dashboard URL
@@ -65,6 +66,9 @@ measured on 2026-09-29/30), so the email trails an outage by up to that gap.
 `ssh netcup-prod` and `k3s kubectl get pods -A`. For dating what the Netcup SCP "Screen" console shows,
 see [`docs/history/2026-09-02-triage-netcup-scp-screen-console.md`](history/2026-09-02-triage-netcup-scp-screen-console.md);
 its `docker` commands predate the k3s cutover.
+
+**Architecture site failure.** Run `curl -sI` against the site root, then `ssh netcup-prod` and read the
+pod in namespace `architecture` and the Certificate `architecture` (`k3s kubectl get pods,certificate -n architecture`).
 
 **Dashboard failure.** Match the status in the issue's list:
 

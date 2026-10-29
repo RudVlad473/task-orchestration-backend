@@ -954,7 +954,7 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
 |----------|---------|---------|
 | [`security-scan.yml`](../../.github/workflows/security-scan.yml) | Mondays 06:00 UTC, manual | OWASP `dependencyCheckAnalyze` against `runtimeClasspath`, and a guard that fails when the report scanned too few jars |
 | [`dependency-submission.yml`](../../.github/workflows/dependency-submission.yml) | Push to `main`, manual | Submit the resolved `runtimeClasspath` graph to GitHub's dependency graph for Dependabot alerts |
-| [`uptime-check.yml`](../../.github/workflows/uptime-check.yml) | Every 15 minutes, manual (`drill` input) | `curl` both public health URLs and both README dashboards (Grafana's public-dashboard API), require HTTP 200 and the UP or enabled-share marker; a failure opens one GitHub issue |
+| [`uptime-check.yml`](../../.github/workflows/uptime-check.yml) | Every 15 minutes, manual (`drill` input) | `curl` both public health URLs, both README dashboards (Grafana's public-dashboard API) and the architecture site's root, require HTTP 200 and the UP, enabled-share or `id="likec4-root"` marker; a failure opens one GitHub issue |
 | [`verify-rate-limit.yml`](../../.github/workflows/verify-rate-limit.yml) | Manual only | Prove production rate-limits `/api/signin` and nonprod does not |
 | [`api-fuzz.yml`](../../.github/workflows/api-fuzz.yml) | Mondays 07:00 UTC, manual | Schemathesis 4.29.3 against a throwaway loopback stack, report-only |
 
@@ -979,8 +979,8 @@ eight Python scripts exited 0 on the current tree when this chapter was written.
   dependency graph held no Maven package. The workflow submits `runtimeClasspath` only. A branch run
   is accepted but does not update the default branch's graph, so Dependabot alerts for Gradle
   dependencies appear only after the workflow has run on `main`.
-- **uptime-check.yml.** 3 attempts per URL, 10 s apart, 20 s `curl` timeout, two health URLs and two
-  dashboard URLs. One URL down never hides the others. Two jobs: `uptime-check` holds no token scope
+- **uptime-check.yml.** 3 attempts per URL, 10 s apart, 20 s `curl` timeout, two health URLs, two
+  dashboard URLs and the architecture site's root. One URL down never hides the others. Two jobs: `uptime-check` holds no token scope
   (workflow-level `permissions: {}`, no checkout) and passes its verdict as job outputs; `alert` alone
   holds `issues: write` and uses `gh` to open, comment on or close the one `Uptime check failing` issue.
   Tested by an offline replay against a fixture server and by the `drill` input, which adds a
