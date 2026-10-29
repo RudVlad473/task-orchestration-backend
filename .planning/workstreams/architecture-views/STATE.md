@@ -7,14 +7,14 @@ current_phase_name: Build and Serve on a Staging Certificate
 current_plan: 7
 status: verifying
 stopped_at: Completed 03-07-PLAN.md
-last_updated: "2026-10-28T22:02:30.037Z"
+last_updated: "2026-10-29T09:21:59.770Z"
 last_activity: 2026-10-28
 last_activity_desc: Phase 02 complete, transitioned to Phase 3
-state_head: 503d4caefaec4af76717168a1752072958a0c209
+state_head: 13c203cf140e3fef529170d368cb0a3eff83454e
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 2
-  total_plans: 15
+  total_plans: 16
   completed_plans: 15
 ---
 
@@ -124,6 +124,10 @@ Shared project todos are in `.planning/todos/pending/`. None has been filed for 
 | 261028-m6k | Stop anonymous 401 requests from creating spring_session rows via request cache | 2026-10-28 | 17a94cb | [261028-m6k-stop-anonymous-401-requests-from-creatin](./quick/261028-m6k-stop-anonymous-401-requests-from-creatin/) |
 | 261028-n5v | Close phase 02 verification gaps: error-401 measured-then-fixed, WR-04 WR-05 WR-06 WR-08, monitoring scope wording | 2026-10-28 | ee9f9be | [261028-n5v-close-phase-02-verification-gaps-error-4](./quick/261028-n5v-close-phase-02-verification-gaps-error-4/) |
 | 261028-opl | Phase 02 final gap pass: draw kube-prometheus-stack scrape targets in monitoring view, error-401 observed after fix | 2026-10-28 | e7a3f91 | [261028-opl-phase-02-final-gap-pass-draw-kube-promet](./quick/261028-opl-phase-02-final-gap-pass-draw-kube-promet/) |
+
+### Roadmap Evolution
+
+- Phase 03.1 inserted after Phase 3: Model description pass: audit descriptions for completeness, standard wording and grouping before the Phase 4 leak review
 
 ## Deferred Items
 

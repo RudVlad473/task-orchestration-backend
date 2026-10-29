@@ -123,6 +123,16 @@ Plans:
 
 **Planning notes**: Open Questions 1, 2 and 3 block planning. Bootstrap order: run the workflow once with `workflow_dispatch` so the first tag exists before the overlay that names it is committed. Before this Certificate is committed, decide on `serviceType: ClusterIP` for the HTTP-01 solver (Pitfall 10, Open Question 8). No uptime probe yet, because a staging certificate fails its TLS check. Live checks over SSH are read-only unless the plan says otherwise (PROJECT.md key decision).
 
+### Phase 03.1: Model description pass (INSERTED)
+
+**Goal:** Every element and relationship description in the published model is complete, worded to the LikeC4 standard and grouped consistently, so the Phase 4 leak review reads a stable artifact. Opens with an audit that lists each defect with the element it sits on.
+**Requirements**: TBD
+**Depends on:** Phase 3
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 03.1 to break down)
+
 ### Phase 4: Leak Review and Production Go-Live
 
 **Goal**: The built artifact passes a leak scan and the user's review. Only after that does the site move to a production certificate, get an uptime probe and get linked from the docs and the README.
