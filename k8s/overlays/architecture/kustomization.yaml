@@ -10,4 +10,4 @@ images:
     newName: rudenkovladimir/kanban-board-backend-architecture
     # Flux's ImagePolicy flux-system/kanban-board-backend-architecture rewrites this value in place on
     # every new image it selects.
-    newTag: main-8-c3c366a # {"$imagepolicy": "flux-system:kanban-board-backend-architecture:tag"}
+    newTag: main-11-d3bb8d1 # {"$imagepolicy": "flux-system:kanban-board-backend-architecture:tag"}
