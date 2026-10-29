@@ -6,10 +6,10 @@ current_phase: 04
 current_plan: Not started
 status: completed
 stopped_at: Phase 04 complete — all phases complete
-last_updated: "2026-10-29T19:22:09.544Z"
+last_updated: "2026-10-29T20:08:20.353Z"
 last_activity: 2026-10-29
 last_activity_desc: Phase 04 complete
-state_head: b15934b3800735d2875834a6024c246c443fde08
+state_head: 723ea3b1991a6c5934e91665c34c89ecd4eb9c4a
 progress:
   total_phases: 5
   completed_phases: 4
@@ -34,7 +34,7 @@ Phase: 04
 Current Plan: Not started
 Total Plans in Phase: 5
 Status: All phases complete
-Last activity: 2026-10-29 — Phase 04 complete
+Last activity: 2026-10-29 - Completed quick task 261029-sra: site sections reordered physical-first, development view rebuilt as layers
 
 Progress: [██████████] 100%
 
@@ -148,6 +148,7 @@ Shared project todos are in `.planning/todos/pending/`. None has been filed for 
 | 261028-n5v | Close phase 02 verification gaps: error-401 measured-then-fixed, WR-04 WR-05 WR-06 WR-08, monitoring scope wording | 2026-10-28 | ee9f9be | [261028-n5v-close-phase-02-verification-gaps-error-4](./quick/261028-n5v-close-phase-02-verification-gaps-error-4/) |
 | 261028-opl | Phase 02 final gap pass: draw kube-prometheus-stack scrape targets in monitoring view, error-401 observed after fix | 2026-10-28 | e7a3f91 | [261028-opl-phase-02-final-gap-pass-draw-kube-promet](./quick/261028-opl-phase-02-final-gap-pass-draw-kube-promet/) |
 | 261029-kyd | Split the 14 scenario views into 5a Application behaviour and 5b Platform and delivery, enforced by checkViewFolders | 2026-10-29 | 74106f2 | [261029-kyd-group-the-14-scenario-views-into-two-fol](./quick/261029-kyd-group-the-14-scenario-views-into-two-fol/) |
+| 261029-sra | Reorder the architecture site sections physical-first (1 to 6) and rebuild the development view as layers, held by a folder-order rule and a package-coverage rule | 2026-10-29 | 723ea3b | [261029-sra-reorder-architecture-site-sections-and-r](./quick/261029-sra-reorder-architecture-site-sections-and-r/) |
 
 ### Roadmap Evolution
 

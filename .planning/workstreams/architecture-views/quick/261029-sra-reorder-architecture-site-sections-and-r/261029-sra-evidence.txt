@@ -1,0 +1,127 @@
+Evidence for quick task 261029-sra. Measured 2026-10-29 on branch main, working tree of /home/andre/dev/kanban-board-backend.
+
+== Task 1: folder order ==
+
+HEAD model extracted with: git archive HEAD docs/architecture/model | tar -x -C docs/architecture/out/head
+
+(a) RED, new sync.mjs on the HEAD model:
+  node docs/architecture/sync.mjs check --model docs/architecture/out/head/docs/architecture/model
+  exit=1
+  19 "view X is in folder 'OLD', expected 'NEW'" lines (the folder rule), plus the order line:
+  - view folders sort as [1 Logical, 2 Process, 3 Development, 4 Physical, 5a Application behaviour, 5b Platform and delivery], expected [1 Physical, 2 Process, 3 Logical, 4 Application behaviour, 5 Platform and delivery, 6 Development]
+
+(b) GREEN, same command without --model (the edited model):
+  OK (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+  exit=0
+
+(c) ORDER MUTANT: a copy of the new sync.mjs (docs/architecture/out/sync-order-mutant.mjs) with the physical and process entries of FOLDER_ORDER swapped, run on the new model:
+  node docs/architecture/out/sync-order-mutant.mjs check --root . --model docs/architecture/model
+  exit=1, exactly one problem line:
+  - view folders sort as [1 Physical, 2 Process, 3 Logical, 4 Application behaviour, 5 Platform and delivery, 6 Development], expected [2 Process, 1 Physical, 3 Logical, 4 Application behaviour, 5 Platform and delivery, 6 Development]
+  Every per-view folder line is absent, so the order rule, not the folder rule, holds the order.
+
+Directions checked: the order rule fails on the old model (a) and on the swapped-expectation mutant (c), and passes on the new model (b).
+
+Other task 1 gates:
+  fish docs/architecture/likec4.fish validate: Valid (10 files), exit 0
+  python3 scripts/pre-commit-likec4-selftest.py: 20/20 passed
+  python3 scripts/verify-comments.py check: OK: 340 files, 1309 comment blocks
+
+Tracer feedback gate: verify (sync.mjs check, validate, self-test) re-run end to end after the slice and passed before the expansion task.
+
+== Task 2: layered development view ==
+
+BEFORE (HEAD model, likec4 export json, jq on .views.development):
+  {"nodes":14,"edges":38,"w":4440,"h":2580}
+  PNG (likec4 export png -f development --flat): 8992 x 5272, so 4496 x 2636 natural (PNG / 2).
+  Read at 2000 px wide: 14 boxes joined by long looping arcs, edges told apart only by arrowheads, eight arrows into constant.
+
+AFTER (edited model):
+  {"nodes":18,"edges":12,"w":4000,"h":978,
+   "groups":["Web","Application","Shared kernel","Persistence"],
+   "parents":["@gr1","@gr2","@gr3","@gr4"]}   (no null parent: every package sits in a group)
+  Edges (source > target colour line label):
+    controller > service            slate dotted
+    security > service              slate dotted
+    config > security               red solid   upward, cycle with security and service
+    service > repository            slate dotted
+    activitylog > repository        slate dotted
+    security > entity               amber dotted skips application, the ArchTest forbids only repository
+    service > entity                slate dotted
+    activitylog > entity            slate dotted
+    mapper > entity                 slate dotted
+    entity > config                 red solid   upward, cycle with config and security
+    dto > entity                    red solid   upward, cycle with entity and config
+    base > entity                   red solid   upward, base and entity import each other
+  No edge targets dto, base, constant or exception (the targets are service, security, repository, entity and config).
+  No edge from controller, handler or security to repository (the LayeringArchTest rule).
+  PNG: 8112 x 2068, so 4056 x 1034 natural. Rendered with the default layout, no autoLayout tried.
+  Read at 2000 px wide (downscaled 4.06x, never at natural size): all 14 package names, the four group titles and the five edge labels legible; the dto edge label straddles the border of the Shared kernel group; the amber arc from security to entity is the longest edge. Not judged at natural size.
+
+Hops of each red cycle, each a generated edge in docs/architecture/model/generated.c4:
+  config > security  (line 145)  closes  config > security (145), security > service (208), service > config (211)
+  entity > config    (line 175)  closes  entity > config (175), config > security (145), security > entity (202)
+  base > entity      (line 133)  and     entity > base (172): the two import each other
+  dto > entity       (line 169)  closes  dto > entity (169), entity > config (175), config > dto (139)
+  security > entity  (line 202): AuthenticationController imports entity.UserEntity (security/AuthenticationController.java:9) and service.UserService (:11).
+
+Layer-key evidence read from source on 2026-10-29:
+  AuthenticationController lives in security (security/AuthenticationController.java).
+  config.EventIdGenerator is imported by SubtaskService, ColumnService, TaskService, BoardService.
+  config.KafkaEventPublisher and config.AvroSchemaRegistrar import kanban_board.event.
+  entity/BaseEntity.java:4 imports config.RandFlakeId (entity > config).
+  config imports security.CurrentUserId and CurrentUserIdResolver (config/CustomArgumentResolverConfig.java:5-6).
+  LayeringArchTest has four @ArchTest rules: controllers_must_not_reach_into_repositories (the layer boundary), domain_services_must_load_through_ownership_verified_findById, rest_controllers_must_carry_class_level_validated, mutating_handlers_must_bind_request_dto_parameters_from_the_body.
+
+Coverage rule (checkPackagesDrawn), model copy at docs/architecture/out/cov-model with the D9b sed applied (handler dropped from the Web group):
+  RED   node docs/architecture/sync.mjs check --model docs/architecture/out/cov-model
+        exit=1: - view development does not draw package kanban.pkg_handler
+  MUTANT (a copy of the new sync.mjs with only the checkPackagesDrawn call deleted)
+        node docs/architecture/out/sync-no-coverage.mjs check --root . --model docs/architecture/out/cov-model
+        exit=0 (OK, 62 elements ...)
+  GREEN node docs/architecture/sync.mjs check on the edited model: exit=0.
+  Directions checked: the rule fails with the rule on the edited model and passes with the rule removed.
+
+View description: 69 words (cap 70), ends with a period, no counts, no leak-scan word.
+Deviation: the plan asked the description to give the config placement reason too. With it the description was 84 words, over the 70-word View cap in DIAGRAM_CONVENTIONS.md, so the config reason moved to the layer key in DIAGRAM_CONVENTIONS.md note (d) and the description keeps the security reason.
+
+Gates after task 2:
+  node docs/architecture/sync.mjs check: exit 0
+  fish docs/architecture/likec4.fish validate: Valid (10 files)
+  python3 scripts/verify-comments.py check: OK: 340 files, 1309 comment blocks
+
+== Task 3: full gate ==
+
+Drills: fish docs/architecture/drill.fish > docs/architecture/out/drill-new.txt (exit 0), diffed with the recorded drill-output.txt. The only differences:
+  - D9: "view development is in folder '6 Development', expected '3 Logical'" (was '3 Development', '1 Logical')
+  - new block D9b: exit=1, "view development does not draw package kanban.pkg_handler"
+  - D29: the eight view lines now read expected '4 Application behaviour', plus one order line:
+    "view folders sort as [1 Physical, 2 Process, 3 Logical, 5 Platform and delivery, 6 Development], expected [... 4 Application behaviour ...]"
+    (the order rule also fires because the folder disappears when its label is removed)
+  - D29b: "view monitoring is in folder '3 Logical', expected '1 Physical'" (no order line, production and delivery keep the Physical folder)
+  - D29c: "view probe-platform is in folder '4 Application behaviour', expected '5 Platform and delivery'"
+  - D29d: "view probe-app is in folder '5 Platform and delivery', expected '4 Application behaviour'"
+  Every other block, the baseline and the scan drills D30 (scan exit=1, LEAK targets=ipv4) and D30b (scan exit=0, OK targets=13) matched byte for byte.
+  drill-new.txt was then copied over docs/architecture/drill-output.txt.
+
+Site, built with CI's command after trash-put of the stale docs/architecture/site/out:
+  pnpm --dir docs/architecture exec likec4 build --use-dot=false -o site/out model   exit 0
+  grep -q 'id="likec4-root"' site/out/index.html   exit 0
+  node docs/architecture/site/leak-scan.mjs docs/architecture/site/out   exit 0, last line "OK targets=13", "FILES 22 BYTES 6965818"
+  node --test docs/architecture/site/leak-scan.test.mjs   81 tests, 81 pass, 0 fail
+
+Label counts in site/out/likec4-views.js (rg -o -F | wc -l):
+  1 Physical 3, 2 Process 1, 3 Logical 1, 4 Application behaviour 8, 5 Platform and delivery 6, 6 Development 1
+  3 Development 0, 5a Application behaviour 0, 5b Platform and delivery 0, 4 Physical 0, 1 Logical 0
+
+UI order, observed headless (shot-scraper 1600 x 4200 of the served landing page at 127.0.0.1:8099, then the server stopped by PID):
+  The landing page is a card gallery, each card titled "<folder> / <view title>". In reading order the cards were: System context (index), 1 Physical x3 (production, delivery, monitoring), 2 Process, 3 Logical, 4 Application behaviour x8, 5 Platform and delivery x6, 6 Development x1.
+  That is the gallery order, not the left navigation panel, which was not opened. The panel's order is held by checkFolderOrder, which reads LikeC4's computed folder order.
+
+Final checks before the commit:
+  node docs/architecture/sync.mjs check   exit 0, OK (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads), cycle line unchanged
+  python3 scripts/pre-commit-likec4-selftest.py   20/20 passed
+  python3 scripts/verify-comments.py check   OK: 340 files, 1309 comment blocks
+  git diff --quiet HEAD -- docs/architecture/model/generated.c4 docs/architecture/model/spec.c4   exit 0
+  git diff --stat lists the nine repo files of files_modified, no others.
