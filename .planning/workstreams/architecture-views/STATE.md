@@ -4,18 +4,18 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: "3.1"
 current_phase_name: Model description pass (INSERTED)
-current_plan: Not started
+current_plan: 2
 status: executing
-stopped_at: Phase 3.1 context gathered
-last_updated: "2026-10-29T12:35:12.213Z"
+stopped_at: Completed 03.1-01-PLAN.md
+last_updated: "2026-10-29T12:46:50.078Z"
 last_activity: 2026-10-29
-last_activity_desc: Phase 03 complete, transitioned to Phase 03.1
-state_head: a605564cd4d9301865d43e0856fce4ca1d2f2748
+last_activity_desc: Phase 3.1 execution started
+state_head: 6b7f09fc8cd874b6d93abb733633d16b915a0270
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -26,15 +26,15 @@ See: .planning/PROJECT.md (updated 2026-09-30; v1.5 is not yet recorded there)
 Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, ROADMAP.md, research/)
 
 **Core value:** A reader of the public repository can see how the system is built from a model that cannot drift from the code, not from screenshots.
-**Current focus:** Phase 02 — Model Completion
+**Current focus:** Phase 3.1 — Model description pass (INSERTED)
 
 ## Current Position
 
-Phase: 3.1 (Model description pass (INSERTED)) — READY TO EXECUTE
-Current Plan: Not started
+Phase: 3.1 (Model description pass (INSERTED)) — EXECUTING
+Current Plan: 2
 Total Plans in Phase: 3
 Status: Ready to execute
-Last activity: 2026-10-29 — Phase 03 complete, transitioned to Phase 03.1
+Last activity: 2026-10-29 — Phase 3.1 execution started
 
 Progress: [████████░░] 75%
 
@@ -78,6 +78,7 @@ Progress: [████████░░] 75%
 | Phase 03 P06 | 25min | 3 tasks | 2 files |
 | Phase 03 P07 | 23min | 3 tasks | 7 files |
 | Phase 03 P08 | 10 min | 2 tasks | 4 files |
+| Phase 03.1 P01 | 25 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-07: Q6 1 authorized the flush push and the model-only push, both made by explicit SHA; the src-only push stays pending under Q4 1
 - [Phase 03]: 03-08: step 4 and the view description say 'registry token', never the secret identifier — Keeps Secret names out of the public model; Phase 4 leak scan lists them as targets
 - [Phase 03]: 03-08: no standing regression test for the model prose fix — No gate reads prose; a sync.mjs rule would hold only workflow-name lists and key on wording. Guard would need a sync.mjs rule reading push: true, a drill row, regenerated drill-output.txt and a hook selftest case
+- [Phase 03.1]: Definition-form noun phrases pass the description sentence rule; noun lists, colon lists and semicolon-joined clauses are defects
+- [Phase 03.1]: Generated elements get description text from the generator (extend cannot carry one at likec4 1.60.0)
 
 ### Pending Todos
 
@@ -143,6 +146,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T10:39:45.496Z
-Stopped at: Phase 3.1 context gathered
-Resume file: phases/03.1-model-description-pass/03.1-CONTEXT.md
+Last session: 2026-10-29T12:46:49.740Z
+Stopped at: Completed 03.1-01-PLAN.md
+Resume file: None
