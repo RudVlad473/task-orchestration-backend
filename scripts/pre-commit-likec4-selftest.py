@@ -477,20 +477,20 @@ def test_17_view_without_description_is_refused():
 
 def test_18_view_outside_its_folder_is_refused():
     case_dir, repo = make_repo("view-outside-folder", True)
-    replace_in(repo, SCENARIOS_APP, "views '5a Application behaviour' {\n", "views {\n")
+    replace_in(repo, SCENARIOS_APP, "views '4 Application behaviour' {\n", "views {\n")
     git(repo, "add", SCENARIOS_APP)
     before = head_of(repo)
     code, out = commit(case_dir, repo)
-    refused_for_drift(code, out, repo, before, "view signin-ok is in folder '', expected '5a Application behaviour'")
+    refused_for_drift(code, out, repo, before, "view signin-ok is in folder '', expected '4 Application behaviour'")
 
 
 def test_19_platform_scenario_in_the_application_folder_is_refused():
     case_dir, repo = make_repo("platform-scenario-in-app-folder", True)
-    replace_in(repo, SCENARIOS_PLATFORM, "views '5b Platform and delivery' {\n", "views '5a Application behaviour' {\n")
+    replace_in(repo, SCENARIOS_PLATFORM, "views '5 Platform and delivery' {\n", "views '4 Application behaviour' {\n")
     git(repo, "add", SCENARIOS_PLATFORM)
     before = head_of(repo)
     code, out = commit(case_dir, repo)
-    refused_for_drift(code, out, repo, before, "view push-to-image is in folder '5a Application behaviour', expected '5b Platform and delivery'")
+    refused_for_drift(code, out, repo, before, "view push-to-image is in folder '4 Application behaviour', expected '5 Platform and delivery'")
 
 
 def test_20_a_weakened_leak_scan_is_refused():

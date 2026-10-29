@@ -6,7 +6,7 @@ views {
   }
 }
 
-views '1 Logical' {
+views '3 Logical' {
   view data of postgres {
     #logical
     title 'Logical view: tables and the foreign keys that own them'
@@ -54,16 +54,66 @@ views '2 Process' {
   }
 }
 
-views '3 Development' {
+views '6 Development' {
   view development of kanban {
     #development
-    title 'Development view: top-level packages and the direction they import'
-    description 'The components and the edges between them are generated from import statements by sync.mjs. Package cycles are reported by sync.mjs check and are never gated.'
-    include kanban.* where kind is component
+    title 'Development view: top-level packages grouped into layers, with the imports that cross them'
+    description 'Packages and edges are generated from the import lines, and the groups are authored. Edges into the shared kernel and edges inside a layer are hidden, the other half of the base and entity cycle among them. Red edges point up the stack and each closes a package cycle that sync.mjs check reports. LayeringArchTest enforces one boundary: no controller touches repository. Security sits in Web because it holds AuthenticationController.'
+
+    group 'Web' {
+      include kanban.pkg_controller, kanban.pkg_handler, kanban.pkg_security
+    }
+    group 'Application' {
+      include kanban.pkg_service, kanban.pkg_activitylog, kanban.pkg_mapper, kanban.pkg_event, kanban.pkg_config
+    }
+    group 'Persistence' {
+      include kanban.pkg_repository, kanban.pkg_entity
+    }
+    group 'Shared kernel' {
+      include kanban.pkg_dto, kanban.pkg_base, kanban.pkg_constant, kanban.pkg_exception
+    }
+
+    exclude
+      kanban.* -> kanban.pkg_dto,
+      kanban.* -> kanban.pkg_base,
+      kanban.* -> kanban.pkg_constant,
+      kanban.* -> kanban.pkg_exception,
+      kanban.pkg_controller -> kanban.pkg_security,
+      kanban.pkg_service -> kanban.pkg_mapper,
+      kanban.pkg_service -> kanban.pkg_event,
+      kanban.pkg_service -> kanban.pkg_config,
+      kanban.pkg_activitylog -> kanban.pkg_event,
+      kanban.pkg_config -> kanban.pkg_event,
+      kanban.pkg_repository -> kanban.pkg_entity
+
+    include kanban.pkg_config -> kanban.pkg_security with {
+      color red
+      line solid
+      title 'upward, cycle with security and service'
+    }
+    include kanban.pkg_entity -> kanban.pkg_config with {
+      color red
+      line solid
+      title 'upward, cycle with config and security'
+    }
+    include kanban.pkg_base -> kanban.pkg_entity with {
+      color red
+      line solid
+      title 'upward, base and entity import each other'
+    }
+    include kanban.pkg_dto -> kanban.pkg_entity with {
+      color red
+      line solid
+      title 'upward, cycle with entity and config'
+    }
+    include kanban.pkg_security -> kanban.pkg_entity with {
+      color amber
+      title 'skips application, the ArchTest forbids only repository'
+    }
   }
 }
 
-views '4 Physical' {
+views '1 Physical' {
   deployment view production {
     #physical
     order 1

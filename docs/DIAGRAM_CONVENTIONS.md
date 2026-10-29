@@ -86,13 +86,15 @@ the `verify/` folder.
   `#process`, `#development`, `#physical` and `#scenarios`, declared in `spec.c4`. The `index` view
   carries none. `sync.mjs check` refuses a view with no tag or with more than one, and refuses a
   viewpoint that no view carries. Each View sits in its Viewpoint's navigation folder, a `views`
-  block labelled `1 Logical`, `2 Process`, `3 Development` or `4 Physical`. The scenarios have two
-  folders, `5a Application behaviour` and `5b Platform and delivery`: a scenario goes in the first
+  block labelled `1 Physical`, `2 Process`, `3 Logical` or `6 Development`. The scenarios have two
+  folders, `4 Application behaviour` and `5 Platform and delivery`: a scenario goes in the first
   when every participant is the client, Traefik, the kanban app, Postgres or Redpanda, and in the
   second when it draws anything else (CI, the registry, Flux, the site, the edge below Traefik, the
-  backup), so a participant that is new defaults to the platform folder. The numbers are there
-  because LikeC4 sorts folders alphabetically. `index` stays at the root. `order` sets the place
-  inside a folder and goes after the tag line. `sync.mjs check` refuses a View outside its folder.
+  backup), so a participant that is new defaults to the platform folder. The site reads in that
+  order, physical first. The numbers are there because LikeC4 sorts folders alphabetically, and
+  `sync.mjs check` refuses a folder set whose LikeC4 order differs from `FOLDER_ORDER`. `index`
+  stays at the root. `order` sets the place inside a folder and goes after the tag line.
+  `sync.mjs check` refuses a View outside its folder.
 - **Provenance.** Exactly one per fact, on a ladder of three rungs:
   - `generated`: written from code, never edited;
   - `checked`: hand-written, and carries `metadata` that a script compares with the code;
@@ -134,7 +136,7 @@ the `verify/` folder.
 |---|---|---|---|---|
 | Logical | plain `view` over `table` elements | tables and the FK ownership chain | columns, entity classes, DTOs | tables and `fk` edges generated from the migrations by a statement-level regex (see V4 and note (a)); the two Spring Session tables authored; two `note` elements (on `activity_log` and on the Avro subjects) carry a `source` whose existence is checked, and their text is authored |
 | Process | `view ... of kanban` | request threads, named executors, topics, consumer groups, DB writes; the Schema Registry, the schema-registering init job, the management server and the nightly backup flow to the off-cluster bucket | method calls, class names | topics checked; the backup job's CronJob checked as a workload; executors, groups, the registry, the init job and the bucket authored |
-| Development | `view ... of kanban`, packages as `component` | top-level packages and their dependency direction | classes, third-party libraries | components and `imports` edges generated from import lines (see V5 and note (d)); cycles printed by the check, not gated |
+| Development | `view ... of kanban`, packages as `component` inside four `group` blocks (Web, Application, Persistence, Shared kernel) | top-level packages grouped into layers, and the imports that cross a layer; upward imports are marked red | classes, third-party libraries, edges into the shared kernel, edges inside one layer | components and `imports` edges generated from import lines (see V5 and note (d)); the four groups and the marks authored; every package drawn checked (`checkPackagesDrawn`); cycles printed by the check, not gated |
 | Physical | `deployment` model and `deployment view`: three views, `production`, `delivery` and `monitoring` | `production`: the server and the provider nodes (arch in the server titles), the cluster, namespaces, workloads (the architecture site among them, in namespace `architecture`), the cluster-scoped ClusterIssuers, and the inbound path with the provider firewall and the host filter as external elements. `delivery`: GitHub and its runner (arch in the title), Docker Hub, Flux and the image path into the cluster, for the app and for the architecture site. `monitoring`: the monitoring workloads, the scrape targets the repo's monitor settings name, the default scrape targets that the kube-prometheus-stack chart at 91.5.2 leaves on (the kubelet with cAdvisor, the API server, CoreDNS, kube-state-metrics, the operator and Grafana), and the query edges; the self-scrape of Prometheus is stated, not drawn | pods, replicas, secrets, objects a chart renders (the chart workloads drawn under a HelmRelease claim are drawn, but the check does not render the chart) | workloads checked (`Deployment`, `StatefulSet`, `CronJob`, `HelmRelease` and `ClusterIssuer` under `k8s/base`, `k8s/data`, `k8s/platform` and `k8s/monitoring`, plus the Flux controller Deployments in `k8s/flux-system/gotk-components.yaml`; the architecture site's Deployment is read from `k8s/base` like the app's); routed hosts checked against every `IngressRoute`; namespace nodes and instance placement checked against the manifests under `k8s`; the firewall, host filter, ServiceLB, the kubelet, the API server, CoreDNS, provider nodes, the runner and the scrape edges authored |
 | Scenarios | `dynamic view`, one per outcome, at most 5 participants | client-visible facts: method and path, status and `code`, cookie, SQL action, topic; also the internal steps of `activity-log-row` (the AFTER_COMMIT hand-off, the publish executor, the topic, the consumer group, the idempotent insert) and of the delivery scenarios `push-to-image`, `image-to-rollout` and `publish-the-site` (workflow jobs, Flux controllers, the init container); class-level calls and branches inside one view are still not drawn | class-level calls, branches inside one view | authored: every step of the ten Phase 2 scenario views is cited in `.planning/workstreams/architecture-views/phases/02-model-completion/02-SCENARIO-EVIDENCE.md`, or marked authored with its reason, and every step of `publish-the-site` is cited in `.planning/workstreams/architecture-views/phases/03-build-and-serve-on-a-staging-certificate/03-SCENARIO-EVIDENCE.md`; the three `signin-*` views were built before that file and have no section in it (the lines they were drawn from are listed, not per step, in `.planning/quick/261027-if9-build-the-kruchten-views-the-likec4-stan/261027-if9-T4-SUMMARY.md` at 8b7e379); at most 5 participants checked; `error-401` draws no SQL step; measured before the fix at 82775fa, and observed at 7bccf71 after it, with no row, no cookie and no statement in the capture windows (a one-second window after each request, plus one log-tail read after rows A to I; the whole log was not re-read; note (b2) lists the other limits) |
 
@@ -200,6 +202,38 @@ by every drill. A fully qualified class name used without an import line is not 
 check` prints the strongly connected components on every run, labelled "reported, not gated", and
 they never change its exit code. Today it lists one group of 8 packages: base, config, dto, entity,
 mapper, repository, security and service.
+
+The `development` view groups the packages into layers and draws only the imports that cross
+layers. The layer key, read from `LayeringArchTest.java` and the import lines in `generated.c4`
+on 2026-10-29:
+
+- Web: controller, handler, security. Application: service, activitylog, mapper, event, config.
+  Persistence: repository, entity. Shared kernel: dto, base, constant, exception.
+- Of the four rules in `LayeringArchTest`, only the first is a layer boundary: no class in
+  `..controller..` or annotated `@RestController` accesses `..repository..`. The other three
+  (no `findById` from a `*Service`, `@Validated` on every controller, `@RequestBody` with `@Valid`
+  on request DTOs) are not layer rules. Every other direction in the view is convention, not a gate.
+- `security` is in Web because it holds `AuthenticationController`, which the first rule treats as
+  a controller (`@RestController`), and which imports `service.UserService`. `controller` imports
+  `security` only for the `CurrentUserId` annotation, which is why that edge stays inside a layer.
+- `config` is in Application because the four domain services import `config.EventIdGenerator`,
+  and `config.KafkaEventPublisher` and `config.AvroSchemaRegistrar` import the event types. Any layer
+  would leave `config` with two upward edges, so the count does not decide, its users do. Shared
+  kernel was rejected: it would hide `service` to `config` and `entity` to `config` as
+  kernel-inbound edges while the kernel depends upward.
+- Hidden: every edge into the shared kernel, and seven edges inside one layer. Drawn: the 12 that
+  cross layers.
+- Four upward edges are drawn red and solid, each closing a cycle that `sync.mjs check` reports,
+  every hop a generated edge: `config` to `security` (config, security, service), `entity` to
+  `config` (entity, config, security), `base` to `entity` (base and entity import each other, and
+  `entity` to `base` is hidden as a kernel-inbound edge) and `dto` to `entity` (dto, entity,
+  config).
+- One layer skip is drawn amber: `security` to `entity`, from `AuthenticationController` to
+  `UserEntity`. The first rule forbids only `repository`, so it is allowed.
+
+The group membership is hand-listed in `views.c4`, so `checkPackagesDrawn` refuses a package that
+no group draws. A new upward import appears as a plain dotted edge until someone adds its `with`
+block, and the cycle line of `sync.mjs check` is what announces a new cycle.
 
 ### Checks
 
@@ -292,6 +326,12 @@ The drift script is `docs/architecture/sync.mjs`, built in spike 007.
     a period;
   - the folder rule: a view sits in the navigation folder of its viewpoint, and a view with no
     viewpoint tag or with two is left to the tag rule;
+  - the folder-order rule: `computed.rootViewFolder.folders` must read `1 Physical`, `2 Process`,
+    `3 Logical`, `4 Application behaviour`, `5 Platform and delivery`, `6 Development`, which is
+    `FOLDER_ORDER` in `sync.mjs`. It holds what the folder rule cannot see: two labels that swap
+    places, or every block renumbered at once;
+  - the package-coverage rule: every package that `sync.mjs` reads from `src/main/java` is drawn in
+    the `development` view, because the groups of that view are hand-listed;
   - `sync.mjs generate` writes a provenance-only description on every generated Element, so a new
     table or package passes the description rule after `generate`.
 - **Drills:** `docs/architecture/drill.fish` runs on a scratch copy (`--model DIR`), never on the
@@ -430,6 +470,25 @@ and match.
 added to it: the export printed 4712 x 3274, which is 2356 x 1637 after dividing by 2, against 2360 x
 1401 before. No other row was re-measured then.
 
+The `development` view was rebuilt on 2026-10-29 as a layered view (quick task 261029-sra), and the
+Physical, Process, Logical and Development folders were renumbered so the site reads 1 Physical to
+6 Development. Measured with `likec4 export json` and `likec4 export png -f development --flat`, PNG
+size divided by 2:
+
+| | Nodes | Edges | Natural size |
+|---|---|---|---|
+| Before (HEAD) | 14 packages | 38 | 4496 x 2636 |
+| After | 14 packages in 4 groups (18 nodes) | 12 | 4056 x 1034 |
+
+The 12 drawn edges are the ones that cross layers: 4 red upward, 1 amber layer skip and 7 plain.
+The before PNG is a tangle of long arcs whose edges are told apart only by their arrowheads. In the
+after PNG, read downscaled to 2000 px wide, all 14 package names, the four group titles and the five
+edge labels are legible, and no label covers a package; the `dto` label straddles the border of
+the Shared kernel group. Not judged: the render at natural size,
+and the text floor, which is undefined for LikeC4. The `dto` and `base` red edges cross the
+Persistence group on their way to `entity`, and the amber `security` to `entity` arc is the longest
+edge in the picture. `autoLayout` was not tried, because the default layout needed none.
+
 ### Undefined, not adopted, and outside this change
 
 **Undefined.** The legibility rule for LikeC4 is undefined.
@@ -448,8 +507,10 @@ added to it: the export printed 4712 x 3274, which is 2356 x 1637 after dividing
 
 **Unmeasured.**
 
-- Whether the development view reads at natural size. The verdict is in the table above, judged
-  from downscaled images; collapsing to layers is still a possibility, not a result.
+- Whether the development view reads at natural size. Both verdicts were judged from images
+  downscaled to 2000 px wide, never at natural size, and the LikeC4 text floor is undefined. The
+  layered view is the result of the collapse that the Phase 1 table called a possibility; see the
+  record below.
 - The gain of `information_schema` over the regex. On today's migrations the regex gives the same 4
   FKs (`261027-if9-T2-green.txt`), so what remains is the forms the regex does not follow: an FK
   made in a DO block or a function, a rename, and `DROP TABLE`.

@@ -13,6 +13,7 @@ D7c	a migration drops a foreign-key column	write	src/main/resources/db/migration
 D8	a new cross-package import	sed	src/main/java/com/vrudenko/kanban_board/constant/KafkaTopics.java	1a import com.vrudenko.kanban_board.mapper.Unused;
 D8b	a two-package cycle appears	sed	src/main/java/com/vrudenko/kanban_board/exception/AppAccessDeniedException.java	1a import com.vrudenko.kanban_board.handler.Unused;
 D9	the only development view is retagged	sed	model/views.c4	s|^    #development$|    #logical|
+D9b	a package is left out of the development view (handler)	sed	model/views.c4	s|^      include kanban.pkg_controller, kanban.pkg_handler, kanban.pkg_security$|      include kanban.pkg_controller, kanban.pkg_security|
 D10	a namespace node is deleted from the model (cert-manager)	sed	model/deployment.c4	/^      cert-manager = namespace .cert-manager. {$/,/^      }$/d
 D10b	a manifest namespace is misspelled (kube-sytem)	sed	k8s/platform/traefik/helmchartconfig.yaml	s|namespace: kube-system|namespace: kube-sytem|
 D11	an instance is moved into the wrong namespace (backup to kanban-prod)	sed	model/deployment.c4	/^        instanceOf backup$/d
@@ -45,8 +46,8 @@ D28	a view loses its description (index)	sed	model/views.c4	/^  view index {$/,/
 D28b	an element loses its description (b2)	sed	model/model.c4	/^  b2 = external /,/^  }$/{/^    description /d}
 D28c	a deployment node loses its description (github.runner)	sed	model/delivery.c4	/^    runner = server /,/^    }$/{/^      description /d}
 D28d	a description loses its trailing period (grafana)	sed	model/monitoring.c4	/^  grafana = system /,/^  }$/s|\.'$|'|
-D29	a block of views loses its folder label (the application scenarios)	sed	model/scenarios-app.c4	s|^views '5[^']*' {$|views {|
-D29b	a view sits in another viewpoint's folder (monitoring)	sed	model/monitoring.c4	s|^views '4 Physical' {$|views '1 Logical' {|
+D29	a block of views loses its folder label (the application scenarios)	sed	model/scenarios-app.c4	s|^views '[^']*' {$|views {|
+D29b	a view sits in another viewpoint's folder (monitoring)	sed	model/monitoring.c4	s|^views '1 Physical' {$|views '3 Logical' {|
 D29c	a scenario that draws CI sits in the application folder	sed	model/scenarios-app.c4	$i\  dynamic view probe-platform {\n    #scenarios\n    order 99\n    variant sequence\n    title 'Probe'\n    description 'Drill view.'\n\n    ci -> dockerhub 'probe'\n  }
 D29d	a scenario that draws only the app sits in the platform folder	sed	model/scenarios-platform.c4	$i\  dynamic view probe-app {\n    #scenarios\n    order 99\n    variant sequence\n    title 'Probe'\n    description 'Drill view.'\n\n    client -> traefik 'probe'\n  }
 D30	an IP literal in an element description (acme)	sed	model/edge.c4	s|\(checks each hostname over HTTP\)\.'$|\1 from 10.20.30.40.'|

@@ -123,7 +123,7 @@ deployment {
   }
 }
 
-views '4 Physical' {
+views '1 Physical' {
   deployment view monitoring {
     #physical
     order 3

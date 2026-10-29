@@ -1,4 +1,4 @@
-views '5a Application behaviour' {
+views '4 Application behaviour' {
   dynamic view signup-ok {
     #scenarios
     order 1

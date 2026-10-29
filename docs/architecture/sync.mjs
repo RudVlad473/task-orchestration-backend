@@ -51,13 +51,14 @@ const VIEWPOINTS = ['logical', 'process', 'development', 'physical', 'scenarios'
 // The navigation folder of each viewpoint, the label of its `views '<label>'` block in model/*.c4.
 //
 // - This map and those block heads are one set, kept in step by hand like VIEWPOINTS and spec.c4.
-// - The numbers make LikeC4's alphabetical folder sort give Kruchten order.
+// - The numbers make LikeC4's alphabetical folder sort give the reading order in FOLDER_ORDER,
+//   and checkFolderOrder holds that order.
 // - The view index stays in an unlabelled block at the root.
 const VIEW_FOLDERS = {
-  logical: '1 Logical',
+  physical: '1 Physical',
   process: '2 Process',
-  development: '3 Development',
-  physical: '4 Physical',
+  logical: '3 Logical',
+  development: '6 Development',
 }
 
 // The scenarios viewpoint has two folders, and a scenario view belongs to one by who it draws.
@@ -67,8 +68,20 @@ const VIEW_FOLDERS = {
 // - Any other participant (CI, the registry, Flux, the site, the edge below Traefik, the backup)
 //   makes it a platform and delivery view, so a new platform element lands there by default.
 // - These two labels and the `views '<label>'` heads in model/scenarios-*.c4 are one set.
-const SCENARIO_FOLDERS = { application: '5a Application behaviour', platform: '5b Platform and delivery' }
+const SCENARIO_FOLDERS = { application: '4 Application behaviour', platform: '5 Platform and delivery' }
 const APP_PARTICIPANTS = ['client', 'traefik', 'kanban', 'postgres', 'redpanda']
+
+// The six navigation folders in the order the site shows them: physical, process, logical, the two
+// scenario folders, then development. Each label is taken from the two maps above, so it is written
+// once. LikeC4 sorts folders alphabetically by label, so the leading numbers are the only lever.
+const FOLDER_ORDER = [
+  VIEW_FOLDERS.physical,
+  VIEW_FOLDERS.process,
+  VIEW_FOLDERS.logical,
+  SCENARIO_FOLDERS.application,
+  SCENARIO_FOLDERS.platform,
+  VIEW_FOLDERS.development,
+]
 
 // The metadata keys the checks read. The DSL cannot declare metadata keys, so this list is the
 // vocabulary: a key outside it is reported, and adding a key means editing it here.
@@ -531,6 +544,31 @@ function checkViewFolders(computed, problems) {
   }
 }
 
+// The root folders of the computed model must sort as FOLDER_ORDER. checkViewFolders compares each
+// view with its own label and cannot see two labels that swap places, or a label that is renumbered
+// in every block at once, so the order the reader sees on the site needs its own rule.
+function checkFolderOrder(computed, problems) {
+  const have = computed.rootViewFolder.folders.map((f) => f.path)
+  if (have.join('\0') !== FOLDER_ORDER.join('\0')) {
+    problems.push(`view folders sort as [${have.join(', ')}], expected [${FOLDER_ORDER.join(', ')}]`)
+  }
+}
+
+// Every package that packages() reads from the source tree must be drawn in the development view.
+// The groups of that view list their packages by hand, so a new package would otherwise be missing
+// from the picture while every other rule stays green.
+function checkPackagesDrawn(computed, pkgs, problems) {
+  const view = [...computed.views()].find((v) => v.id === 'development')
+  if (!view) {
+    problems.push('view development is missing')
+    return
+  }
+  const drawn = new Set([...view.nodes()].map((n) => n.id))
+  for (const name of pkgs.names) {
+    if (!drawn.has(`kanban.pkg_${name}`)) problems.push(`view development does not draw package kanban.pkg_${name}`)
+  }
+}
+
 // Holds the presence and trailing-period half of the Description rule in docs/DIAGRAM_CONVENTIONS.md
 // for every element, deployment node and view. The cap and the sentence shape are left to review.
 //
@@ -695,9 +733,11 @@ async function check() {
   checkParticipants(computed, problems)
   checkDeployedWorkloads(computed, problems)
   checkViewFolders(computed, problems)
+  checkFolderOrder(computed, problems)
+  const pkgs = packages()
+  checkPackagesDrawn(computed, pkgs, problems)
   checkDescriptions(computed, problems)
 
-  const pkgs = packages()
   const tally =`${elements.length} elements, ${tables().size} tables, ${foreignKeys().length} foreign keys, ${pkgs.names.length} packages, ${pkgs.edges.length} package edges, ${topics().size} topics, ${manifestWorkloads.size} workloads`
   // Cycles are reported on both outcomes and never add a problem, so they cannot change the exit code.
   if (problems.length) {
