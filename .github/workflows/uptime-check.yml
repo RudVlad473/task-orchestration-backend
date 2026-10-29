@@ -1,4 +1,4 @@
-# Standing uptime probe of both public health endpoints and both README dashboards; a failure opens one issue.
+# Standing uptime probe of both public health endpoints, both README dashboards and the architecture site's root; a failure opens one issue.
 # A run goes red on any failure, and a separate job opens, updates or closes the one GitHub issue that emails the owner.
 #
 # docs/INFRA_RUNBOOK.md section "Uptime alert triage" says what to do once the issue exists. The older console
@@ -11,6 +11,7 @@
 #   "publicDashboardEnabled":true for both README ids and 404 with publicdashboards.notFound for an unknown id. The
 #   page form answers 200 with the same Grafana HTML shell for a real and an unknown id, so only the API form can
 #   tell a missing share from a working one. A 503 (no ready backend) and a login redirect fail on status alone.
+#   The architecture site is probed at its root for the app shell's root element (id="likec4-root").
 # - Issues through gh with the job token, in a separate job: the probe job keeps no token scope, no secret and no
 #   third-party action holds issues: write, and a broken alert step cannot turn the probe red.
 # - The verdict crosses to the alert job as job outputs (a few hundred bytes), not an artifact, so there is one
@@ -32,6 +33,8 @@
 #     failing subsystem beneath it. The dashboard check proves an enabled share resolves, not that its panels
 #     return data.
 # (e) While an issue is open, every failing run adds one comment, so the owner gets one notification per failing run.
+# (f) The site probe proves the root serves the LikeC4 app shell, not that its hashed assets load: nginx answers
+#     every extensionless path with index.html, and asset names change per build, so none can be a constant.
 name: Uptime Check
 
 on:
@@ -54,9 +57,10 @@ permissions: {}
 jobs:
   uptime-check:
     runs-on: ubuntu-latest
-    # Runaway guard against a hung curl: worst case is 4 URLs x 3 attempts x 20s curl timeout plus 8 sleeps of
-    # 10s, which is 320s; the drill's fifth URL makes it 400s. 8 minutes leaves the rest for runner setup.
-    timeout-minutes: 8
+    # Runaway guard against a hung curl: one URL costs at most 3 attempts x 20s curl timeout plus 2 sleeps of
+    # 10s, which is 80s, so 5 URLs x 80s = 400s and the drill's sixth URL makes 6 URLs x 80s = 480s.
+    # 10 minutes leaves the rest for runner setup.
+    timeout-minutes: 10
     outputs:
       result: ${{ steps.probe.outputs.result }}
       report: ${{ steps.probe.outputs.report }}
@@ -81,13 +85,17 @@ jobs:
       CURL_MAX_TIME: 20
       UP_MARKER: '"status":"UP"'
       DASHBOARD_MARKER: '"publicDashboardEnabled":true'
+      # The architecture site's root.
+      SITE_URL: https://kanban-board-rud-vlad-473-architecture.duckdns.org/
+      # The app shell's root element.
+      SITE_MARKER: 'id="likec4-root"'
     steps:
       # The step always exits 0 and writes its verdict to the step outputs; the next step turns a bad verdict
       # into a red job, so a crash of this script (empty result) is red too.
       #
       # No `${{ }}` interpolation: every value arrives through `env:`, per this repo's injection-safety rule
       # (see security-scan.yml's NVD_API_KEY step), which also lets this exact script run locally unmodified.
-      - name: Probe both health endpoints and both dashboards
+      - name: Probe the health endpoints, the dashboards and the architecture site
         id: probe
         run: |
           set -eu
@@ -158,6 +166,7 @@ jobs:
           for URL in $DASHBOARD_URLS; do
             run_check "$URL" "$DASHBOARD_MARKER"
           done
+          run_check "$SITE_URL" "$SITE_MARKER"
 
           DRILL_ACTIVE=false
           if [ "$DRILL" = "true" ]; then
