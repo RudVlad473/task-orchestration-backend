@@ -49,3 +49,6 @@ D29	a block of views loses its folder label (the application scenarios)	sed	mode
 D29b	a view sits in another viewpoint's folder (monitoring)	sed	model/monitoring.c4	s|^views '4 Physical' {$|views '1 Logical' {|
 D29c	a scenario that draws CI sits in the application folder	sed	model/scenarios-app.c4	$i\  dynamic view probe-platform {\n    #scenarios\n    order 99\n    variant sequence\n    title 'Probe'\n    description 'Drill view.'\n\n    ci -> dockerhub 'probe'\n  }
 D29d	a scenario that draws only the app sits in the platform folder	sed	model/scenarios-platform.c4	$i\  dynamic view probe-app {\n    #scenarios\n    order 99\n    variant sequence\n    title 'Probe'\n    description 'Drill view.'\n\n    client -> traefik 'probe'\n  }
+D30	an IP literal in an element description (acme)	sed	model/edge.c4	s|\(checks each hostname over HTTP\)\.'$|\1 from 10.20.30.40.'|
+D30	an IP literal in an element description (acme)	scan	-	-
+D30b (control)	the untouched copy is built and scanned	scan	-	-

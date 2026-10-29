@@ -4,6 +4,8 @@
 # is expected to be caught except D5, a negative control that is documented as not caught, and
 # D13b, D16b and D17b, controls that must stay clean. A drill on a k8s fact source is caught with exit 4.
 # The real model is never edited: a drill that changes a view changes the scratch copy.
+# A drill with a scan row is caught by the scan's exit, not by the drift check: its sync exit stays 0,
+# which shows that sync.mjs alone does not catch a leak in the text of a description.
 #
 # The drills are the rows of drills.tsv, run by run_drills in row order, so the rows keep the order
 # drill-output.txt records. A drill that makes several edits is several consecutive rows with the
@@ -69,6 +71,28 @@ function labeldrill --inherit-variable scratch
     printf '%s\n' 'model {' "  kanban.publisher -[sync]-> postgres '$argv[1]'" '}' >$scratch/model/labeldrill.c4
 end
 
+# Builds the scratch model with the installed likec4 and runs the leak scan on the output. It prints
+# the scan's exit and its last line only: the build is not byte-reproducible and its asset names are
+# hashed, so a file name or a byte count in the record would change on every regeneration.
+function scan_build --inherit-variable here --inherit-variable scratch
+    set bin $here/node_modules/.bin/likec4
+    if not test -x $bin
+        echo "  scan build skipped: likec4 is not installed" >&2
+        exit 3
+    end
+    $bin build --use-dot=false -o $scratch/site-out $scratch/model >$scratch/build.log 2>&1
+    set built $status
+    if test $built -ne 0
+        echo "  scan build exit=$built"
+        printf '  %s\n' (tail -n 5 $scratch/build.log)
+        return
+    end
+    set out (node $here/site/leak-scan.mjs $scratch/site-out 2>&1)
+    set code $status
+    echo "  scan exit=$code"
+    printf '  %s\n' $out[-1]
+end
+
 # Runs every drill of the table named by $argv[1], in row order.
 #
 # The columns are drill, title, kind, file and value, and a column the kind does not use holds a
@@ -82,6 +106,7 @@ end
 # - mv: moves file to the path in value
 # - none: no edit
 # - certmgr_into, lonely_into, labeldrill: the helper of that name, with value as its one argument
+# - scan: builds the scratch model and runs the leak scan on it; value and file are dashes
 #
 # Each field reaches its command as one argument from a variable that fish never parses again, so
 # quotes, dollar signs and backslashes arrive as written. The rows are read whole before the loop,
@@ -129,6 +154,8 @@ function run_drills --inherit-variable scratch
                 lonely_into $f[5]
             case labeldrill
                 labeldrill $f[5]
+            case scan
+                scan_build
             case '*'
                 echo "run_drills: unknown kind $f[3] in drill $f[1]" >&2
                 exit 2

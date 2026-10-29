@@ -245,3 +245,15 @@
   DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads):
   - view probe-app is in folder '5b Platform and delivery', expected '5a Application behaviour'
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D30: an IP literal in an element description (acme)
+  scan exit=1
+  LEAK targets=ipv4
+  exit=0
+  OK (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D30b (control): the untouched copy is built and scanned
+  scan exit=0
+  OK targets=13
+  exit=0
+  OK (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads)
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
