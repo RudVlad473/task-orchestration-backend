@@ -7,7 +7,7 @@ model {
     }
 
     staging = component 'ClusterIssuer letsencrypt-staging' {
-      description 'A staging issuer, defined in the repo but referenced by no Certificate today. The prod, nonprod and monitoring Certificates all name the production issuer.'
+      description 'A staging issuer, defined in the repo and referenced today only by the Certificate of the architecture site. The prod, nonprod and monitoring Certificates all name the production issuer.'
       metadata {
         source 'k8s/platform/edge/clusterissuers.yaml'
         workload 'ClusterIssuer/letsencrypt-staging'
@@ -28,18 +28,18 @@ model {
   }
 
   hostfilter = external 'KANBAN-INGRESS host filter' {
-    description 'Authored. Host firewall chain ahead of k3s that admits new connections only as TCP on an allow-listed port or as ICMP, and drops every other new connection; only the existence of its script is checked.'
+    description 'Authored. Host firewall chain ahead of k3s that admits new connections only as TCP on an allow-listed port or as ICMP, and drops every other new connection. Only the existence of its script is checked.'
     metadata {
       source 'infra/vm/k3s-host-firewall.sh'
     }
   }
 
   firewall = external 'Netcup Cloud Firewall' {
-    description 'Authored. Provider-side firewall configured outside this repository; its rules are not drawn and cannot be checked from here.'
+    description 'Authored. Provider-side firewall configured outside this repository. Its rules are not drawn and cannot be checked from here.'
   }
 
   svclb = system 'ServiceLB (svclb-traefik)' {
-    description 'Authored. The pod that k3s ServiceLB creates for the Traefik LoadBalancer Service and the only pod with a hostPort; no manifest in the repo declares it.'
+    description 'Authored. The pod that k3s ServiceLB creates for the Traefik LoadBalancer Service and the only pod with a hostPort. No manifest in the repo declares it.'
   }
 
   certmanager.staging -[sync]-> acme 'ACME over HTTPS'

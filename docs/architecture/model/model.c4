@@ -1,10 +1,10 @@
 model {
   client = actor 'Browser / API client' {
-    description 'Holds a JSESSIONID cookie after signin'
+    description 'Holds a JSESSIONID cookie after signin.'
   }
 
   traefik = system 'Traefik' {
-    description 'Public edge: TLS termination, routes to the app by host'
+    description 'Public edge that terminates TLS and routes to the app by host.'
     metadata {
       source 'k8s/platform/traefik'
       host [
@@ -17,14 +17,14 @@ model {
   }
 
   kanban = system 'Kanban backend' {
-    description 'Spring Boot REST API with session auth and per-user ownership checks'
+    description 'Spring Boot REST API with session auth and per-user ownership checks.'
     metadata {
       workload 'Deployment/app'
     }
 
     api = container 'REST API' {
       technology 'Spring MVC, Tomcat request threads'
-      description 'Signin/signup, boards, columns, tasks, subtasks. 401/403/400/409 answered by distinct layers.'
+      description 'Serves signin, signup and the board, column, task and subtask routes. The 401, 403, 400 and 409 answers each come from a distinct layer.'
       metadata {
         source 'src/main/java/com/vrudenko/kanban_board/controller'
       }
@@ -40,7 +40,7 @@ model {
 
     consumer = thread 'activity-log consumer' {
       technology 'Spring Kafka listener, group activity-log'
-      description 'Idempotent insert into activity_log; retries, then the dead-letter topic.'
+      description 'Inserts each event into activity_log once, idempotent on event_id. After its retries, it sends a failed event to the dead-letter topic.'
       metadata {
         source 'src/main/java/com/vrudenko/kanban_board/activitylog'
       }
@@ -64,7 +64,7 @@ model {
   }
 
   postgres = datastore 'Postgres 16' {
-    description 'Single instance in ns kanban-data, holding the prod and nonprod databases'
+    description 'Single instance in ns kanban-data, holding the prod and nonprod databases.'
     metadata {
       source 'k8s/data/postgres/postgres.yaml'
       workload 'StatefulSet/postgres'
@@ -108,7 +108,7 @@ model {
   }
 
   backup = job 'Postgres backup' {
-    description 'CronJob that runs postgres-backup.sh as the prod DB role'
+    description 'CronJob that runs postgres-backup.sh as the prod DB role.'
     metadata {
       source 'k8s/data/postgres/backup-cronjob.yaml'
       workload 'CronJob/postgres-backup'
@@ -116,7 +116,7 @@ model {
   }
 
   redpanda = system 'Redpanda' {
-    description 'Kafka-compatible broker, one per environment'
+    description 'Kafka-compatible broker, one per environment.'
     metadata {
       source 'k8s/base/redpanda/redpanda.yaml'
       workload 'StatefulSet/redpanda'
@@ -129,10 +129,10 @@ model {
       }
     }
     activity = topic 'kanban.activity' {
-      description 'Avro, keyed by event id'
+      description 'Carries the Avro events, keyed by event id.'
     }
     dlt = topic 'kanban.activity.dlt' {
-      description 'Dead-letter topic for events the consumer still failed to process after its retries'
+      description 'Dead-letter topic for events the consumer still failed to process after its retries.'
     }
   }
 

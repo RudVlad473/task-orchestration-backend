@@ -4,14 +4,14 @@ model {
   }
 
   ci = system 'GitHub Actions' {
-    description 'The workflows that push images to Docker Hub are deploy.yml, which tests and pushes the app image when main changes outside k8s/, the docs and the planning files; backup-image.yml, which builds and pushes the image of the nightly backup job when its Dockerfile changes; and architecture-site.yml, which checks the model, builds the site and pushes its image when the model, the site directory or the LikeC4 manifest change.'
+    description 'Three workflows push images to Docker Hub: deploy.yml for the app image, backup-image.yml for the backup job image, and architecture-site.yml for the architecture site image.'
     metadata {
       source '.github/workflows/deploy.yml'
     }
   }
 
   dockerhub = external 'Docker Hub' {
-    description 'Authored. Registry that holds the app image repositories, the backup job image repository and the architecture site image repository; the workflows push to it and the cluster pulls from it.'
+    description 'Authored. Registry that holds the app image repositories, the backup job image repository and the architecture site image repository. The workflows push to it and the cluster pulls from it.'
     metadata {
       source '.github/workflows/deploy.yml'
     }

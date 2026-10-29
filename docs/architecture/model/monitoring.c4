@@ -1,6 +1,6 @@
 model {
   prometheus = system 'Prometheus' {
-    description 'Metrics store and scraper. Its scrape edges are drawn from the PodMonitor and ServiceMonitor settings in the repo and from the default monitors of the kube-prometheus-stack chart that the values file leaves on, not from live targets. It also scrapes itself, which is not drawn.'
+    description 'Metrics store and scraper. Its scrape edges come from the repo\'s PodMonitor and ServiceMonitor settings and the default monitors of its chart, not from live targets. It also scrapes itself, which is not drawn.'
     metadata {
       source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
       workload 'HelmRelease/kube-prometheus-stack'
@@ -24,7 +24,7 @@ model {
   }
 
   loki = datastore 'Loki' {
-    description 'Log store, single binary on a filesystem volume.'
+    description 'Log store that runs as a single binary on a filesystem volume.'
     metadata {
       source 'k8s/monitoring/controllers/loki.yaml'
       workload 'HelmRelease/loki'
@@ -48,7 +48,7 @@ model {
   }
 
   kube-state-metrics = system 'kube-state-metrics' {
-    description 'Exposes the state of Kubernetes objects as metrics; a subchart of the kube-prometheus-stack release.'
+    description 'Exposes the state of Kubernetes objects as metrics. It is a subchart of the kube-prometheus-stack release.'
     metadata {
       source 'k8s/monitoring/controllers/kube-prometheus-stack.yaml'
       workload 'HelmRelease/kube-prometheus-stack'
@@ -64,21 +64,21 @@ model {
   }
 
   kubelet = system 'kubelet (with cAdvisor)' {
-    description 'Authored. The node agent and its built-in cAdvisor run inside the k3s server process that infra/vm/k3s/install.sh installs; no manifest in the repo declares them.'
+    description 'Authored. The node agent and its built-in cAdvisor run inside the k3s server process that infra/vm/k3s/install.sh installs. No manifest in the repo declares them.'
     metadata {
       source 'infra/vm/k3s/config.yaml'
     }
   }
 
   kube-apiserver = system 'Kubernetes API server' {
-    description 'Authored. The API server runs inside the k3s server process that infra/vm/k3s/install.sh installs; no manifest in the repo declares it.'
+    description 'Authored. The API server runs inside the k3s server process that infra/vm/k3s/install.sh installs. No manifest in the repo declares it.'
     metadata {
       source 'infra/vm/k3s/config.yaml'
     }
   }
 
   coredns = system 'CoreDNS' {
-    description 'Authored. The cluster DNS that k3s deploys in kube-system; infra/vm/k3s/config.yaml leaves it on (its disable list names only metrics-server) and no manifest in the repo declares it.'
+    description 'Authored. The cluster DNS that k3s deploys in kube-system. infra/vm/k3s/config.yaml leaves it on, because its disable list names only metrics-server. No manifest in the repo declares it.'
     metadata {
       source 'infra/vm/k3s/config.yaml'
     }
