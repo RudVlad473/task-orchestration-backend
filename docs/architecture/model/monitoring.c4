@@ -128,7 +128,7 @@ views '4 Physical' {
     #physical
     order 3
     title 'Physical view: the monitoring stack and what it scrapes'
-    description 'The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo, and from the default monitors of kube-prometheus-stack at the pinned version 91.5.2 that the values file leaves on: the kubelet with cAdvisor, the API server, CoreDNS, kube-state-metrics, the operator and Grafana. Each of those was read from the chart values and is recorded line by line in 261028-opl-chart-values.txt. Not drawn are the controller-manager, scheduler, etcd and kube-proxy monitors and Alertmanager, which the values file turns off, and the scrape Prometheus makes of itself, because LikeC4 rejects a relationship from an element to itself. The check proves each HelmRelease exists and lands in monitoring, not what its chart renders; the kubelet, the API server and CoreDNS are authored, and the live target list is not read.'
+    description 'The scrape and query edges come from the PodMonitor, ServiceMonitor and datasource settings in the repo and from the default monitors of kube-prometheus-stack at the pinned version 91.5.2 that the values file leaves on. The check proves each HelmRelease exists and lands in monitoring, not what its chart renders. The kubelet, the API server and CoreDNS are authored, and the live target list is not read.'
     include
       netcup, netcup.k3s,
       netcup.k3s.monitoring.*,

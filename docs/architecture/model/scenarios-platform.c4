@@ -64,7 +64,7 @@ views '5 Scenarios' {
     order 13
     variant sequence
     title 'Scenario: Traefik routes a request to the app'
-    description 'From the connection reaching Traefik to the response. The route is chosen by the Host rule, and the rate-limit Middleware of that route is applied before the request is forwarded to the app Service. The production routes carry a Middleware, the nonprod routes do not.'
+    description 'This view runs from the connection reaching Traefik to the response. The route is chosen by the Host rule, and the rate-limit Middleware of that route is applied before the request is forwarded to the app Service. The production routes carry a Middleware, the nonprod routes do not.'
 
     svclb -> traefik 'the connection reaches the HTTPS entry point of Traefik'
     traefik -> traefik 'the route whose Host rule matches the request is chosen, the sign-in and sign-up paths match their own route'

@@ -1,7 +1,7 @@
 views {
   view index {
     title 'System context'
-    description 'Who talks to the backend, and what it depends on.'
+    description 'This view shows who talks to the backend and what it depends on.'
     include client, traefik, kanban, postgres, redpanda
   }
 }
@@ -106,7 +106,7 @@ views '5 Scenarios' {
     order 2
     variant sequence
     title 'Scenario: signin succeeds'
-    description 'POST /api/signin through to a session cookie. The signin reads the user by email, reads it again by id while the credentials are checked, reads the live sessions for the user, then rotates the session id and saves the security context.'
+    description 'This view follows POST /api/signin through to a session cookie. The signin reads the user by email, reads it again by id while the credentials are checked, reads the live sessions for the user, then rotates the session id and saves the security context.'
 
     client -> traefik 'POST /api/signin {email, password}'
     traefik -> kanban.api 'forward'
@@ -124,7 +124,7 @@ views '5 Scenarios' {
     order 3
     variant sequence
     title 'Scenario: signin with bad credentials'
-    description 'The unknown-email branch: no row for the email, so a 401 with code BAD_CREDENTIALS. A wrong password for a known email returns the identical body right after the SELECT user by id drawn in signin-ceiling, so its SQL is a prefix of that view and has no view of its own.'
+    description 'This view draws the unknown-email branch. No row exists for the email, so the answer is a 401 with code BAD_CREDENTIALS. A wrong password for a known email returns the identical body right after the SELECT user by id drawn in signin-ceiling, so its SQL is a prefix of that view and has no view of its own.'
 
     client -> traefik 'POST /api/signin {email, password}'
     traefik -> kanban.api 'forward'
