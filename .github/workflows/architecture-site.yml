@@ -74,6 +74,9 @@ jobs:
       - name: Verify the model matches the code
         run: node docs/architecture/sync.mjs check
 
+      - name: Verify the leak scan catches each target
+        run: node --test docs/architecture/site/leak-scan.test.mjs
+
       - name: Build the static site
         run: pnpm --dir docs/architecture exec likec4 build --use-dot=false -o site/out model
 

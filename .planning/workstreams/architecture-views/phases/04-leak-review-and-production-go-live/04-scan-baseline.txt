@@ -56,3 +56,9 @@ UNPLANT exit=0
 MISSING exit=4
 EMPTY exit=4
 USAGE exit=2
+# Fixture suite: node --test docs/architecture/site/leak-scan.test.mjs
+TESTS pass=81 fail=0
+# Mutants: a copy of the script weakened one way, run against the copied suite
+MUTANT ipv4-row-removed tests_failed=30 first_failing=ipv4: host 10.20.30.40 here fails the scan
+MUTANT allowlist-widened tests_failed=4 first_failing=hostname: https://evil-kanban.duckdns.org/ fails the scan
+MUTANT robots-removed tests_failed=5 first_failing=robots: a build with no robots.txt fails the scan
