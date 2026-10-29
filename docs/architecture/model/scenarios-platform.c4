@@ -1,4 +1,4 @@
-views '5 Scenarios' {
+views '5b Platform and delivery' {
   dynamic view push-to-image {
     #scenarios
     order 9

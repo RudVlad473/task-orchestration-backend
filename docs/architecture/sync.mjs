@@ -58,8 +58,17 @@ const VIEW_FOLDERS = {
   process: '2 Process',
   development: '3 Development',
   physical: '4 Physical',
-  scenarios: '5 Scenarios',
 }
+
+// The scenarios viewpoint has two folders, and a scenario view belongs to one by who it draws.
+//
+// - A view is application behaviour when every participant is one of APP_PARTICIPANTS, the
+//   kanban system and the client and edge proxy that talk to it.
+// - Any other participant (CI, the registry, Flux, the site, the edge below Traefik, the backup)
+//   makes it a platform and delivery view, so a new platform element lands there by default.
+// - These two labels and the `views '<label>'` heads in model/scenarios-*.c4 are one set.
+const SCENARIO_FOLDERS = { application: '5a Application behaviour', platform: '5b Platform and delivery' }
+const APP_PARTICIPANTS = ['client', 'traefik', 'kanban', 'postgres', 'redpanda']
 
 // The metadata keys the checks read. The DSL cannot declare metadata keys, so this list is the
 // vocabulary: a key outside it is reported, and adding a key means editing it here.
@@ -501,6 +510,13 @@ function checkDeployedWorkloads(computed, problems) {
   }
 }
 
+// The folder of a scenario view, read from the participants it draws, see SCENARIO_FOLDERS.
+function scenarioFolder(view) {
+  const inside = (id) => APP_PARTICIPANTS.some((root) => id === root || id.startsWith(`${root}.`))
+  const application = [...view.nodes()].every((n) => inside(n.id))
+  return SCENARIO_FOLDERS[application ? 'application' : 'platform']
+}
+
 // A view sits in the folder of its viewpoint. A view in an unlabelled or mislabelled block leaves
 // its folder while every other rule stays green, so this rule is the only guard.
 //
@@ -510,7 +526,7 @@ function checkViewFolders(computed, problems) {
   for (const view of views) {
     const own = [...view.tags].filter((t) => VIEWPOINTS.includes(t))
     if (view.id !== 'index' && own.length !== 1) continue
-    const want = view.id === 'index' ? '' : VIEW_FOLDERS[own[0]]
+    const want = view.id === 'index' ? '' : own[0] === 'scenarios' ? scenarioFolder(view) : VIEW_FOLDERS[own[0]]
     if (view.folder.path !== want) problems.push(`view ${view.id} is in folder '${view.folder.path}', expected '${want}'`)
   }
 }

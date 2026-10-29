@@ -86,10 +86,13 @@ the `verify/` folder.
   `#process`, `#development`, `#physical` and `#scenarios`, declared in `spec.c4`. The `index` view
   carries none. `sync.mjs check` refuses a view with no tag or with more than one, and refuses a
   viewpoint that no view carries. Each View sits in its Viewpoint's navigation folder, a `views`
-  block labelled `1 Logical`, `2 Process`, `3 Development`, `4 Physical` or `5 Scenarios`. The
-  numbers are there because LikeC4 sorts folders alphabetically. `index` stays at the root.
-  `order` sets the place inside a folder and goes after the tag line. `sync.mjs check` refuses a
-  View outside its folder.
+  block labelled `1 Logical`, `2 Process`, `3 Development` or `4 Physical`. The scenarios have two
+  folders, `5a Application behaviour` and `5b Platform and delivery`: a scenario goes in the first
+  when every participant is the client, Traefik, the kanban app, Postgres or Redpanda, and in the
+  second when it draws anything else (CI, the registry, Flux, the site, the edge below Traefik, the
+  backup), so a participant that is new defaults to the platform folder. The numbers are there
+  because LikeC4 sorts folders alphabetically. `index` stays at the root. `order` sets the place
+  inside a folder and goes after the tag line. `sync.mjs check` refuses a View outside its folder.
 - **Provenance.** Exactly one per fact, on a ladder of three rungs:
   - `generated`: written from code, never edited;
   - `checked`: hand-written, and carries `metadata` that a script compares with the code;

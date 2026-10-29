@@ -31,7 +31,7 @@ D14b	a k8s fact source directory is missing (k8s/monitoring)	delete	k8s/monitori
 D14c	a k8s manifest does not parse	write	k8s/platform/broken.yaml	a: [1, 2\nb: 3\n
 D17	a drawn instance pair gains a relationship with a different title	labeldrill	-	probe
 D17b (control)	the same pair gains a relationship with the shared title	labeldrill	-	SQL over JDBC
-D18	a scenario view gets a sixth participant	sed	model/views.c4	s|^\(    client <- traefik '200 {id, email, displayName, theme}'\)$|\1\n    kanban.api -> redpanda.activity 'probe'|
+D18	a scenario view gets a sixth participant	sed	model/scenarios-app.c4	s|^\(    client <- traefik '200 {id, email, displayName, theme}'\)$|\1\n    kanban.api -> redpanda.activity 'probe'|
 D19	the only instance of a workload element is deleted (backup)	sed	model/deployment.c4	/^        instanceOf backup$/d
 D20	a claimed HelmRelease is renamed (loki)	sed	k8s/monitoring/controllers/loki.yaml	s|^  name: loki$|  name: lokix|
 D21	a claimed namespace changes (loki moved to kanban-data)	sed	k8s/monitoring/controllers/loki.yaml	s|^  namespace: monitoring$|  namespace: kanban-data|
@@ -45,5 +45,7 @@ D28	a view loses its description (index)	sed	model/views.c4	/^  view index {$/,/
 D28b	an element loses its description (b2)	sed	model/model.c4	/^  b2 = external /,/^  }$/{/^    description /d}
 D28c	a deployment node loses its description (github.runner)	sed	model/delivery.c4	/^    runner = server /,/^    }$/{/^      description /d}
 D28d	a description loses its trailing period (grafana)	sed	model/monitoring.c4	/^  grafana = system /,/^  }$/s|\.'$|'|
-D29	a block of views loses its folder label (the signin views)	sed	model/views.c4	s|^views '5 Scenarios' {$|views {|
+D29	a block of views loses its folder label (the application scenarios)	sed	model/scenarios-app.c4	s|^views '5[^']*' {$|views {|
 D29b	a view sits in another viewpoint's folder (monitoring)	sed	model/monitoring.c4	s|^views '4 Physical' {$|views '1 Logical' {|
+D29c	a scenario that draws CI sits in the application folder	sed	model/scenarios-app.c4	$i\  dynamic view probe-platform {\n    #scenarios\n    order 99\n    variant sequence\n    title 'Probe'\n    description 'Drill view.'\n\n    ci -> dockerhub 'probe'\n  }
+D29d	a scenario that draws only the app sits in the platform folder	sed	model/scenarios-platform.c4	$i\  dynamic view probe-app {\n    #scenarios\n    order 99\n    variant sequence\n    title 'Probe'\n    description 'Drill view.'\n\n    client -> traefik 'probe'\n  }

@@ -218,15 +218,30 @@
   DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads):
   - element grafana description does not end with a period
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
-== D29: a block of views loses its folder label (the signin views)
+== D29: a block of views loses its folder label (the application scenarios)
   exit=1
   DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads):
-  - view signin-bad-credentials is in folder '', expected '5 Scenarios'
-  - view signin-ceiling is in folder '', expected '5 Scenarios'
-  - view signin-ok is in folder '', expected '5 Scenarios'
+  - view activity-log-row is in folder '', expected '5a Application behaviour'
+  - view error-401 is in folder '', expected '5a Application behaviour'
+  - view error-403 is in folder '', expected '5a Application behaviour'
+  - view error-409 is in folder '', expected '5a Application behaviour'
+  - view signin-bad-credentials is in folder '', expected '5a Application behaviour'
+  - view signin-ceiling is in folder '', expected '5a Application behaviour'
+  - view signin-ok is in folder '', expected '5a Application behaviour'
+  - view signup-ok is in folder '', expected '5a Application behaviour'
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
 == D29b: a view sits in another viewpoint's folder (monitoring)
   exit=1
   DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads):
   - view monitoring is in folder '1 Logical', expected '4 Physical'
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D29c: a scenario that draws CI sits in the application folder
+  exit=1
+  DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads):
+  - view probe-platform is in folder '5a Application behaviour', expected '5b Platform and delivery'
+  package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service
+== D29d: a scenario that draws only the app sits in the platform folder
+  exit=1
+  DRIFT (62 elements, 6 tables, 4 foreign keys, 14 packages, 38 package edges, 2 topics, 18 workloads):
+  - view probe-app is in folder '5b Platform and delivery', expected '5a Application behaviour'
   package cycles (reported, not gated): base, config, dto, entity, mapper, repository, security, service

@@ -52,6 +52,8 @@ TRAEFIK_CONFIG = "k8s/platform/traefik/helmchartconfig.yaml"
 TRACKED_PATHS = ("src/main", "k8s", "docs/architecture", ".github/workflows", "infra/vm")
 MODEL = "docs/architecture/model/model.c4"
 VIEWS = "docs/architecture/model/views.c4"
+SCENARIOS_APP = "docs/architecture/model/scenarios-app.c4"
+SCENARIOS_PLATFORM = "docs/architecture/model/scenarios-platform.c4"
 
 GIT = shutil.which("git") or "git"
 HOOK = DEFAULT_HOOK
@@ -462,11 +464,20 @@ def test_17_view_without_description_is_refused():
 
 def test_18_view_outside_its_folder_is_refused():
     case_dir, repo = make_repo("view-outside-folder", True)
-    replace_in(repo, VIEWS, "views '5 Scenarios' {\n", "views {\n")
-    git(repo, "add", VIEWS)
+    replace_in(repo, SCENARIOS_APP, "views '5a Application behaviour' {\n", "views {\n")
+    git(repo, "add", SCENARIOS_APP)
     before = head_of(repo)
     code, out = commit(case_dir, repo)
-    refused_for_drift(code, out, repo, before, "view signin-ok is in folder '', expected '5 Scenarios'")
+    refused_for_drift(code, out, repo, before, "view signin-ok is in folder '', expected '5a Application behaviour'")
+
+
+def test_19_platform_scenario_in_the_application_folder_is_refused():
+    case_dir, repo = make_repo("platform-scenario-in-app-folder", True)
+    replace_in(repo, SCENARIOS_PLATFORM, "views '5b Platform and delivery' {\n", "views '5a Application behaviour' {\n")
+    git(repo, "add", SCENARIOS_PLATFORM)
+    before = head_of(repo)
+    code, out = commit(case_dir, repo)
+    refused_for_drift(code, out, repo, before, "view push-to-image is in folder '5a Application behaviour', expected '5b Platform and delivery'")
 
 
 def preflight(hook):
