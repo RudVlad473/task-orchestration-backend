@@ -4,18 +4,18 @@ milestone: v1.5
 milestone_name: Architecture Views
 current_phase: 04
 current_phase_name: Leak Review and Production Go-Live
-current_plan: 4
+current_plan: 5
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-10-29T18:27:43.146Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-10-29T18:51:01.149Z"
 last_activity: 2026-10-29
 last_activity_desc: Phase 04 execution started
-state_head: 9354a94064455223028a919fff564b6923669c5d
+state_head: 44a7976d9ce992f84a20850f6ca88473db11c285
 progress:
   total_phases: 5
   completed_phases: 3
   total_plans: 24
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -31,7 +31,7 @@ Workstream files: `.planning/workstreams/architecture-views/` (REQUIREMENTS.md, 
 ## Current Position
 
 Phase: 04 (Leak Review and Production Go-Live) — EXECUTING
-Current Plan: 4
+Current Plan: 5
 Total Plans in Phase: 5
 Status: Ready to execute
 Last activity: 2026-10-29 — Phase 04 execution started
@@ -85,6 +85,7 @@ Progress: [████████░░] 75%
 | Phase 04 P01 | 25 min | 3 tasks | 8 files |
 | Phase 04 P02 | 30min | 2 tasks | 6 files |
 | Phase 04 P03 | 25min | 3 tasks | 2 files |
+| Phase 04 P04 | 35min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -123,6 +124,7 @@ Recent decisions affecting current work:
 - [Phase 03.1]: The drill before-record runs the BASE script on the final model with generated.c4 re-rendered by it, so the old script does not call the file stale
 - [Phase 04]: 04-01: leak-scan.mjs sits beside the site; ssh-command is case-sensitive so the model prose 'SSH forward' passes (owner sees it at review); secret-word is kept by default at 0 hits and the owner confirms at Q2
 - [Phase 04]: 04-03: owner chose Q1 1 (push and prove) and Q2 approve; approved artifact is tag main-8-c3c366a and the secret-word scan target stays (hits=0)
+- [Phase 04]: Q3 1 flip now: certificate moved to letsencrypt-production in 26c0e3e, Ready at revision 2 within 2.4 minutes
 
 ### Pending Todos
 
@@ -158,6 +160,6 @@ Items acknowledged and deferred at milestone close, most recent first:
 
 ## Session Continuity
 
-Last session: 2026-10-29T18:27:42.654Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-10-29T18:51:00.533Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None

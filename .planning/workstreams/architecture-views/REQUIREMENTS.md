@@ -47,7 +47,7 @@ Every gate is proven red on a deliberate break, then green, before it counts.
 
 - [x] **PUB-01**: CI builds the static site (`likec4 build`) into an image pushed to its own Docker Hub repo, rebuilt only on source-path changes.
 - [x] **PUB-02**: k8s manifests and Flux wiring serve the image at the DuckDNS architecture hostname. Only static build output is exposed, never `likec4 start`.
-- [ ] **PUB-03**: The certificate is issued by the staging issuer first, then flipped to production.
+- [x] **PUB-03**: The certificate is issued by the staging issuer first, then flipped to production.
 - [ ] **PUB-04**: An uptime probe covers the site.
 - [x] **PUB-05**: A leak scan of the built artifact and a review gate run before the production certificate. `robots.txt` keeps `Disallow: /`.
 - [ ] **PUB-06**: Docs and the README link to the public address; history-style URLs resolve and a missing asset does not return 200 HTML.
@@ -99,7 +99,7 @@ Populated by the roadmapper.
 | STD-01 | Phase 2 | Complete |
 | PUB-01 | Phase 3 | Complete |
 | PUB-02 | Phase 3 | Complete |
-| PUB-03 | Phase 4 | Pending |
+| PUB-03 | Phase 4 | Complete |
 | PUB-04 | Phase 4 | Pending |
 | PUB-05 | Phase 4 | Complete |
 | PUB-06 | Phase 4 | Pending |
