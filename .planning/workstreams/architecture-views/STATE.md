@@ -138,6 +138,7 @@ Shared project todos are in `.planning/todos/pending/`. None has been filed for 
 | 261028-m6k | Stop anonymous 401 requests from creating spring_session rows via request cache | 2026-10-28 | 17a94cb | [261028-m6k-stop-anonymous-401-requests-from-creatin](./quick/261028-m6k-stop-anonymous-401-requests-from-creatin/) |
 | 261028-n5v | Close phase 02 verification gaps: error-401 measured-then-fixed, WR-04 WR-05 WR-06 WR-08, monitoring scope wording | 2026-10-28 | ee9f9be | [261028-n5v-close-phase-02-verification-gaps-error-4](./quick/261028-n5v-close-phase-02-verification-gaps-error-4/) |
 | 261028-opl | Phase 02 final gap pass: draw kube-prometheus-stack scrape targets in monitoring view, error-401 observed after fix | 2026-10-28 | e7a3f91 | [261028-opl-phase-02-final-gap-pass-draw-kube-promet](./quick/261028-opl-phase-02-final-gap-pass-draw-kube-promet/) |
+| 261029-kyd | Split the 14 scenario views into 5a Application behaviour and 5b Platform and delivery, enforced by checkViewFolders | 2026-10-29 | 74106f2 | [261029-kyd-group-the-14-scenario-views-into-two-fol](./quick/261029-kyd-group-the-14-scenario-views-into-two-fol/) |
 
 ### Roadmap Evolution
 
