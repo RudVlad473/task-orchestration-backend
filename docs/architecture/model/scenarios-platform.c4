@@ -30,7 +30,7 @@ views {
     #scenarios
     variant sequence
     title 'Scenario: a model change becomes the published architecture site'
-    description 'The workflow runs for changes to the model, the site directory, the LikeC4 manifest or lockfile, and the workflow itself, and a pull request runs only the build. The drift check gates the build, only the publish job holds the registry token, and Flux rolls the highest run number into the architecture namespace, where only the static build is served.'
+    description 'The workflow runs for changes to the model, the site directory, the LikeC4 manifest or lockfile, and the workflow itself, and a pull request runs only the build. The drift check gates the build, the publish job is the only job of this workflow that holds the registry token, and Flux rolls the highest run number into the architecture namespace, where only the static build is served.'
 
     repo -> ci 'a push to main that changes the model, the site directory, the LikeC4 manifest or lockfile, or the workflow starts architecture-site.yml, a pull request runs the build job only'
     ci -> ci 'sync.mjs check runs first, and a drifted model stops the run before anything is built'

@@ -4,3 +4,14 @@ STEP4-TOKEN diff_exit=0
 SITE-ENV count=1
 SYNC task1 exit=0
 BUILT-STEP4 new_files=3 old_files=0
+DELIVERY diff_exit=0
+DELIVERY-REL diff_exit=0
+OLD-PHRASES model_lines=0
+BUILT L38 new_files=3 old_files=0
+BUILT L33 new_files=2 old_files=0
+BUILT L7 new_files=4 old_files=0
+BUILT L14 new_files=4 old_files=0
+BUILT L42 new_files=5 old_files=0
+BUILT L43 new_files=6 old_files=0
+LEAKWORDS lines=0
+SYNC task2 exit=0
