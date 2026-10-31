@@ -4,8 +4,7 @@ REST API for a kanban board (`user → board → column → task → subtask`) w
 authentication and ownership-based access control: a user can only reach resources that chain back
 to their own account.
 
-
-https://github.com/user-attachments/assets/99f6e161-db89-4016-83ad-9ea921f9a757
+https://github.com/user-attachments/assets/eef970ae-4f6f-4a07-a212-20acc037d266
 
 https://github.com/user-attachments/assets/2418ed6e-333e-48ca-a0b8-6fa8843e00c3
 
