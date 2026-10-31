@@ -1,8 +1,12 @@
-# Kanban Board — Backend
+# Event-Driven Task Orchestration Platform (Back End)
+
+**Stack:** Java 21, Spring Boot 3.5, PostgreSQL, Kafka, Avro, Hibernate, Flyway, Kubernetes (k3s),
+Flux, Docker, GitHub Actions, Testcontainers.
 
 REST API for a kanban board (`user → board → column → task → subtask`) with session-based
-authentication and ownership-based access control: a user can only reach resources that chain back
-to their own account.
+authentication, ownership-based access control (a user can only reach resources that chain back
+to their own account) and optimistic locking, plus an event-driven activity feed on Kafka with Avro
+schema governance and a dead-letter topic.
 
 https://github.com/user-attachments/assets/eef970ae-4f6f-4a07-a212-20acc037d266
 
@@ -12,7 +16,7 @@ https://github.com/user-attachments/assets/3540dba9-0ef3-490d-99bb-cf9bcbc657c0
 
 A Spring Boot 3.5.16 / Java 21 backend that has been through two production infrastructure
 migrations and a real CI/CD hardening pass, not just a CRUD API against a local database. The parts
-worth reading past the routes are the ones that aren't CRUD — concurrent-edit handling, an
+worth reading past the routes are the ones that aren't CRUD, concurrent-edit handling, an
 event-driven activity feed with real failure paths, Avro schema governance in front of the topic,
 and a delivery pipeline that ships to a real VPS with an isolated nonprod environment ahead of every
 change to production.
@@ -21,36 +25,40 @@ change to production.
 
 Detail and reasoning for each of these is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-- **Optimistic locking** — concurrent edits to the same board, column, task or subtask return
+- **Optimistic locking**, concurrent edits to the same board, column, task or subtask return
   **409** instead of silently overwriting →
   [how](docs/ARCHITECTURE.md#concurrency-optimistic-locking)
-- **Activity feed publishes after commit, off the request thread** — so recording history can never
+- **Activity feed publishes after commit, off the request thread**, so recording history can never
   slow down or fail the mutation that caused it, and poison messages retry then dead-letter →
   [how](docs/ARCHITECTURE.md#event-driven-activity-feed)
-- **Avro schemas with enforced BACKWARD compatibility** — registration is owned by a Gradle task,
+- **Avro schemas with enforced BACKWARD compatibility**, registration is owned by a Gradle task,
   not the producer, and a test proves the registry actually rejects an incompatible change →
   [how](docs/ARCHITECTURE.md#schema-governance)
-- **Layering enforced by ArchUnit, not code review** — controllers reaching into repositories, or a
+- **Layering enforced by ArchUnit, not code review**, controllers reaching into repositories, or a
   service skipping the ownership-verified loader, fail the build →
   [how](docs/ARCHITECTURE.md#testing)
-- **N+1 fixed by measurement, not guesswork** — a bulk delete went from 33 queries for 8 tasks to 4
+- **N+1 fixed by measurement, not guesswork**, a bulk delete went from 33 queries for 8 tasks to 4
   regardless of count, with a query-count regression test holding it there →
   [how](docs/ARCHITECTURE.md#testing)
+- **Owned in production**, a self-built k3s cluster on a hardened VPS (Flux GitOps,
+  Prometheus/Grafana/Loki, OpenTelemetry). Found the root cause of a live dashboard outage, added a
+  CI invariant and an uptime alert for it, and cut runtime advisories from 26 to 2 →
+  [how](docs/INFRA_ARCHITECTURE.md)
 
 ## Live
 
 <!--
 GitHub's README renderer strips a plain HTML <video src> tag and does not render a raw file
-path/URL as a player — the only inline-playing mechanism it honors is a `user-attachments/assets/
+path/URL as a player, the only inline-playing mechanism it honors is a `user-attachments/assets/
 <id>` URL, minted by dragging docs/demo/kanban-board-backend-dashboards-demo.mp4 into any
 comment/PR/issue text box on this repo. Paste that URL on its own line below (no markdown wrapper)
 to replace this placeholder link.
 -->
 
-[**Architecture views**](https://kanban-board-rud-vlad-473-architecture.duckdns.org/) — the LikeC4
+[**Architecture views**](https://kanban-board-rud-vlad-473-architecture.duckdns.org/), the LikeC4
 model of this system, rebuilt from the repository when the model changes.
 
-[**Watch the dashboards**](./docs/demo/kanban-board-backend-dashboards-demo.mp4) — a walkthrough
+[**Watch the dashboards**](./docs/demo/kanban-board-backend-dashboards-demo.mp4), a walkthrough
 of the live Grafana dashboards below, both public and reachable with no login.
 
 - [Network & OS](https://kanban-board-rud-vlad-473-monitoring.duckdns.org/public-dashboards/9b5bf7c8d3c743e1868eed84c9d3e5df)
@@ -69,7 +77,7 @@ published on host port **5433** so a pre-existing native install can't silently 
 meant for the container. Full runbook: [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md).
 
 ```bash
-./gradlew test      # everything; Docker required — every test boots a Testcontainers Postgres
+./gradlew test      # everything; Docker required, every test boots a Testcontainers Postgres
 ./gradlew fastTest  # same suite minus the Kafka-backed *E2ETest classes; still needs Docker
 ```
 
@@ -78,26 +86,26 @@ meant for the container. Full runbook: [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md).
 | Concern            | Choice                                                                                            | Why                                                                                                                                                                                                                            |
 | ------------------ | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Language / runtime | Java 21, Gradle 8.11.1 (wrapper)                                                                  | Wrapper distribution is checksum-pinned (`distributionSha256Sum`), so a compromised or retargeted distribution is refused, not silently used. Compile-time checks add Error Prone (bug patterns) alongside the compiler itself |
-| Framework          | Spring Boot 3.5.16 — Web, Data JPA, Security, Validation                                          | Kept deliberately conventional so the actually distinguishing work (locking, events, schema governance) stays legible against a familiar baseline                                                                              |
-| Persistence        | PostgreSQL + Hibernate; Flyway for schema history; Testcontainers PostgreSQL for the test profile | Every test runs against the same Flyway migrations production does — not H2 standing in for Postgres                                                                                                                           |
+| Framework          | Spring Boot 3.5.16, Web, Data JPA, Security, Validation                                          | Kept deliberately conventional so the actually distinguishing work (locking, events, schema governance) stays legible against a familiar baseline                                                                              |
+| Persistence        | PostgreSQL + Hibernate; Flyway for schema history; Testcontainers PostgreSQL for the test profile | Every test runs against the same Flyway migrations production does, not H2 standing in for Postgres                                                                                                                           |
 | Sessions           | Spring Session JDBC (server-side session state in Postgres)                                       | A restart or a second instance doesn't discard logins; the concurrent-session ceiling reads live from the same store instead of per-instance bookkeeping                                                                       |
 | Messaging          | Spring Kafka against Redpanda; Apache Avro 1.12 + Confluent Schema Registry                       | BACKWARD compatibility is enforced by the registry itself and proven by a test that shows it actually rejects a bad change, not assumed from config                                                                            |
 | Mapping            | MapStruct 1.5.3 (compile-time generated, no reflection)                                           | A broken mapping is a compile error, not a runtime surprise                                                                                                                                                                    |
 | Ids                | ULID via `ulid-creator`, generated in-app by `RandFlakeGenerator`                                 | Sortable by creation time without a database round-trip, unlike a random UUID                                                                                                                                                  |
 | Docs               | springdoc-openapi 2.8.8                                                                           | Generates the published OpenAPI contract from the same annotations that already validate requests, including the shared `ProblemDetail` error envelope                                                                         |
-| Testing            | JUnit 5, REST Assured, Testcontainers (Redpanda), ArchUnit                                        | Layering and ownership-loading rules fail the build directly — ArchUnit turns a review convention into a compile-time-adjacent check                                                                                           |
+| Testing            | JUnit 5, REST Assured, Testcontainers (Redpanda), ArchUnit                                        | Layering and ownership-loading rules fail the build directly, ArchUnit turns a review convention into a compile-time-adjacent check                                                                                           |
 | Build gates        | Spotless (google-java-format AOSP), ErrorProne                                                    | Both pinned to exact versions, so a formatter or analyzer release upstream can't red an unchanged commit                                                                                                                       |
 
 ## Testing
 
-424 test methods (`@Test`/`@ParameterizedTest`-annotated, counted directly from `src/test/java` —
-re-derived 2026-08-19, not carried over from a prior count): unit tests for services and DTO
+552 test methods (`@Test`/`@ParameterizedTest`-annotated, counted directly from `src/test/java`,
+re-derived 2026-10-31, not carried over from a prior count), behind a 90% coverage gate: unit tests for services and DTO
 validation, REST Assured/MockMvc integration tests for controllers, Testcontainers-backed E2E tests
 for the Kafka pipeline and real-socket concurrency, dedicated `security/` classes for injection
-resistance and auth gating, and ArchUnit rules over the whole class graph. Every test — not just the
-Kafka/real-socket-tagged classes — runs against a real PostgreSQL 16 instance via Testcontainers,
+resistance and auth gating, and ArchUnit rules over the whole class graph. Every test, not just the
+Kafka/real-socket-tagged classes, runs against a real PostgreSQL 16 instance via Testcontainers,
 whose schema is built by the same Flyway migrations production runs, so Docker is required for
-`./gradlew test`. Entities and repositories are deliberately untested — they carry no custom logic.
+`./gradlew test`. Entities and repositories are deliberately untested, they carry no custom logic.
 Full breakdown in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#testing).
 
 ## API
@@ -108,7 +116,7 @@ signin. Child resources are created by `POST`ing to their parent.
 | Method         | Path                                           | Notes                                                                                                                                                                  |
 | -------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `POST`         | `/signup` · `/signin` · `/logout`              | Session cookie; max 2 concurrent sessions per user. `/signup`/`/signin` also return the caller's identity (`id`, `email`, `displayName`, `theme`) in the response body |
-| `GET` `POST`   | `/boards`                                      | `GET` lists boards owned by the caller; `POST` creates one — `201` with a `Location` header, and the name must be unique for that user                                 |
+| `GET` `POST`   | `/boards`                                      | `GET` lists boards owned by the caller; `POST` creates one, `201` with a `Location` header, and the name must be unique for that user                                 |
 | `PUT` `DELETE` | `/boards/{boardId}`                            | `PUT` requires the current `version`; delete cascades to columns, tasks, subtasks                                                                                      |
 | `GET`          | `/boards/{boardId}/full`                       | The board with its columns, each column with its tasks, and each task with its subtasks, in one nested document; carries the board's own `version`                     |
 | `GET`          | `/boards/{boardId}/columns`                    |                                                                                                                                                                        |
@@ -121,7 +129,7 @@ signin. Child resources are created by `POST`ing to their parent.
 | `PATCH`        | `/tasks/{taskId}/move`                         | Cross-column move; requires the current `version`                                                                                                                      |
 | `GET` `POST`   | `…/tasks/{taskId}/subtasks`                    |                                                                                                                                                                        |
 | `PUT` `DELETE` | `…/tasks/{taskId}/subtasks/{subtaskId}`        |                                                                                                                                                                        |
-| `GET`          | `/boards/{boardId}/activity`                   | Paginated feed — default 20, capped at 100                                                                                                                             |
+| `GET`          | `/boards/{boardId}/activity`                   | Paginated feed, default 20, capped at 100                                                                                                                             |
 | `GET` `PUT`    | `/users/me/theme`                              | The caller's own theme preference (`LIGHT`/`DARK`); the user is taken from the session, so no user id appears in the path                                              |
 
 ## Production deployment
@@ -137,12 +145,12 @@ Production runs on a **k3s v1.36.4+k3s1** single-node cluster, on the same **Net
 G12s** (Vienna, x86_64) as before, behind the Netcup Cloud Firewall and a Docker-independent
 `mangle`-table firewall (`KANBAN-INGRESS`, Plan 13-08): **Traefik** (the k3s-packaged edge)
 terminates public TLS with cert-manager-issued Let's Encrypt certificates and is the only
-component with a published host port (80/443, via k3s's ServiceLB) — confirmed live via `k3s
+component with a published host port (80/443, via k3s's ServiceLB), confirmed live via `k3s
 kubectl get svc -A` (the cluster's only non-`ClusterIP` Service) and `k3s kubectl get pods -A`
 (the only Pods carrying `hostPort` are `svclb-traefik-*`). `app`, a self-hosted `redpanda` broker
 per environment (Kafka wire protocol plus its built-in Schema Registry), and a self-hosted
-**Postgres 16** StatefulSet — the system of record since Phase 11 replaced Neon serverless
-Postgres — sit behind Traefik with no host port of their own, reachable only via `ClusterIP`
+**Postgres 16** StatefulSet, the system of record since Phase 11 replaced Neon serverless
+Postgres, sit behind Traefik with no host port of their own, reachable only via `ClusterIP`
 Services inside the cluster's own pod network (Postgres specifically gated by a `NetworkPolicy` in
 its own `kanban-data` namespace). **Flux** reconciles every manifest from this repository's `main`
 branch pull-based GitOps, no push-based deploy step. A shared kube-prometheus-stack/Loki/Alloy
@@ -155,10 +163,10 @@ Oracle Cloud's Always Free A1 Flex, ARM64 capacity that proved structurally unav
 
 **Nonprod** is a second, fully isolated deployment colocated on the same cluster: its own
 namespace (`kanban-nonprod`), its own database (`kanban_nonprod`) on that same shared self-hosted
-Postgres instance — never holding a production row — its own Redpanda broker with an
+Postgres instance, never holding a production row, its own Redpanda broker with an
 independently-populated Avro Schema Registry, and its own publicly trusted HTTPS host
 (`kanban-board-rud-vlad-473-nonprod.duckdns.org`) reconciled by its own, independent Flux
-`Kustomization` (D-16) — a nonprod-only image bump never touches prod's Pod, and vice versa. It
+`Kustomization` (D-16), a nonprod-only image bump never touches prod's Pod, and vice versa. It
 exists so a change can be proven against a real broker, a real registry, and real TLS before it
 ever reaches production data. The Compose-era isolation proof (container/volume/network identity,
 a live signup-then-board-create that left production's row counts unchanged) is in
@@ -168,18 +176,18 @@ namespace isolation and independent Kustomizations instead.
 
 ## CI/CD pipeline & deploy strategy
 
-Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) — there
+Every push to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml), there
 is no other trigger. **CI ends at image push (D-14).** Neither production nor nonprod deploys
-through this pipeline anymore — Flux deploys both environments independently, entirely through
+through this pipeline anymore, Flux deploys both environments independently, entirely through
 GitOps (D-16). `run-tests` (`./gradlew test`, then `spotlessCheck`) gates everything below it;
 nothing else runs unless it's green. From there the graph fans out and back in:
 
 - **In parallel:** the Docker image builds once and pushes to BOTH the prod and nonprod Docker Hub
   repositories, tagged with a sortable scheme (`main-<run_number>-<short SHA>`, D-15) so each
-  environment's own Flux `ImagePolicy` can pick the numerically newest tag deterministically —
-  `linux/amd64` natively, the runner and the VM share the same architecture, no QEMU needed — and
+  environment's own Flux `ImagePolicy` can pick the numerically newest tag deterministically,
+  `linux/amd64` natively, the runner and the VM share the same architecture, no QEMU needed, and
   two Flyway migration-verification jobs run **on the VM itself** (the runner SCPs the migration
-  scripts over, then runs the pinned Flyway CLI over SSH against Postgres's `ClusterIP` directly —
+  scripts over, then runs the pinned Flyway CLI over SSH against Postgres's `ClusterIP` directly,
   not against a runner-side connection to a managed provider), one per environment's own database
   on that same shared self-hosted instance.
 - **Then: nothing in this pipeline.** There is no `deploy-to-netcup`, no
@@ -187,12 +195,12 @@ nothing else runs unless it's green. From there the graph fans out and back in:
   `ImageRepository`/`ImagePolicy` (5m poll) picks up the newly pushed tag, `ImageUpdateAutomation`
   (author `fluxcdbot`) commits a `Setters`-strategy bump to that environment's own overlay
   `kustomization.yaml` on `main` (`k8s/**` sits on this workflow's own paths-ignore, so that commit
-  does not re-trigger a build), and `kustomize-controller` applies it — the app `Deployment`'s
+  does not re-trigger a build), and `kustomize-controller` applies it, the app `Deployment`'s
   `register-schemas` `initContainer` re-registers Avro schemas in-cluster, ordered before the app
   container starts by the kubelet's own contract, replacing the CI job entirely.
 - **Cleanup, per environment:** `cleanup-old-images`/`cleanup-old-images-nonprod` each keep the
   five newest sortable-tag images in their own Docker Hub repository, run independently of any
-  deploy outcome (there is no deploy job left in this pipeline to gate on) — Flux needs recent tags
+  deploy outcome (there is no deploy job left in this pipeline to gate on), Flux needs recent tags
   available for a `git revert`-based rollback either way.
 
 Full delivery-path detail, including the exact mechanism for the image-tag bump and the
@@ -212,7 +220,7 @@ the **instruction budget** (`scripts/verify-instruction-budget.py`), then the **
 `docs/architecture` or is `KafkaTopics.java`; it needs Node and
 `pnpm --dir docs/architecture install`, and refuses the commit when either is missing), then
 `spotlessCheck`, then `fastTest` (the full suite minus classes tagged `@Tag("kafka")` or
-`@Tag("realSocket")` — still exercises every unit/service/controller test and ArchUnit's layering
+`@Tag("realSocket")`, still exercises every unit/service/controller test and ArchUnit's layering
 rule). None of them auto-fixes anything; each fails the commit with instructions instead of
 silently rewriting staged files.
 
@@ -221,15 +229,15 @@ shouldn't cover:
 
 | Gate                                                        | Posture                                          | Why                                                                                                                                                                                                                                              |
 | ----------------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `gitleaks` full-history scan                                | Hard — every push/PR                             | Same pinned scanner as the pre-commit hook, but over full history, not just the staged diff                                                                                                                                                      |
-| `TruffleHog` verified-live-credential scan                  | Hard — every push/PR, diff-scoped                | Narrows what gitleaks already flags to only what's actually exploitable right now — a live network verification call per candidate, not a pattern match                                                                                          |
-| Digest-pinned `appleboy/scp-action` / `appleboy/ssh-action` | Hard, structural                                 | Both actions carry real SSH keys to production/staging VMs — pinned to immutable commit SHAs (`@<sha>  # v<version>`), not a mutable tag; first-party GitHub/Docker actions stay tag-trusted, with the trade-off recorded inline in `deploy.yml` |
-| `gradle/actions/wrapper-validation`                         | Hard — before every `./gradlew` invocation in CI | Confirms the wrapper scripts and jar haven't been tampered with, before any of them execute                                                                                                                                                      |
-| Gradle dependency-verification metadata                     | Hard — resolution-time, every build              | `gradle/verification-metadata.xml` checksums every resolved artifact; an artifact republished under the same coordinates+version with different bytes fails the build                                                                            |
-| Spotless / Error Prone (`ErrorProne` plugin)                | Hard — every build, including the Docker build   | Formatting and compile-time bug patterns (null derefs, ignored futures); both pinned exactly so an upstream release can't red an unchanged commit                                                                                                |
-| JaCoCo coverage ratchet                                     | Hard — `test` only                               | INSTRUCTION/LINE ≥ 90%, BRANCH ≥ 75%                                                                                                                                                                                                             |
-| OWASP `dependency-check`                                    | **Report-only**, weekly + on demand              | Its verdict drifts with newly-published NVD advisories independent of any code change, so it isn't hard-gated — findings are visible in the uploaded report, not blocking                                                                        |
-| Dependabot                                                  | N/A — advisory PRs                               | Watches both the Gradle and GitHub Actions ecosystems, so a version bump for a digest-pinned action or a verified dependency arrives as a reviewable PR, not manual upkeep                                                                       |
+| `gitleaks` full-history scan                                | Hard, every push/PR                             | Same pinned scanner as the pre-commit hook, but over full history, not just the staged diff                                                                                                                                                      |
+| `TruffleHog` verified-live-credential scan                  | Hard, every push/PR, diff-scoped                | Narrows what gitleaks already flags to only what's actually exploitable right now, a live network verification call per candidate, not a pattern match                                                                                          |
+| Digest-pinned `appleboy/scp-action` / `appleboy/ssh-action` | Hard, structural                                 | Both actions carry real SSH keys to production/staging VMs, pinned to immutable commit SHAs (`@<sha>  # v<version>`), not a mutable tag; first-party GitHub/Docker actions stay tag-trusted, with the trade-off recorded inline in `deploy.yml` |
+| `gradle/actions/wrapper-validation`                         | Hard, before every `./gradlew` invocation in CI | Confirms the wrapper scripts and jar haven't been tampered with, before any of them execute                                                                                                                                                      |
+| Gradle dependency-verification metadata                     | Hard, resolution-time, every build              | `gradle/verification-metadata.xml` checksums every resolved artifact; an artifact republished under the same coordinates+version with different bytes fails the build                                                                            |
+| Spotless / Error Prone (`ErrorProne` plugin)                | Hard, every build, including the Docker build   | Formatting and compile-time bug patterns (null derefs, ignored futures); both pinned exactly so an upstream release can't red an unchanged commit                                                                                                |
+| JaCoCo coverage ratchet                                     | Hard, `test` only                               | INSTRUCTION/LINE ≥ 90%, BRANCH ≥ 75%                                                                                                                                                                                                             |
+| OWASP `dependency-check`                                    | **Report-only**, weekly + on demand              | Its verdict drifts with newly-published NVD advisories independent of any code change, so it isn't hard-gated, findings are visible in the uploaded report, not blocking                                                                        |
+| Dependabot                                                  | N/A, advisory PRs                               | Watches both the Gradle and GitHub Actions ecosystems, so a version bump for a digest-pinned action or a verified dependency arrives as a reviewable PR, not manual upkeep                                                                       |
 
 See [docs/ARCHITECTURE.md#build-quality-gates](docs/ARCHITECTURE.md#build-quality-gates) for the
 Spotless/ErrorProne detail and [docs/INFRA_RUNBOOK.md](docs/INFRA_RUNBOOK.md) for the diagnosed
@@ -262,7 +270,7 @@ or [docs/INFRA_ARCHITECTURE.md](docs/INFRA_ARCHITECTURE.md):
 Shipped: optimistic locking (v1.0), the Kafka activity feed (v1.1), Avro Schema Registry governance
 and the Flyway migration history (v1.2, phases 4 and 4.1), the infra migration to Netcup (v1.2,
 phase 5), an isolated live nonprod environment with its own continuous-deploy path (v1.3, phases
-8-9), and this phase's CI/deploy hardening pass — digest-pinned deploy actions, a verified-live
+8-9), and this phase's CI/deploy hardening pass, digest-pinned deploy actions, a verified-live
 credential scan alongside pattern-based scanning, Gradle wrapper and dependency-artifact
 verification, and the `Secure` cookie attribute now that both environments serve real TLS.
 
@@ -272,7 +280,7 @@ renewal (sessions are fixed-duration), and no caching layer.
 ## Documentation
 
 `docs/` holds one flat list of files plus a few subdirectories; grouped here by what each one is
-for, not by where it lives — files aren't physically reorganized into subdirs because ~90% of the
+for, not by where it lives, files aren't physically reorganized into subdirs because ~90% of the
 links that would break are inside `.planning/`'s own dated historical records, which shouldn't be
 rewritten after the fact.
 
@@ -280,8 +288,8 @@ rewritten after the fact.
 
 |                                                                        |                                                                                                                           |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                           | How the application works and why — the detail behind the highlights above                                                |
-| [docs/AUTH_FLOWS.md](docs/AUTH_FLOWS.md)                               | For a frontend/QA engineer writing E2E tests — the signup/signin contract in HTTP terms, plus session/cookie/CORS gotchas |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                           | How the application works and why, the detail behind the highlights above                                                |
+| [docs/AUTH_FLOWS.md](docs/AUTH_FLOWS.md)                               | For a frontend/QA engineer writing E2E tests, the signup/signin contract in HTTP terms, plus session/cookie/CORS gotchas |
 | [docs/MOCKUP_FEATURE_GAP.md](docs/MOCKUP_FEATURE_GAP.md)               | What the Kanban design mock-ups ask for vs. what the API delivers, and the gap-closure history      |
 | [docs/demo/](docs/demo/)                                               | A short screen-recording demo of the live dashboards                                                                     |
 
@@ -290,8 +298,8 @@ rewritten after the fact.
 |                                                                        |                                                                                                                           |
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | [docs/INFRA_ARCHITECTURE.md](docs/INFRA_ARCHITECTURE.md)               | The production deployment topology and the delivery path, in full                                                         |
-| [docs/INFRA_RUNBOOK.md](docs/INFRA_RUNBOOK.md)                         | Live-verified provider/firewall/DNS/database/backup reference state — durable how-to content only                        |
-| [docs/history/](docs/history/)                                        | The dated record of every infra change (deploys, cutovers, incidents, resource measurements) — one file per event, chronologically indexed |
+| [docs/INFRA_RUNBOOK.md](docs/INFRA_RUNBOOK.md)                         | Live-verified provider/firewall/DNS/database/backup reference state, durable how-to content only                        |
+| [docs/history/](docs/history/)                                        | The dated record of every infra change (deploys, cutovers, incidents, resource measurements), one file per event, chronologically indexed |
 | [docs/incidents/](docs/incidents/)                                     | Deep-dive write-ups for individual production incidents (e.g. a nonprod SYN-loss investigation)                          |
 | [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md)                                 | Local runbook and the compose stack's scope                                                                               |
 | [docs/diagrams/](docs/diagrams/)                                       | Source `.mmd` + rendered `.png` for every architecture/auth/infra diagram, pinned to a digest-locked renderer             |
@@ -302,7 +310,7 @@ rewritten after the fact.
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | [docs/CODE_STYLE.md](docs/CODE_STYLE.md)                               | Numbered code rules, each naming the test or linter that holds it                                                         |
 | [docs/CODE_REVIEW_RUBRIC.md](docs/CODE_REVIEW_RUBRIC.md)               | Judgement rules no tool can check, each with the deciding test a reviewer applies                                         |
-| [docs/SESSION_LESSONS.md](docs/SESSION_LESSONS.md)                     | Operational lessons from running GSD workflows here — how work is *run*, the sibling to CODE_STYLE's how code is *written* |
+| [docs/SESSION_LESSONS.md](docs/SESSION_LESSONS.md)                     | Operational lessons from running GSD workflows here, how work is *run*, the sibling to CODE_STYLE's how code is *written* |
 | [docs/DIAGRAM_CONVENTIONS.md](docs/DIAGRAM_CONVENTIONS.md)             | Which Kruchten 4+1 view a diagram should be, and why it matters                                                           |
 | [docs/learning/](docs/learning/)                                       | A chaptered guide explaining every major architectural decision, written for a new contributor's onboarding pass         |
 
