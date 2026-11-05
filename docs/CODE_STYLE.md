@@ -142,6 +142,21 @@ durable decision that code cannot express. Enforced, for the mechanical half, by
 
 Reviewed: rubric rule 14, for whether a comment should exist at all.
 
+### 15. Name intermediate Stream and List values instead of nesting calls; keep methods under the complexity ceiling
+
+Name each intermediate Stream or List as a local, then combine the locals. Do not pass one
+`Stream.concat`, `filter` or `map` pipeline as an argument of another. google-java-format (AOSP)
+indents each nested argument a further step, so a two-deep `Stream.concat` reads as a staircase that
+has to be unwound from the inside out.
+
+Enforced, as a floor: `pmdMain` (build.gradle) fails on a main-code method or constructor whose PMD
+CognitiveComplexity or NCSS reaches the ceiling measured on 2026-11-05, and on a type whose NCSS does.
+Test code is not checked.
+
+Reviewed: rubric rule 15, for nested call arguments, which no enforced check sees. ArchUnit reads
+bytecode, where the nesting is gone (the same reason as rule 9). PMD's metrics count branches and
+statements, not argument depth.
+
 ## Adding a rule
 
 Append a `###` section under `## Rules` with the next integer. First try to enforce it: an ArchUnit

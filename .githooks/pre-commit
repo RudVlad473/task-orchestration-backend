@@ -258,9 +258,12 @@ fi
 # It includes ArchUnit's LayeringArchTest and the unit/service tests, and excludes @Tag("kafka") and
 # @Tag("realSocket") classes: a new test class runs here by default and earns a tag only if it genuinely
 # needs Kafka or a real socket.
+#
+# fastTest also pulls in pmdMain, the complexity gate, through build.gradle, so a method or type above the
+# measured ceilings is refused before any test starts.
 echo "Compiling and running fast tests..."
 ./gradlew fastTest < /dev/null
 if [ $? -ne 0 ]; then
-  echo "Compile or test failure. Commit aborted."
+  echo "Compile, complexity gate (pmdMain) or test failure. Commit aborted."
   exit 1
 fi

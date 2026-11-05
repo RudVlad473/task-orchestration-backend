@@ -1,0 +1,36 @@
+261105-pay proof: the PMD complexity gate fails on violations and passes on the tree
+
+Date: 2026-11-05. Ceilings under test: cognitive 27, method NCSS 37, type NCSS 191. PMD 7.29.0. Gradle 8.11.1.
+sha256 of build.gradle at the start: 5e6b401da21109a56b9b5f5e8f728248d41b676d38cd4d7098c3e3f9bde1c8bc
+Every mutation was temporary and undone; pmdMain runs used --rerun, and each console showed "> Task :pmdMain" executing.
+
+P1 must-pass | clean tree | ./gradlew pmdMain --rerun | exit 0 | BUILD SUCCESSFUL, "> Task :pmdMain" executed, build/reports/pmd/main.xml holds 0 violation and 0 error elements
+P2 must-fail | pmdCognitiveComplexityCeiling 27 -> 26 | ./gradlew pmdMain --rerun | exit 1 | ComposedConstraintPropertyCustomizer.java:301 CognitiveComplexity: The method 'translateDotAndWhitespaceShorthand(String, boolean)' has a cognitive complexity of 26 ("1 PMD rule violations were found"); restored
+P3 must-fail | pmdMethodNcssCeiling 37 -> 36 | ./gradlew pmdMain --rerun | exit 1 | ComposedConstraintPropertyCustomizer.java:301 NcssCount: The method 'translateDotAndWhitespaceShorthand(String, boolean)' has a NCSS line count of 36 ("1 PMD rule violations were found"); restored
+P4 must-fail | pmdTypeNcssCeiling 191 -> 190 | ./gradlew pmdMain --rerun | exit 1 | ComposedConstraintPropertyCustomizer.java:62 NcssCount: The class 'ComposedConstraintPropertyCustomizer' has a NCSS line count of 190 (Highest = 36) ("1 PMD rule violations were found"); restored
+P5 must-fail | new src/main/java/com/vrudenko/kanban_board/PmdGateProbe.java, one static method score(int): a 5-deep nested if (15) plus 12 sequential top-level ifs (12) | ./gradlew pmdMain --rerun | exit 1 | PmdGateProbe.java:6 CognitiveComplexity: The method 'score(int)' has a cognitive complexity of 27, current threshold is 27 (exactly the ceiling); it was the only violation ("1 PMD rule violations were found"), no NcssCount message named the probe, and compileJava passed under Error Prone first
+P6 must-pass | one top-level if removed from the probe (complexity 26) | ./gradlew pmdMain --rerun | exit 0 | BUILD SUCCESSFUL; probe then deleted with trash-put and "test ! -e" confirmed it gone
+P7 must-fail then must-pass | `sourceSets = [sourceSets.main]` deleted, then restored | ./gradlew -m check | exit 0 each (dry run) | without the line the plan lists ":pmdMain SKIPPED" and ":pmdTest SKIPPED"; with it restored only ":pmdMain SKIPPED" (no :pmdTest), so the line keeps test code off check
+P8 wiring | none | ./gradlew -m test, -m fastTest, -m bootJar | exit 0 each (dry run) | test lists ":pmdMain" and no :pmdTest; fastTest lists ":pmdMain" and no :pmdTest; bootJar lists no pmd task (rg for ':pmd' exit 1)
+
+Notes on method
+- The temporary build.gradle mutation for P7 was made with a one-off python replace and undone by copying the saved file back, not with Edit; the final sha256sum matched the value above (see the end of this file).
+- P2 to P4 each changed one ceiling by one. The only violation each time was the single worst offender from 261105-pay-measure.txt, which also shows the ceilings are tight to the measured maximum from below on all three measures.
+- P7 and P8 are dry runs (-m): they prove task-graph membership, not execution. Execution of pmdMain inside test was shown by the metadata regeneration run (spotlessCheck test), which printed "> Task :pmdMain" before the suite.
+
+Cost
+Setup: ./gradlew compileJava made compileJava up to date first. Incremental cache file: build/tmp/pmdMain/incremental.cache (confirmed with ls).
+Full analysis (cache deleted with trash-put before each run), wall time for ./gradlew pmdMain --rerun with a warm daemon:
+  full 1: 5.86 s (exit 0)
+  full 2: 5.70 s (exit 0)
+  full 3: 5.84 s (exit 0)
+  median: 5.84 s
+With the cache present:
+  cached 1: 4.38 s (exit 0)
+  cached 2: 4.29 s (exit 0)
+  cached 3: 4.60 s (exit 0)
+  median: 4.38 s
+Stop rule: the full-analysis median of 5.84 s is under the 30 s limit, so wiring into test and fastTest stands.
+Caveat: these are warm-daemon times. A cold Gradle daemon start adds its own cost (the strict --refresh-dependencies runs took 22 s and 35 s, but those include a dependency refresh, so they do not isolate the analysis). I did not measure a cold-daemon pmdMain.
+Peak RSS: sampling ps -eo pid,rss,args every 0.5 s during full run 1 for GradleWorkerMain processes saw 3 pids. The worker that appeared for the run (Gradle Worker Daemon 15, pid 257087) peaked at 283908 KB (about 277 MB). A second worker (Gradle Worker Daemon 12, pid 254530, left over from earlier pmdMain runs) was already resident and peaked at 258984 KB (about 253 MB). So the PMD path can hold two idle-or-active workers of roughly 250 to 280 MB each; with the 768 MB daemon cap that is the extra memory pressure to watch on the 8 GB WSL host. A third matching process (pid 256965) held about 5 MB; I did not identify it.
+sha256 at end: 5e6b401da21109a56b9b5f5e8f728248d41b676d38cd4d7098c3e3f9bde1c8bc

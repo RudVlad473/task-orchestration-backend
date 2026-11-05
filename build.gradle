@@ -12,6 +12,12 @@ plugins {
     // numbers stay honest.
     id 'jacoco'
 
+    // Main-code complexity gate, configured in the PMD section further down.
+    //
+    // Ships inside Gradle core like jacoco: no plugin coordinate is resolved, only the PMD artifacts the
+    // toolVersion there pins.
+    id 'pmd'
+
     // Compiles src/main/avro/*.avsc into generated SpecificRecord classes at build time.
     //
     // Pinned exactly: GitHub reports davidmc24/gradle-avro-plugin as archived (last push 2023-12-28), so
@@ -35,7 +41,7 @@ plugins {
     // task in this build. It runs from a scheduled CI workflow (.github/workflows/security-scan.yml) and from
     // manual invocation, and sits on no path a developer or the pre-commit hook waits for.
     // Its verdict is not a pure function of the source tree: every other gate here (Spotless, Error Prone,
-    // JaCoCo, ArchUnit, verifyRuntimeDependencyFloor) yields the same verdict for the same commit forever; this
+    // JaCoCo, ArchUnit, pmdMain, verifyRuntimeDependencyFloor) yields the same verdict for the same commit forever; this
     // one goes red days later when a new advisory publishes against an unchanged dependency. That is the
     // intent, and "it broke and I changed nothing" is an expected outcome, not a bug to hunt.
     // Rung and ratchet: report-only today (see the dependencyCheck block below), because the CPE-matched finding
@@ -735,6 +741,77 @@ tasks.named('compileTestJava') {
             'MissingOverride',
             'NotJavadoc',
             'DefaultCharset')
+}
+
+// --- PMD complexity gate ---------------------------------------------------
+// Complexity gate on hand-written main code, each ceiling one above the worst offender measured on 2026-11-05.
+//
+// Decisions:
+// The two rules are PMD CognitiveComplexity and NcssCount.
+// The measurement is recorded in
+// .planning/quick/261105-pay-add-a-pmd-complexity-gate-cognitivecompl/261105-pay-measure.txt.
+// PMD is pinned to exactly 7.29.0: the rule definitions are versioned by the PMD release, so a floating
+// version could red an unchanged commit. Gradle 8.11.1's own default is PMD 6.55.0, too old to rely on.
+// Ceiling = worst offender + 1 because both rules report at greater-or-equal (CognitiveComplexityRule
+// cognitive >= reportLevel; NcssCountRule likewise), so the tightest level that passes today is max + 1.
+// Measured worst offenders: cognitive complexity 26 and method NCSS 36 (both
+// ComposedConstraintPropertyCustomizer.translateDotAndWhitespaceShorthand), type NCSS 190
+// (ComposedConstraintPropertyCustomizer).
+// Main code only (user decision): sourceSets keeps pmdTest off check.
+// Source is restricted to src/main/java because gradle-avro-plugin adds build/generated-main-avro-java to the
+// main source set. Unrestricted, the measurement run analyzed 134 files, 14 of them generated, instead of 120
+// hand-written ones.
+// Wired through test and fastTest, not check: CI runs test and spotlessCheck and never check, and the
+// pre-commit hook runs fastTest. dependsOn, not finalizedBy, so it fails in seconds before the suite starts.
+// Not wired into bootJar, so the Docker build is unchanged.
+// Ratchet direction: lower a ceiling when its worst offender is refactored, never raise it to admit new
+// code.
+//
+// Known holes:
+// Neither metric counts how deeply call arguments nest (docs/CODE_STYLE.md rule 15, held by review).
+// A ceiling at the worst offender stops new outliers, not growth below it.
+// Test code is unchecked.
+// A NOPMD comment or a SuppressWarnings PMD marker bypasses a rule; the tree held none on 2026-11-05.
+def pmdCognitiveComplexityCeiling = 27
+def pmdMethodNcssCeiling = 37
+def pmdTypeNcssCeiling = 191
+
+pmd {
+    toolVersion = '7.29.0'
+    sourceSets = [sourceSets.main]
+    ruleSets = []
+    consoleOutput = true
+    ruleSetConfig = resources.text.fromString("""<?xml version="1.0"?>
+<ruleset name="complexity-gate"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+  <description>Complexity ceilings for hand-written main code.</description>
+  <rule ref="category/java/design.xml/CognitiveComplexity">
+    <properties>
+      <property name="reportLevel" value="${pmdCognitiveComplexityCeiling}"/>
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/NcssCount">
+    <properties>
+      <property name="methodReportLevel" value="${pmdMethodNcssCeiling}"/>
+      <property name="classReportLevel" value="${pmdTypeNcssCeiling}"/>
+    </properties>
+  </rule>
+</ruleset>
+""")
+}
+
+tasks.named('pmdMain') {
+    source = fileTree('src/main/java')
+}
+
+tasks.named('test') {
+    dependsOn 'pmdMain'
+}
+
+tasks.named('fastTest') {
+    dependsOn 'pmdMain'
 }
 
 // --- Git hooks bootstrap ---------------------------------------------------

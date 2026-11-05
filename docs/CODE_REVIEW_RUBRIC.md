@@ -103,3 +103,25 @@ The functional marker is consumed by repository tooling; do not rewrite or
 remove such markers without updating that tooling.
 
 **Deciding test:** Decide in one pass; the first yes wins. Does it restate the code? Delete it. Is it a task? Make it a `TODO:` with a link, or a test. Is it a settled decision a reader would otherwise undo? Keep it as a decision record. Does it name another identifier only to say "same as that one"? Cut the name. Otherwise it is one line, at a different abstraction level than the code.
+
+### 15. Name intermediate Stream and List values instead of nesting calls; keep methods under the complexity ceiling
+
+Name each intermediate Stream or List as a local, then combine the locals. Do not pass one
+`Stream.concat`, `filter` or `map` pipeline as an argument of another.
+
+**Why:** google-java-format (AOSP) indents each nested argument a further step, so a two-deep
+`Stream.concat` reads as a staircase that has to be unwound from the inside out. `pmdMain` holds only
+a floor (a method, constructor or type at the measured worst complexity or above fails the build).
+Its metrics count branches and statements, not argument depth, so nesting is held by review. ArchUnit
+reads bytecode, where the nesting is gone.
+
+Preferred shapes: a named local per intermediate stream or list, or `Stream.of(a, b, c)` flattened
+once when there are three or more parts.
+
+The shape to avoid already exists: the `expectedIds` assignment in the delete test of
+`TaskServiceTest` nests two `Stream.concat` calls around a filtered stream. Measured on 2026-11-05
+with `ast-grep --lang java -p 'Stream.concat(Stream.concat($$$A), $$$B)' src/main/java src/test/java`:
+1 site. Grade new lines only, as the header says.
+
+**Deciding test:** Does a changed expression pass the result of a stream-producing call (`Stream.concat`, `Stream.of`, a `.stream()` pipeline) directly as an argument of another stream-producing call, two or more levels deep? That is a finding. A named local per inner value passes.
+

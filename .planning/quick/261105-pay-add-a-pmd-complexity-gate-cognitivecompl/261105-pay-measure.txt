@@ -1,0 +1,99 @@
+261105-pay measurement: PMD complexity ceilings
+
+Date: 2026-11-05
+HEAD: 845c764ba96e05190f51de47be6ea86766f41140
+Gradle: 8.11.1
+PMD version used: 7.29.0 (ran without a class-loading or invoker error, so no step-down was needed)
+Command: ./gradlew --dependency-verification lenient pmdMain --rerun --console=plain
+Levels during measurement: CognitiveComplexity reportLevel 1, NcssCount methodReportLevel 1 and classReportLevel 1
+Run outcome: BUILD FAILED (exit 1) as expected, because every level was 1. Report: build/reports/pmd/main.xml
+
+Population
+- .java files under src/main/java (rg --files src/main/java -g '*.java'): 134
+- Distinct file elements in the report: 120
+- Files absent from the report: 14, all com/vrudenko/kanban_board/event/*Event.java
+  (BoardCreated, BoardDeleted, BoardUpdated, ColumnCreated, ColumnDeleted, ColumnReordered, ColumnUpdated,
+  SubtaskCreated, SubtaskDeleted, SubtaskUpdated, TaskCreated, TaskDeleted, TaskMoved, TaskUpdated).
+  Each is a one-line record with no body (BoardCreatedEvent read directly: "implements ActivityEvent {}"),
+  so its NCSS is below the level of 1 and nothing is reported. I read one of the 14 files, not all of them;
+  the claim for the other 13 rests on their identical names and the 14-for-14 absence, not on reading each.
+- Report elements named error: 0 (no file failed to parse, so no silent skip)
+- Report elements named configerror: 0
+- Report file names containing /build/: 0
+- Distinct rule attributes in the report: CognitiveComplexity, NcssCount (exactly those two)
+- Violations at level 1: 73 CognitiveComplexity, 285 NcssCount on methods or constructors, 125 NcssCount on types
+
+Measured worst offenders (top 5 per measure; PMD default level beside each)
+
+1. CognitiveComplexity per method or constructor. Max 26. PMD default 15.
+   26 config/ComposedConstraintPropertyCustomizer.java:301 translateDotAndWhitespaceShorthand(String, boolean)
+   20 config/ComposedConstraintPropertyCustomizer.java:259 hasUnsupportedGroupConstruct(String)
+   14 config/ComposedConstraintPropertyCustomizer.java:170 contribute(Annotation, Accumulator)
+   12 config/ProblemDetailOpenApiCustomizer.java:84 customise(OpenAPI)
+   10 service/TaskService.java:229 moveToColumn(String, String, MoveTaskRequestDTO)
+
+2. NCSS per method or constructor (messages without "(Highest ="). Max 36. PMD default 60.
+   36 config/ComposedConstraintPropertyCustomizer.java:301 translateDotAndWhitespaceShorthand(String, boolean)
+   34 service/TaskService.java:229 moveToColumn(String, String, MoveTaskRequestDTO)
+   25 config/ComposedConstraintPropertyCustomizer.java:259 hasUnsupportedGroupConstruct(String)
+   19 service/ColumnService.java:180 reorder(String, String, ReorderColumnRequestDTO)
+   18 config/ComposedConstraintPropertyCustomizer.java:170 contribute(Annotation, Accumulator)
+
+3. NCSS per type (messages with "(Highest ="). Max 190. PMD default 1500.
+   190 config/ComposedConstraintPropertyCustomizer.java:62 class ComposedConstraintPropertyCustomizer (Highest = 36)
+   102 service/TaskService.java:40 class TaskService (Highest = 34)
+   92 handler/GlobalExceptionHandler.java:45 class GlobalExceptionHandler (Highest = 7)
+   68 service/ColumnService.java:32 class ColumnService (Highest = 19)
+   63 service/BoardService.java:37 class BoardService (Highest = 13)
+   (paths are relative to src/main/java/com/vrudenko/kanban_board/)
+
+Gap to PMD defaults: the cognitive-complexity maximum (26) is ABOVE PMD's default of 15, so that ceiling (27) is
+looser than the default. The method-NCSS maximum (36) is below the default of 60 and the type-NCSS maximum (190) is
+below the default of 1500, so those two ceilings (37 and 191) are much tighter than the defaults. Per the user
+decision the ceilings are still measured max + 1, not the defaults.
+
+Chosen ceilings (each exactly max + 1, because both rules report at greater-or-equal: PMD 7.29.0
+CognitiveComplexityRule "cognitive >= reportLevel", NcssCountRule likewise)
+- pmdCognitiveComplexityCeiling = 27 (worst 26, translateDotAndWhitespaceShorthand)
+- pmdMethodNcssCeiling = 37 (worst 36, translateDotAndWhitespaceShorthand)
+- pmdTypeNcssCeiling = 191 (worst 190, ComposedConstraintPropertyCustomizer)
+
+Generated-source contrast (source restriction removed, same command, same levels of 1)
+- Distinct files in the report: 134 (120 hand-written plus 14 generated)
+- Report files whose path contains /build/: 14, all under build/generated-main-avro-java/ (the Avro records)
+- Maximum among those generated files: cognitive complexity 13 (AvroTaskMovedEvent), method NCSS 25
+  (AvroColumnReorderedEvent), type NCSS 292 (AvroTaskMovedEvent)
+- Reading: the generated type NCSS of 292 exceeds the 191 ceiling, so without the restriction pmdMain would fail
+  on generated code nobody edits. The restriction (source = fileTree('src/main/java')) was restored; confirmed with
+  rg -n "fileTree\('src/main/java'\)" build.gradle (line 778 at the time).
+
+Ceilings set in build.gradle: 27 / 37 / 191. Final-ceiling run: ./gradlew --write-verification-metadata sha256
+--refresh-dependencies spotlessCheck test finished BUILD SUCCESSFUL in 5m 1s with :pmdMain executed as test's dependency
+(so pmdMain passes at the final ceilings, exit 0).
+
+Verification metadata (gradle/verification-metadata.xml)
+- First regeneration (the build.gradle recipe, verbatim): 120 lines added, 0 deleted.
+- A strict cold re-resolution (./gradlew --refresh-dependencies pmdMain --rerun, default strict mode) then FAILED with
+  exit 1: checker-qual-3.55.1.pom and pcollections-4.0.2.pom had no checksum, although their .module files did.
+  The recipe's run under-captured these two POMs, the same class of gap the build.gradle comment describes.
+- Fix: one more pass limited to the pmd resolution,
+  ./gradlew --write-verification-metadata sha256 --refresh-dependencies pmdMain --rerun
+  added 6 lines (the two POM artifacts). Final diff: 126 added, 0 deleted (git diff --numstat).
+- Strict cold re-resolution after the fix: ./gradlew --refresh-dependencies pmdMain --rerun exit 0, BUILD SUCCESSFUL.
+- The added lines are only component, artifact and sha256 entries.
+- Newly added components (15; all dependencies of the pmd configuration, none touch runtimeClasspath):
+  net.sourceforge.pmd: pmd, pmd-ant, pmd-core, pmd-java (7.29.0)
+  net.sf.saxon:Saxon-HE:12.10
+  org.xmlresolver:xmlresolver:5.3.3
+  org.ow2.asm:asm:9.11.1
+  org.pcollections:pcollections:4.0.2
+  org.checkerframework:checker-qual:3.55.1
+  com.github.oowekyala.ooxml:nice-xml-messages:3.1
+  com.google.code.gson:gson:2.13.2 and gson-parent:2.13.2
+  com.google.errorprone:error_prone_annotations:2.41.0 and error_prone_parent:2.41.0
+  org.junit:junit-bom:6.1.3
+  Four of these (gson, error_prone_annotations, checker-qual, junit-bom) are groups already present at other versions;
+  these are new versions only, pulled in by PMD 7.29.0.
+
+runtimeClasspath before/after: identical
+spotlessCheck exit 0; python3 scripts/verify-comments.py check exit 0; python3 scripts/verify-instruction-budget.py exit 0.

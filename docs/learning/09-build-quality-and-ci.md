@@ -65,7 +65,7 @@ change runs on a schedule and reports only.
 
 ### How it works
 
-The hard gates are Spotless, Error Prone, JaCoCo, ArchUnit, `verifyRuntimeDependencyFloor`, gitleaks,
+The hard gates are Spotless, Error Prone, PMD complexity (`pmdMain`), JaCoCo, ArchUnit, `verifyRuntimeDependencyFloor`, gitleaks,
 TruffleHog and the `scripts/verify-*.py` invariant gates. The only report-only gate is OWASP
 dependency-check. The comment in
 [`build.gradle` (OWASP plugin block)](../../build.gradle#L37-L40) states the difference:

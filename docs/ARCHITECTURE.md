@@ -511,6 +511,11 @@ its base class and tag, never by whether its name happens to end in `E2ETest`.
   sources are held *stricter* than main: five named checks are promoted to ERROR after a 27-finding
   backlog was triaged to zero. Both the plugin and analyzer are pinned exactly, so an upstream
   release can't red the build on its own.
+- **PMD complexity (`pmdMain`)** — CognitiveComplexity and NcssCount on hand-written main code;
+  test and Avro-generated sources are excluded. Each ceiling is one above the worst offender
+  measured on 2026-11-05, and PMD is pinned exactly. `test` and `fastTest` depend on it, so CI and
+  the pre-commit hook run it and the Docker build does not. It does not measure nested call
+  arguments (CODE_STYLE rule 15).
 - **`fastTest`** — the full suite minus classes tagged `@Tag("kafka")` or `@Tag("realSocket")`, so
   the pre-commit hook gets a real gate (ArchUnit and every unit/service/controller test — including
   both new `security/` classes above, which carry no tag and therefore run in the gate by default,
