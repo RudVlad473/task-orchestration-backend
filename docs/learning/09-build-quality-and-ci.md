@@ -188,7 +188,7 @@ dependencies and the reason the sources give.
 | Lombok 1.18.36 | `compileOnly` + `annotationProcessor` | Generates getters, setters, builders, `equals`/`hashCode` at compile time | Reason not recorded |
 | MapStruct 1.5.3.Final | `implementation` + `annotationProcessor` | Generates `*MapperImpl` classes for entity/DTO mapping | Reason not recorded |
 | Vavr 0.10.4 | `implementation` | `io.vavr.control.Try` in `AuthenticationController` and `GlobalExceptionHandler` | Reason not recorded |
-| Guava 32.0.1-android | `implementation` | `@VisibleForTesting` in four services, `Ints` in `TaskService`/`ColumnService` | Reason not recorded |
+| Guava 33.7.2-jre | `implementation` | `@VisibleForTesting` in four services, `Ints` in `TaskService`/`ColumnService` | `verifyRuntimeDependencyFloor` holds the version for GHSA-xxph-c9ww-hj94; the reason for the dependency itself is not recorded |
 | commons-lang3 3.18.0 | `implementation` | No direct `src/main` import; tests use `RandomStringUtils` | Floor for a transitive CVE (**CI-06**) |
 | commons-collections4 4.5.0 | `implementation` | Only tests import it (`ListUtils`) | Reason not recorded |
 | Avro 1.12.1 + Avro Gradle plugin 1.9.1 | `implementation` / plugin | Compiles `src/main/avro/*.avsc` to `SpecificRecord` classes | Plugin is final and complete for `.avsc` codegen |
@@ -244,8 +244,8 @@ rejected three options:
 
 ### Trade-offs and limits
 
-- `verifyRuntimeDependencyFloor` has one entry today. It fails loudly if the coordinate disappears
-  from `runtimeClasspath`, so it cannot silently stop checking
+- `verifyRuntimeDependencyFloor` has one entry per pinned module. It fails loudly if a coordinate
+  disappears from `runtimeClasspath`, so it cannot silently stop checking
   ([`build.gradle`](../../build.gradle#L507-L512)).
 - The OWASP plugin 12.x and later is on the Gradle Plugin Portal only, not on Maven Central. A
   future `pluginManagement { repositories { mavenCentral() } }` block would break plugin resolution
@@ -254,7 +254,8 @@ rejected three options:
 ### How we test it
 
 - [`verifyRuntimeDependencyFloor`](../../build.gradle#L514-L583) resolves
-  `configurations.runtimeClasspath` and compares major, minor and patch numbers element by element.
+  `configurations.runtimeClasspath` and compares major, minor and patch numbers, plus an optional
+  fourth number (snappy-java versions such as 1.1.10.12), element by element.
   The `test` task `dependsOn` it ([`build.gradle`](../../build.gradle#L329)), so it fails in seconds,
   before the suite starts.
 - The `/api/docs` defect has its own fix record:

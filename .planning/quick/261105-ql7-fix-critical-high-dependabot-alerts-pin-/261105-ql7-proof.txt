@@ -1,0 +1,185 @@
+Proof file for quick task 261105-ql7. Each entry: label, exit code, one-line summary, then the command and relevant output indented two spaces.
+
+PREFLIGHT exit=0 free -h before work: 8.7Gi total, 3.9Gi available; HEAD ef59a1756ba825df446ee5909fbc653e23bf5a95; git status showed only the pre-existing untracked files
+
+B1 exit=0 baseline: snappy-java resolves 1.1.10.5 via kafka-clients 3.9.2 via spring-kafka 3.3.16
+  ./gradlew -q dependencyInsight --configuration runtimeClasspath --dependency org.xerial.snappy:snappy-java
+  org.xerial.snappy:snappy-java:1.1.10.5
+    Variant runtime:
+  org.xerial.snappy:snappy-java:1.1.10.5
+  \--- org.apache.kafka:kafka-clients:3.9.2
+       \--- org.springframework.kafka:spring-kafka:3.3.16 (requested org.apache.kafka:kafka-clients:3.8.1)
+            \--- runtimeClasspath (requested org.springframework.kafka:spring-kafka)
+
+B2 exit=0 baseline: guava resolves 32.0.1-android (selected by rule); Confluent's 32.0.1-jre request is rewritten to it
+  ./gradlew -q dependencyInsight --configuration runtimeClasspath --dependency com.google.guava:guava
+  com.google.guava:guava:32.0.1-android (selected by rule)
+    Variant runtime:
+  com.google.guava:guava:32.0.1-android
+  \--- runtimeClasspath
+  com.google.guava:guava:32.0.1-jre -> 32.0.1-android
+  +--- io.confluent:kafka-avro-serializer:7.8.9
+  |    \--- runtimeClasspath
+  \--- io.confluent:kafka-schema-registry-client:7.8.9
+       +--- io.confluent:kafka-avro-serializer:7.8.9 (*)
+       \--- io.confluent:kafka-schema-serializer:7.8.9
+            \--- io.confluent:kafka-avro-serializer:7.8.9 (*)
+  (*) - Indicates repeated occurrences of a transitive dependency subtree. Gradle expands transitive dependency subtrees only once per project; repeat occurrences only display the root of the subtree, followed by this annotation.
+
+O1 exit=0 OSV before (POST https://api.osv.dev/v1/query, ecosystem Maven)
+  == org.xerial.snappy:snappy-java 1.1.10.5
+  ['GHSA-gwq9-9ffj-mvrv', 'GHSA-q233-g92q-qxp6', 'GHSA-xqrx-qh46-34m7']
+  == com.google.guava:guava 32.0.1-android
+  ['GHSA-xxph-c9ww-hj94']
+  == com.google.guava:guava 32.0.1-jre
+  ['GHSA-xxph-c9ww-hj94']
+
+F1 exit=0 floor blind spot: snappy floor 1.1.10.12 added, comparator unchanged, floor PASSES although snappy-java resolves 1.1.10.5 (three-part regex reads both as 1.1.10)
+  ./gradlew verifyRuntimeDependencyFloor
+  > Task :verifyRuntimeDependencyFloor
+  BUILD SUCCESSFUL in 5s
+  1 actionable task: 1 executed
+
+F2 exit=1 floor red: comparator reads an optional fourth number, no pin yet; floor FAILS naming only snappy-java
+  ./gradlew verifyRuntimeDependencyFloor
+  > verifyRuntimeDependencyFloor: 'org.xerial.snappy:snappy-java' resolves to '1.1.10.5' on configurations.runtimeClasspath, below the required floor '1.1.10.12'. This is the production classpath bootJar packages -- see the dependencies-block comment above this entry for why the floor exists.
+  BUILD FAILED in 3s
+
+W1 exit=0 metadata write pass for the snappy slice (55s): one component added
+  ./gradlew --write-verification-metadata sha256 --refresh-dependencies verifyRuntimeDependencyFloor
+  added component: org.xerial.snappy:snappy-java:1.1.10.12 (jar sha256 1c03ce77..., pom sha256 a7de2e8f...)
+  cross-check: sha1 of the jar downloaded from repo1.maven.org equals Central's published .sha1 (c97fdfd953df72ae08be22384a1581ce665c2694); sha256 of that download equals the metadata entry
+
+F3 exit=0 floor green: strict (dependency verification on) cold run with the pin in place
+  ./gradlew --refresh-dependencies verifyRuntimeDependencyFloor
+  > Task :verifyRuntimeDependencyFloor
+  BUILD SUCCESSFUL in 35s
+  1 actionable task: 1 executed
+
+A1 exit=0 after: snappy-java 1.1.10.12 selected by rule, kafka-clients' 1.1.10.5 request rewritten
+  ./gradlew -q dependencyInsight --configuration runtimeClasspath --dependency org.xerial.snappy:snappy-java
+  org.xerial.snappy:snappy-java:1.1.10.12 (selected by rule)
+    Variant runtime:
+  org.xerial.snappy:snappy-java:1.1.10.5 -> 1.1.10.12
+  \--- org.apache.kafka:kafka-clients:3.9.2
+       \--- org.springframework.kafka:spring-kafka:3.3.16 (requested org.apache.kafka:kafka-clients:3.8.1)
+            \--- runtimeClasspath (requested org.springframework.kafka:spring-kafka)
+
+F4 exit=1 floor red for guava: floor 33.7.2 added, Guava still 32.0.1-android; floor FAILS naming only guava
+  ./gradlew verifyRuntimeDependencyFloor
+  > verifyRuntimeDependencyFloor: 'com.google.guava:guava' resolves to '32.0.1-android' on configurations.runtimeClasspath, below the required floor '33.7.2'. This is the production classpath bootJar packages -- see the dependencies
+  BUILD FAILED in 3s
+
+W2 exit=0 metadata write pass for the whole build (9m16s): 35 lines added, 0 deleted; components added: com.google.guava:guava:33.7.2-jre, com.google.guava:guava-parent:33.7.2-jre, org.jspecify:jspecify:1.0.1
+  ./gradlew --write-verification-metadata sha256 --refresh-dependencies spotlessCheck test bootJar dependencies --configuration runtimeClasspath
+  Gradle reported spotlessCheck UP-TO-DATE; bootJar, verifyRuntimeDependencyFloor and test executed. Log: build/tmp/261105-ql7-write.log (deleted at cleanup)
+  Note: failureaccess 1.0.3, error_prone_annotations 2.50.0 and j2objc-annotations 3.1 needed no new metadata entries (already present from other dependency paths)
+
+V1 exit=0 strict cold run, dependency verification on, first strict pass (323s, BUILD SUCCESSFUL in 5m 22s): no second write pass was needed
+  ./gradlew --refresh-dependencies spotlessCheck test --rerun bootJar dependencies --configuration runtimeClasspath
+  > Task :spotlessCheck UP-TO-DATE
+  > Task :bootJar UP-TO-DATE
+  > Task :testClasses UP-TO-DATE
+  > Task :verifyRuntimeDependencyFloor
+  > Task :test
+  > Task :dependencies
+  BUILD SUCCESSFUL in 5m 22s
+  --rerun applies to test only, so spotlessCheck and bootJar printed UP-TO-DATE from the write pass; their classpaths were still resolved and verified under --refresh-dependencies
+
+F5 exit=0 floor green inside V1: '> Task :verifyRuntimeDependencyFloor' executed in the strict run (both floors satisfied)
+  > Task :verifyRuntimeDependencyFloor
+
+A2 exit=0 after: guava 33.7.2-jre selected by rule from Variant jreRuntimeElements; Confluent's 32.0.1-jre request rewritten to 33.7.2-jre
+  ./gradlew -q dependencyInsight --configuration runtimeClasspath --dependency com.google.guava:guava
+  com.google.guava:guava:33.7.2-jre (selected by rule)
+    Variant jreRuntimeElements:
+      | Attribute Name                 | Provided     | Requested    |
+      |--------------------------------|--------------|--------------|
+      | org.gradle.status              | release      |              |
+      | org.gradle.category            | library      | library      |
+      | org.gradle.dependency.bundling | external     | external     |
+      | org.gradle.jvm.environment     | standard-jvm | standard-jvm |
+      | org.gradle.jvm.version         | 8            | 21           |
+      | org.gradle.libraryelements     | jar          | jar          |
+      | org.gradle.usage               | java-runtime | java-runtime |
+  com.google.guava:guava:33.7.2-jre
+  \--- runtimeClasspath
+  com.google.guava:guava:32.0.1-jre -> 33.7.2-jre
+  +--- io.confluent:kafka-avro-serializer:7.8.9
+  |    \--- runtimeClasspath
+  \--- io.confluent:kafka-schema-registry-client:7.8.9
+       +--- io.confluent:kafka-avro-serializer:7.8.9 (*)
+       \--- io.confluent:kafka-schema-serializer:7.8.9
+            \--- io.confluent:kafka-avro-serializer:7.8.9 (*)
+
+V2 exit=1 diff of runtimeClasspath before and after (diff exit 1 means differences exist; expected): only snappy-java and the Guava family changed
+  ./gradlew -q dependencies --configuration runtimeClasspath, before vs after
+  263,264c263,264
+  < +--- com.google.guava:guava:32.0.1-android
+  < |    +--- com.google.guava:failureaccess:1.0.1
+  ---
+  > +--- com.google.guava:guava:33.7.2-jre
+  > |    +--- com.google.guava:failureaccess:1.0.3
+  266,269c266,268
+  < |    +--- com.google.code.findbugs:jsr305:3.0.2
+  < |    +--- org.checkerframework:checker-qual:3.33.0
+  < |    +--- com.google.errorprone:error_prone_annotations:2.18.0
+  < |    \--- com.google.j2objc:j2objc-annotations:2.8
+  ---
+  > |    +--- org.jspecify:jspecify:1.0.1
+  > |    +--- com.google.errorprone:error_prone_annotations:2.50.0
+  > |    \--- com.google.j2objc:j2objc-annotations:3.1
+  301c300
+  < |         \--- org.jspecify:jspecify:1.0.0
+  ---
+  > |         \--- org.jspecify:jspecify:1.0.0 -> 1.0.1
+  312c311
+  < |    |    +--- org.xerial.snappy:snappy-java:1.1.10.5
+  ---
+  > |    |    +--- org.xerial.snappy:snappy-java:1.1.10.5 -> 1.1.10.12
+  333c332
+  <      |    |    +--- com.google.guava:guava:32.0.1-jre -> 32.0.1-android (*)
+  ---
+  >      |    |    +--- com.google.guava:guava:32.0.1-jre -> 33.7.2-jre (*)
+  343c342
+  <      +--- com.google.guava:guava:32.0.1-jre -> 32.0.1-android (*)
+  ---
+  >      +--- com.google.guava:guava:32.0.1-jre -> 33.7.2-jre (*)
+  Findings: jsr305 3.0.2 and checker-qual 3.33.0 left runtimeClasspath (Guava 33 no longer requests them); jspecify 1.0.0 -> 1.0.1 (a Guava dependency raising a transitive request). Every other changed module is in the expected Guava family.
+
+V3 exit=0 bootJar contents: new jars present, no older copy
+  unzip -l build/libs/kanban-board-0.0.1-SNAPSHOT.jar | rg 'BOOT-INF/lib/(guava|snappy|failureaccess)'
+    3057659  2026-11-05 18:29   BOOT-INF/lib/guava-33.7.2-jre.jar
+      10763  2026-08-25 07:24   BOOT-INF/lib/failureaccess-1.0.3.jar
+    2448671  2026-11-05 18:27   BOOT-INF/lib/snappy-java-1.1.10.12.jar
+
+K1 exit=0 kafka-tagged classes in the strict run (13 tagged; 12 present). Counts sum each class's outer file and its nested-class files, because the outer file of a class with @Nested tests reports tests=0
+  rg -l '@Tag("kafka")' src/test/java; counts from build/test-results/test/TEST-<class>*.xml
+  activitylog.ActivityLogAvroDeadLetterE2ETest files=4 tests=3 skipped=0 failures=0 errors=0
+  activitylog.ActivityLogAvroRoundTripE2ETest files=3 tests=2 skipped=0 failures=0 errors=0
+  activitylog.ActivityLogConsumerE2ETest files=2 tests=18 skipped=0 failures=0 errors=0
+  activitylog.ActivityLogDeadLetterE2ETest files=6 tests=5 skipped=0 failures=0 errors=0
+  activitylog.ActivityLogIdempotencyE2ETest files=4 tests=4 skipped=0 failures=0 errors=0
+  activitylog.ActivityTraceContinuityE2ETest files=1 tests=1 skipped=0 failures=0 errors=0
+  activitylog.HistoricalActivityEventReconstructorTest files=2 tests=6 skipped=0 failures=0 errors=0
+  activitylog.HistoricalSchemaRehearsalE2ETest ABSENT (also tagged rehearsal, excluded by test)
+  activitylog.KafkaPublishFailureE2ETest files=1 tests=1 skipped=0 failures=0 errors=0
+  activitylog.SchemaCompatibilityE2ETest files=3 tests=3 skipped=0 failures=0 errors=0
+  activitylog.SchemaRegistryOutageE2ETest files=3 tests=2 skipped=0 failures=0 errors=0
+  e2e.reset.ResetControllerE2ETest files=3 tests=11 skipped=0 failures=0 errors=0
+  e2e.reset.ResetServiceE2ETest files=3 tests=9 skipped=0 failures=0 errors=0
+  WHOLE RUN files=253 tests=622 skipped=0 failures=0 errors=0
+
+O2 exit=0 OSV after: no advisories for either new version
+  == org.xerial.snappy:snappy-java 1.1.10.12
+  []
+  == com.google.guava:guava 33.7.2-jre
+  []
+
+S1 exit=0 snappy round trip on the new jar (direction: after only; a compatibility check, nothing committed for it). ActivityLogConsumerE2ETest, 18 tests, 0 failures, 0 errors, 0 skipped, BUILD SUCCESSFUL in 39s
+  SPRING_KAFKA_PRODUCER_COMPRESSIONTYPE=snappy ./gradlew test --tests 'com.vrudenko.kanban_board.activitylog.ActivityLogConsumerE2ETest' --rerun -x jacocoTestCoverageVerification
+  evidence: rg -c 'compression.type = snappy' on TEST-...ActivityLogConsumerE2ETest$OnActivityEventTest.xml = 1 (the producer config dump; the outer file of this class has no @Test methods and holds no log)
+  path: the tests send with AbstractKafkaContainerTest.sendAndAwaitAck through the autoconfigured KafkaTemplate and await the broker ack, then assert on what the listener consumed, so records went out through the snappy-configured producer and back through kafka-clients' consumer
+  contrast: in the strict run V1, 24 result files carried 'compression.type = none' in a producer config dump. A same-class default-run contrast was not possible: the default run's ActivityLogConsumerE2ETest files held no producer config dump, because the dump is logged where the shared context first creates its producer, not necessarily in this class
+  NOT directly observed: a snappy-compressed batch on the wire, or snappy-java's native library loading (no snappy-*.so extraction was found in /tmp or build/, and snappy-java may delete it on exit). The claim is: the producer was configured for snappy and 18 produce-consume tests passed on snappy-java 1.1.10.12; snappy compression itself is inferred from the config, not measured.
+  default (1.1.10.12) was used; no fallback to 1.1.10.9 was needed
