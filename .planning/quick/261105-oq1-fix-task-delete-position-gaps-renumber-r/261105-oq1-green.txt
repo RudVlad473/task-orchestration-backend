@@ -1,0 +1,10 @@
+GREEN proof for quick 261105-oq1 (TaskService.deleteById now closes the gap)
+
+Command: ./gradlew test --rerun --tests '*TaskServiceTest*' -x jacocoTestCoverageVerification < /dev/null
+Exit code: 0 (BUILD SUCCESSFUL in 1m 2s)
+Testcase: TaskServiceTest$DeleteByIdTest.shouldKeepPositionsContiguousAndUnique_whenCreatingAfterDeletingAMiddleTask
+Result: testsuite DeleteByIdTest tests=1 skipped=0 failures=0 errors=0
+
+All TaskServiceTest suites: AddSubtaskByTaskId 3/3, DeleteByIdTest 1/1, FindAllByColumnIdTest 5/5,
+FindAllByIdTest 4/4, GetTaskCountByColumnIdTest 4/4, MoveToColumnQueryCountTest 1/1,
+UpdateByIdTest 3/3; failures=0 errors=0 in every suite.

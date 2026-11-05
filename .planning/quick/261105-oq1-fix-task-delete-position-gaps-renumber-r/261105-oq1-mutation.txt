@@ -1,0 +1,28 @@
+Mutation proof for quick 261105-oq1 (query-count guard fails against a per-row renumber)
+
+Mutant (temporary, in TaskService.deleteById): the single
+  taskRepository.shiftPositions(deletedColumnId, -1, deletedPosition + 1, Integer.MAX_VALUE)
+call was replaced by a loop over taskRepository.findAllByColumnId(deletedColumnId) that
+decrements each sibling positioned after deletedPosition and saves each one, then
+entityManager.flush(). It is behaviourally correct, only not constant-cost.
+
+Run 1 (mutant)
+  Command: ./gradlew test --rerun --tests '*TaskServiceTest*' -x jacocoTestCoverageVerification < /dev/null
+  Exit code: 1 (BUILD FAILED)
+  Suite: TaskServiceTest$DeleteByIdTest tests=2 failures=1 errors=0
+  Failing testcase: shouldNotScaleQueryCount_whenMoreTasksFollowTheDeletedTask
+  Failure type: org.opentest4j.AssertionFailedError
+  Failure message: expected: 4L but was: 11L
+    (4 = prepared statements deleting the lone task, 11 = deleting the first of 8 tasks, whose
+    7 later siblings each add an UPDATE)
+  Passing testcase: shouldKeepPositionsContiguousAndUnique_whenCreatingAfterDeletingAMiddleTask
+    (the mutant renumbers correctly, so the contiguity test cannot tell it apart)
+
+Run 2 (mutant removed, single shiftPositions call restored)
+  Command: ./gradlew test --rerun --tests '*TaskServiceTest*' -x jacocoTestCoverageVerification < /dev/null
+  Exit code: 0 (BUILD SUCCESSFUL)
+  Suite: TaskServiceTest$DeleteByIdTest tests=2 failures=0 errors=0
+
+Restore check: git diff -- src/main shows only the deletedPosition local, the one shiftPositions
+call and the deleteById Javadoc; rg -c findAllByColumnId on TaskService.java is back to 3 (HEAD
+baseline).

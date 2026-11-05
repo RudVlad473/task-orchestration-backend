@@ -545,6 +545,12 @@ gets 1. Result: A0 D1 B2 C3.
 [`ColumnService.deleteById`](../../src/main/java/com/vrudenko/kanban_board/service/ColumnService.java#L270-L291)
 shifts `[deletedPosition + 1, Integer.MAX_VALUE]` by −1.
 
+**Task delete** closes the gap the same way:
+[`TaskService.deleteById`](../../src/main/java/com/vrudenko/kanban_board/service/TaskService.java)
+shifts `[deletedPosition + 1, Integer.MAX_VALUE]` by −1 in the task's own column. The column id
+comes from the ownership-verified task, not from the URL. The shift runs in the delete's
+transaction, so a failed delete rolls it back too.
+
 **Sibling reads** use a two-key total order, `order by position asc, id asc`
 ([`TaskRepository.findAllByColumnId`](../../src/main/java/com/vrudenko/kanban_board/repository/TaskRepository.java#L13-L21)).
 The id breaks ties, so two reads of the same data always give the same order.
@@ -585,15 +591,6 @@ The id breaks ties, so two reads of the same data always give the same order.
 - **Concurrent inserts can create duplicate positions.** Two concurrent creates in one column can
   both read the same count. No unique constraint exists on `(column_id, position)`. The `id`
   tiebreak keeps reads deterministic, but the sequence has a duplicate.
-- **Caution — a task delete leaves a hole in the sequence.** `ColumnService.deleteById` closes the
-  gap, but [`TaskService.deleteById`](../../src/main/java/com/vrudenko/kanban_board/service/TaskService.java#L259-L279)
-  has no `shiftPositions` call. The 06-04 plan added gap-closing to column delete only. So after
-  tasks 0, 1, 2 lose task 1, the column holds 0 and 2. The next create gets position
-  `count = 2`, a duplicate. Two reviewers ran this against the live app. One deleted task 1 and
-  got positions 0, 2, 2. The other deleted task 0 and got positions 1, 2, 2. The 06-04 SUMMARY
-  says positions stay contiguous "on create/move/reorder/delete" for "both entities". The code
-  does not do that for tasks. No test covers a task delete followed by a read of positions.
-  Confirmed by running on 2026-09-23.
 - **The nested `/full` read does not use `position`.** `BoardEntity.column`, `ColumnEntity.task`
   and `TaskEntity.subtasks` carry `@OrderBy("id")`. So `GET /boards/{id}/full` lists columns and
   tasks in id order, not position order. After a reorder, a client must sort by the `position`
@@ -622,6 +619,8 @@ The id breaks ties, so two reads of the same data always give the same order.
   `shouldNotChangeAnyTaskPosition_whenReorderingAColumn`;
   `ColumnControllerTest.DeleteById.shouldLeaveSurvivingColumnsContiguousFromZero_whenDeletingAMiddleColumn`.
 - `TaskServiceTest.MoveToColumnQueryCountTest.queryCountDoesNotScaleWithSourceColumnSize`.
+- `TaskServiceTest.DeleteByIdTest.shouldKeepPositionsContiguousAndUnique_whenCreatingAfterDeletingAMiddleTask`
+  and `TaskServiceTest.DeleteByIdTest.shouldNotScaleQueryCount_whenMoreTasksFollowTheDeletedTask`.
 
 ### Where this is recorded
 
@@ -1101,28 +1100,24 @@ The rules are tests. `./gradlew test` runs `LayeringArchTest` with the rest of t
    [`260813-os9-PLAN.md`](../../.planning/quick/260813-os9-replace-randflakegenerator-s-random-23-l/260813-os9-PLAN.md#L339)
    records this disclosure and accepts it. The threat says the class comment records it, but
    `RandFlakeGenerator` has no such comment.
-3. **Task delete leaves a position hole**, and the next create duplicates a position. Positions
-   0, 1, 2 became 1, 2, 2 after a delete of task 0 and one create. `06-04-SUMMARY.md` claims
-   contiguity on delete for both entities; the code does it for columns only.
-   Confirmed by running on 2026-09-23.
-4. **No unique constraint on `(parent_id, position)`.** Concurrent creates can duplicate a
+3. **No unique constraint on `(parent_id, position)`.** Concurrent creates can duplicate a
    position.
-5. **`/full` orders by id, flat reads order by position.** The nested read does not show the
+4. **`/full` orders by id, flat reads order by position.** The nested read does not show the
    reorder result in list order. After a reorder, the flat reads showed the new order and `/full`
    showed the id order. Confirmed by running on 2026-09-23.
-6. **Cross-board move 400** uses the generic `ILLEGAL_ARGUMENT` code (spike 002, Finding 3).
-7. **`TaskMovedEvent` has no positions** (open todo).
-8. **`activity_log` rows survive `UserService.deleteById`** outside the nonprod targeted reset.
-9. **`BaseUserOwnedService` is an empty, unused interface.** A `TODO: make a service interface`
+5. **Cross-board move 400** uses the generic `ILLEGAL_ARGUMENT` code (spike 002, Finding 3).
+6. **`TaskMovedEvent` has no positions** (open todo).
+7. **`activity_log` rows survive `UserService.deleteById`** outside the nonprod targeted reset.
+8. **`BaseUserOwnedService` is an empty, unused interface.** A `TODO: make a service interface`
    stays on `TaskService.findById`.
-10. **Stated reason for field injection is not true** (no cycle exists; Boot forbids cycles by
-    default). The project `CLAUDE.md` also calls field injection "lazy initialization", which is
-    wrong. It also says that no class uses constructor injection, but five security and config
-    classes do.
-11. **Small code defects:** `SubtaskService.deleteAllByTaskId(userId, subtaskId)` takes a task id.
+9. **Stated reason for field injection is not true** (no cycle exists; Boot forbids cycles by
+   default). The project `CLAUDE.md` also calls field injection "lazy initialization", which is
+   wrong. It also says that no class uses constructor injection, but five security and config
+   classes do.
+10. **Small code defects:** `SubtaskService.deleteAllByTaskId(userId, subtaskId)` takes a task id.
     The `TaskRepository.findAllByColumnId` comment points at a Javadoc paragraph that does not
     exist. The `BoardFullMapper` Javadoc calls `BoardEntity.column` a `List`, but it is a `Set`.
-12. **`docs/ARCHITECTURE.md` says ArchUnit has two rules**; it has four.
+11. **`docs/ARCHITECTURE.md` says ArchUnit has two rules**; it has four.
 
 ## Questions to check your knowledge
 

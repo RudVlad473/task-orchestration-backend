@@ -316,7 +316,16 @@ public class TaskService {
      *
      * The ids are captured into locals BEFORE the deletes run: afterwards nothing is left to
      * derive boardId from, and the event's consumer runs with no SecurityContext
-     * and cannot look it up.
+     * and cannot look it up. deletedPosition is captured with them for the same reason.
+     *
+     * Decisions:
+     *
+     * The gap the delete leaves is closed with one bulk shift of the later tasks in the column,
+     * so positions stay contiguous from zero, which save's sibling-count probe depends on. The
+     * column id is the verified task's, never a path variable (docs/CODE_STYLE.md rule 2): it is
+     * the shift's whole scope. The shift runs in this transaction, so a version-mismatched delete
+     * rolls it back too. Shifted siblings keep their @Version, the same decision moveToColumn's
+     * Javadoc records.
      */
     @Transactional
     public void deleteById(String userId, String taskId) {
@@ -325,10 +334,13 @@ public class TaskService {
         var deletedTaskId = task.getId();
         var deletedColumnId = task.getColumn().getId();
         var deletedBoardId = task.getColumn().getBoard().getId();
+        var deletedPosition = task.getPosition();
 
         subtaskService.deleteAllByTaskId(userId, taskId);
 
         taskRepository.deleteById(task.getId());
+
+        taskRepository.shiftPositions(deletedColumnId, -1, deletedPosition + 1, Integer.MAX_VALUE);
 
         eventPublisher.publishEvent(
                 new TaskDeletedEvent(

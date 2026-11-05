@@ -492,8 +492,7 @@ Both are `integer NOT NULL DEFAULT 0`, added by V5. Subtasks and boards have no 
 
 ### How it works
 
-Create, move, reorder and column delete keep positions contiguous from zero. Task delete does not
-(see "Known gaps"):
+Create, move, reorder, task delete and column delete keep positions contiguous from zero:
 
 - **Create.** The service sets `position` to the current sibling count, which is the next free
   slot ([`TaskService.save`](../../src/main/java/com/vrudenko/kanban_board/service/TaskService.java#L58-L66),
@@ -504,6 +503,9 @@ Create, move, reorder and column delete keep positions contiguous from zero. Tas
   A request beyond the end is clamped to the end.
 - **Column delete.** `ColumnService.deleteById` shifts the later columns down by one
   ([`ColumnService`](../../src/main/java/com/vrudenko/kanban_board/service/ColumnService.java#L270-L282)).
+- **Task delete.** `TaskService.deleteById` shifts the later tasks in the column down by one
+  ([`TaskService`](../../src/main/java/com/vrudenko/kanban_board/service/TaskService.java)).
+  Subtasks have no position, so a subtask delete has nothing to close.
 - **Flat reads** sort by two keys:
   `order by t.position asc, t.id asc`
   ([`TaskRepository.findAllByColumnId`](../../src/main/java/com/vrudenko/kanban_board/repository/TaskRepository.java#L13-L21)).
@@ -552,6 +554,9 @@ order, not a random one.
   `shouldAssignContiguousPositions_whenCreatingThreeColumnsOnOneBoard`,
   `shouldMoveThirdColumnToFront_andShiftOthersDown_whenTargetPositionIsZero`,
   `shouldClampToEnd_whenTargetPositionExceedsBoardColumnCount`.
+- [`TaskServiceTest.DeleteByIdTest`](../../src/test/java/com/vrudenko/kanban_board/service/TaskServiceTest.java):
+  `shouldKeepPositionsContiguousAndUnique_whenCreatingAfterDeletingAMiddleTask`,
+  `shouldNotScaleQueryCount_whenMoreTasksFollowTheDeletedTask`.
 - [`TaskMoveTest`](../../src/test/java/com/vrudenko/kanban_board/e2e/task/TaskMoveTest.java):
   `shouldLeaveBothColumnsContiguous_whenMovingTaskToDifferentColumnAtPositionZero`,
   `shouldAppendAtEnd_whenTargetPositionIsOmitted`,
@@ -1010,30 +1015,22 @@ and the idempotency path.
 
 ## Known gaps and open items
 
-1. **Task delete leaves a position gap, and the next create makes a duplicate position.**
-   `TaskService.deleteById` calls no `shiftPositions`
-   ([`TaskService.deleteById`](../../src/main/java/com/vrudenko/kanban_board/service/TaskService.java#L259-L278)),
-   while column delete does. The comment in `TaskService.save` says positions stay contiguous "by
-   every mutation in this class". That comment is false. After a delete, `countByColumnId` returns
-   a position that a remaining task already holds. Observed result: positions `0, 1, 2`, delete the
-   task at 0, create one task, positions `1, 2, 2`. The `(position, id)` sort keeps the tie in a
-   stable order. No test covers task delete followed by create. Confirmed by running on 2026-09-23.
-2. **Nested read order differs from flat read order.** `GET /boards/{id}/full` orders columns and
+1. **Nested read order differs from flat read order.** `GET /boards/{id}/full` orders columns and
    tasks by `@OrderBy("id")`. The flat endpoints order by `(position, id)`. After a reorder, the
    two reads show different orders. `BoardFullReadTest` asserts only that the nested ids are
    sorted. Confirmed by running on 2026-09-23.
-3. **`FlywaySchemaProvenanceTest` stops at V6.** See its section.
-4. **Id width change in 2053.** String ordering of ids matches numeric order only while all ids
+2. **`FlywaySchemaProvenanceTest` stops at V6.** See its section.
+3. **Id width change in 2053.** String ordering of ids matches numeric order only while all ids
    have 12 characters (my calculation: until 2053-10-19).
-5. **No index on the child foreign keys** `columns.board_id`, `tasks.column_id`,
+4. **No index on the child foreign keys** `columns.board_id`, `tasks.column_id`,
    `subtasks.task_id`. Reason not recorded.
-6. **Nullable foreign keys** in V1. Reason not recorded.
-7. **Unused dependency** `ulid-creator:5.2.0`.
-8. **Column color is create-only** (pending todo, linked above).
-9. **Board-name uniqueness is case-sensitive.** Reason not recorded.
-10. **A rename race returns 500, not 409.** Parallel renames to one name gave
-    `500 200 500 500 409 409 409 409`. The 500 body holds raw SQL for `uk_boards_user_id_name`.
-    See "Board-name uniqueness per user". Confirmed by running on 2026-09-23.
+5. **Nullable foreign keys** in V1. Reason not recorded.
+6. **Unused dependency** `ulid-creator:5.2.0`.
+7. **Column color is create-only** (pending todo, linked above).
+8. **Board-name uniqueness is case-sensitive.** Reason not recorded.
+9. **A rename race returns 500, not 409.** Parallel renames to one name gave
+   `500 200 500 500 409 409 409 409`. The 500 body holds raw SQL for `uk_boards_user_id_name`.
+   See "Board-name uniqueness per user". Confirmed by running on 2026-09-23.
 
 ### Doc-vs-code contradictions (the code wins)
 

@@ -1,6 +1,8 @@
 package com.vrudenko.kanban_board.service;
 
 import java.util.UUID;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import com.vrudenko.kanban_board.constant.ValidationConstants;
 import com.vrudenko.kanban_board.dto.subtask_dto.SaveSubtaskRequestDTO;
@@ -85,6 +87,78 @@ public class TaskServiceTest extends AbstractAppTest {
 
             // assert
             Assertions.assertThat(largeMoveQueryCount).isEqualTo(smallMoveQueryCount);
+        }
+    }
+
+    @Nested
+    class DeleteByIdTest {
+        @Test
+        void shouldKeepPositionsContiguousAndUnique_whenCreatingAfterDeletingAMiddleTask() {
+            // arrange
+            final var userId = getOwningUser().getId();
+            final var columnId = mockPopulatedColumn.getId();
+            final var middleTaskId = mockTasks.get(MOCK_TASKS_AMOUNT / 2).getId();
+
+            // act
+            taskService.deleteById(userId, middleTaskId);
+            var createdTask = createTask();
+            var tasks = taskService.findAllByColumnId(userId, columnId);
+
+            // assert
+            var expectedPositions = IntStream.rangeClosed(0, MOCK_TASKS_AMOUNT).boxed().toList();
+            var expectedIds =
+                    Stream.concat(
+                                    Stream.concat(
+                                            mockTasks.stream()
+                                                    .filter(
+                                                            task ->
+                                                                    !task.getId()
+                                                                            .equals(middleTaskId)),
+                                            Stream.of(mockPopulatedTask)),
+                                    Stream.of(createdTask))
+                            .map(TaskResponseDTO::getId)
+                            .toList();
+
+            Assertions.assertThat(tasks)
+                    .extracting(TaskResponseDTO::getPosition)
+                    .containsExactlyElementsOf(expectedPositions);
+            Assertions.assertThat(tasks)
+                    .extracting(TaskResponseDTO::getId)
+                    .containsExactlyElementsOf(expectedIds);
+        }
+
+        // Pins the renumber as one statement however many tasks follow the deleted one. Uses
+        // countQueries, the sanctioned prepared-statement counter, like the move test above.
+        @Test
+        void shouldNotScaleQueryCount_whenMoreTasksFollowTheDeletedTask() {
+            // arrange
+            final var userId = getOwningUser().getId();
+
+            var loneTask =
+                    taskService.save(
+                            SaveTaskRequestDTO.builder()
+                                    .title(
+                                            dataFactory.getRandomWord(
+                                                    ValidationConstants.MIN_TASK_TITLE_LENGTH + 2))
+                                    .description(
+                                            dataFactory.getRandomText(
+                                                    ValidationConstants
+                                                            .MIN_TASK_DESCRIPTION_LENGTH))
+                                    .build(),
+                            columnService.findById(userId, mockColumns.get(1).getId()));
+
+            // Position 0 with MOCK_TASKS_AMOUNT tasks after it, and no subtasks: mockPopulatedTask
+            // owns the fixture's subtasks, whose cascade would add statements of its own.
+            var firstOfManyTask = mockTasks.getFirst();
+
+            // act
+            var loneDeleteQueryCount =
+                    countQueries(() -> taskService.deleteById(userId, loneTask.getId()));
+            var largeDeleteQueryCount =
+                    countQueries(() -> taskService.deleteById(userId, firstOfManyTask.getId()));
+
+            // assert
+            Assertions.assertThat(largeDeleteQueryCount).isEqualTo(loneDeleteQueryCount);
         }
     }
 

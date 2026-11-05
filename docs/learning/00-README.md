@@ -113,7 +113,6 @@ it. The guide describes each defect. The code does not fix any of them.
 | A board `PUT` with only `version` | 500 with a NOT NULL violation and the SQL text | 03, 05 |
 | An unknown route or a wrong HTTP method | 500 `INTERNAL_ERROR`, not 404 or 405 | 05 |
 | An anonymous request to a protected route | 401, plus a new stored session and a `JSESSIONID` cookie | 06 |
-| A task delete | The position gap stays, so the next task gets a duplicate position | 01, 04 |
 | `GET /boards/{id}/full` | Columns and tasks come in id order. The flat reads use position order | 02, 04 |
 | Pull requests | No workflow runs the Gradle tests on a pull request | 09 |
 | `verify-postgres-memory-invariant.py` | No workflow runs it | 09, 10 |

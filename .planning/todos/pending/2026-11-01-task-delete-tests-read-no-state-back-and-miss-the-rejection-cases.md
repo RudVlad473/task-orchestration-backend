@@ -19,17 +19,17 @@ second blind run, `delete_task`). Files read: `TaskControllerTest`, `ActivityEve
 hand; other test files were not read and may cover a row. No mutation run, so `PARTIAL` rows are reading
 judgments.
 
-`TaskService.deleteById` has 0 of 7 required cases fully covered:
+`TaskService.deleteById` has 1 of 6 required cases fully covered (updated 2026-11-05: the position-gap
+fix added one covered row and removed one that no longer applies):
 
 | Required case | Status | Where |
 | --- | --- | --- |
 | Success: the task is gone on read-back | PARTIAL | `TaskControllerTest.java:87-101` asserts HTTP 200 only; it would pass if `deleteById` did nothing |
 | Success: its subtasks are gone (no orphans) | MISSING | no test reads subtasks after a task delete |
-| Success: sibling tasks in the column are untouched | MISSING | none |
+| Success: siblings keep their relative order and close up to contiguous positions | MISSING | none for the HTTP delete; the renumber after a middle delete is read back only through the create in `TaskServiceTest.DeleteByIdTest` |
 | Rejected `ACCESS_DENIED`, state unchanged | PARTIAL | `AuthorizationGatingTest.java:461` checks 403 and the code, never reads state back |
 | Rejected `ENTITY_NOT_FOUND`, state unchanged | PARTIAL | `InjectionAttemptTest.java:833-847` accepts 400 or 404 for malformed ids only; no well-formed unknown id |
-| After a middle delete, a later create keeps positions unique | MISSING | covered by the Solution of the position-gap todo (2026-11-01-task-delete-leaves-position-gaps...) |
-| Positions are not closed up after a delete (the code's current behaviour) | MISSING | pin it only if the position-gap defect is decided as "not a defect" |
+| After a middle delete, a later create keeps positions unique | COVERED | `TaskServiceTest.DeleteByIdTest.shouldKeepPositionsContiguousAndUnique_whenCreatingAfterDeletingAMiddleTask` (quick 261105-oq1) |
 
 The event side is covered: `ActivityEventPublicationTest.java:80` pins `TaskDeletedEvent` and its four ids.
 
@@ -38,5 +38,6 @@ The event side is covered: `ActivityEventPublicationTest.java:80` pins `TaskDele
 TBD. In `TaskControllerTest.DeleteById`, after the 200: read the task back and expect not found, read its
 subtasks and expect none, read the column's other tasks and expect them unchanged. Add a well-formed unknown
 task id (expect 404, nothing changed) and make the foreign-user case read the task back (expect it still
-there). Do not add the last two rows until the position-gap todo is decided. Re-run review-tests with
+there). The position-gap todo was decided on 2026-11-05 (renumber after delete), so the middle-delete-then-create
+row is covered and the "positions are not closed up" row no longer applies. Re-run review-tests with
 `--cases` afterwards; each row should move to `COVERED`.
