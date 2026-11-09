@@ -13,3 +13,10 @@ P2 mutation: floor removed
     "a tolerance of zero demands every package"; "repeated package names count once"
   repository guard: the same selftest exits 0 with every case ok
   the mutant copy was removed afterwards
+
+P3 root drift fires
+  setup: throwaway k8s/zz-drift-probe/kustomization.yaml (empty resources list), in neither SCAN_ROOTS nor SKIP_ROOTS
+  command: bash scripts/trivy-scan.sh config
+  exit code: 1
+  stderr: FAIL: kustomization root(s) under k8s/ in neither SCAN_ROOTS nor SKIP_ROOTS: k8s/zz-drift-probe
+  the probe directory was removed afterwards, git status --short k8s printed nothing, and config mode then exited 0 on the clean tree

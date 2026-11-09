@@ -21,3 +21,16 @@ Image scan, scripts/trivy-scan.sh image
   Image baseline 2026-11-09: CRITICAL 0, HIGH 2, MEDIUM 22, LOW 16 (40 findings), 9 with a non-empty FixedVersion
   Guard verdict: PASS (exit 0)
   After the run: .trivy-reports/image.tar is gone, and docker images no longer lists kanban-trivy-scan.
+
+Config scan, scripts/trivy-scan.sh config (config baseline, 2026-11-09)
+  scan: 3s (embedded checks only, Trivy image already pulled); exit 0 on the clean tree
+  staged files: 6 (Dockerfile, backup.Dockerfile, and the rendered k8s-overlays-prod, k8s-overlays-nonprod, k8s-overlays-architecture, k8s-data-postgres)
+  guard: 6 of 6 scanned, PASS (exit 0)
+  failures by severity per Type: dockerfile HIGH 1, LOW 2; kubernetes HIGH 12, MEDIUM 22, LOW 46 (no CRITICAL)
+  failures per Target:
+    Dockerfile: 2
+    backup.Dockerfile: 1
+    k8s-data-postgres.yaml: 19
+    k8s-overlays-architecture.yaml: 5
+    k8s-overlays-nonprod.yaml: 28
+    k8s-overlays-prod.yaml: 28

@@ -1,0 +1,122 @@
+# Report-only Trivy scans of the built image's OS packages and of the rendered k8s manifests, separate from deploy.yml.
+#
+# Decisions:
+# No push or pull_request trigger. The image verdict drifts with the vulnerability database, so a
+# report-only per-push run has no gating power and would only add noise. The config verdict is
+# deterministic (embedded checks, pinned binary), so graduating it to invariant-checks.yml is the later
+# step, once a baseline is triaged and a gate is wanted.
+# Trivy runs from the container image pinned by digest in scripts/trivy-scan.sh, never through
+# trivy-action or setup-trivy: in March 2026 most trivy-action tags and every setup-trivy tag were
+# force-pushed to credential-stealing code (GHSA-69fq-xp46-6x23). No third-party action is used, and
+# neither job holds a secret or logs in to a registry.
+# Each job runs the guard's selftest first, as every gate here does, so a guard that cannot fire fails
+# loudly. Findings never fail a job, so a red job means the scan or the guard failed: the guard fails
+# when the scan covered less than the image or the staged files held.
+# persist-credentials is false on both checkouts because the scanner container mounts the checkout, and
+# a token left in .git/config would sit inside that mount.
+# The same script and the same guard command run here and on a developer machine, so a red run can be
+# reproduced locally (docs/INFRA_RUNBOOK.md, Trivy scan triage).
+#
+# Known holes:
+# The workflow was not run on a GitHub runner when it was committed, because the executor never pushes.
+# The first gh workflow run after a push is the real test.
+# Anonymous Docker Hub pulls of the Gradle and Temurin base images may be rate limited on a shared
+# runner. That was not measured.
+# A fresh build shows what a rebuild would ship, not the OS layer running in prod.
+# The vulnerability database is not pinned, by design.
+# Workloads installed by a HelmRelease are not scanned, and Java libraries are left to dependency-check
+# and Dependabot.
+name: Trivy Scan
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 7 * * 1' # Mondays 07:00 UTC, an hour after the dependency-check run so both reports arrive together
+
+permissions:
+  contents: read
+
+jobs:
+  image-scan:
+    runs-on: ubuntu-latest
+    # Runaway guards sized from a local measurement on a maintainer machine, not a runner measurement.
+    # Cold build 495s plus scan 108s is about 600s; 3 times that rounds up to 35 minutes for the scan step.
+    # The job adds 5 minutes for checkout and the selftest.
+    timeout-minutes: 40
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify the report guard can fire
+        run: python3 -I scripts/verify-trivy-report-selftest.py
+
+      - name: Build the image and scan its OS packages
+        id: scan
+        run: bash scripts/trivy-scan.sh image
+        # No continue-on-error: a scan that could not run must stay visible.
+        timeout-minutes: 35
+
+      # Fails when the report lists fewer OS packages than dpkg holds in the image, and writes the counts and
+      # the vulnerabilities by severity to the log and to the job summary.
+      - name: Verify the report scanned the image
+        if: always() && steps.scan.outcome != 'skipped'
+        run: >-
+          python3 -I scripts/verify-trivy-report.py
+          --kind image
+          --report .trivy-reports/image.json
+          --expected .trivy-reports/image-packages.txt
+          --summary "$GITHUB_STEP_SUMMARY"
+
+      # Files by name, never the directory: the saved image tar lives in it while a scan runs.
+      - name: Upload Trivy image report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-image-report
+          path: |
+            .trivy-reports/image.json
+            .trivy-reports/image-packages.txt
+          if-no-files-found: warn
+
+  config-scan:
+    runs-on: ubuntu-latest
+    # Runaway guards sized from a local measurement, not a runner measurement. The scan itself took 3s, so
+    # the step gets the 5-minute floor of the rounding rule and the job 10 minutes for the checkout, the
+    # kubectl download and the Trivy image pull.
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify the report guard can fire
+        run: python3 -I scripts/verify-trivy-report-selftest.py
+
+      - name: Render the manifests and scan their misconfigurations
+        id: scan
+        run: bash scripts/trivy-scan.sh config
+        # No continue-on-error: a scan that could not run must stay visible.
+        timeout-minutes: 5
+
+      # Fails when a staged file is missing from the report or had no check run on it.
+      - name: Verify the report scanned every staged file
+        if: always() && steps.scan.outcome != 'skipped'
+        run: >-
+          python3 -I scripts/verify-trivy-report.py
+          --kind config
+          --report .trivy-reports/config.json
+          --expected .trivy-reports/config-expected.txt
+          --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Trivy config report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-config-report
+          path: |
+            .trivy-reports/config.json
+            .trivy-reports/config-expected.txt
+          if-no-files-found: warn

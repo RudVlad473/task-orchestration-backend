@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Report-only Trivy scan of the image built from ./Dockerfile, run identically locally and in CI.
+# Report-only Trivy scans of the built image and of the rendered k8s manifests, run the same locally and in CI.
 #
-# Usage: bash scripts/trivy-scan.sh image
-# Writes .trivy-reports/image.json and .trivy-reports/image-packages.txt, then prints the guard
-# command that judges whether the scan covered the image (scripts/verify-trivy-report.py).
-# Findings leave the exit status 0 on purpose; only a scan that could not run exits non-zero.
+# Usage: bash scripts/trivy-scan.sh image | config
+# image writes .trivy-reports/image.json and image-packages.txt; config writes config.json and
+# config-expected.txt. Each prints the guard command that judges whether the scan covered what it
+# was given (scripts/verify-trivy-report.py). Findings leave the exit status 0 on purpose; only a
+# scan that could not run, or a k8s root nobody classified, exits non-zero.
 #
 # Decisions:
 # - Trivy runs from one container image pinned by digest, read from ghcr.io and Docker Hub and
@@ -30,8 +31,18 @@
 #   separate decision about severity and exit code.
 # - The denominator for the guard is dpkg inside the same built image (status ii), measured to
 #   match Trivy's own package count 143 to 143 on the eclipse-temurin:21-jre-jammy base on 2026-11-09.
+# - config scans four roots (the three overlays and data/postgres) in rendered form, plus both
+#   Dockerfiles. Raw patch files would be scanned as partial manifests and report findings on
+#   fragments, and the bases render inside the overlays, so scanning them alone double-counts.
+# - config passes --skip-check-update, so only the checks embedded in the pinned binary run. The
+#   verdict is then a pure function of the manifests and the pin, and the checks age with the pin.
+# - Both modes share this script and run_trivy, so the CI command and the local command are the same.
 #
 # Known holes:
+# - config does not scan workloads installed by a HelmRelease: their charts render in the cluster.
+# - The embedded config checks are as old as the pinned binary.
+# - config reads rendered output only, so a base edited without a rendering root is invisible until
+#   a root that renders it is listed in SCAN_ROOTS.
 # - The vulnerability database is not pinned, by design: a pinned database is a scanner that stops
 #   finding new CVEs. The script never passes --db-repository or --java-db-repository.
 # - A fresh build shows what a rebuild would ship, not the operating-system layer running in prod,
@@ -65,9 +76,41 @@ fail() {
 }
 
 usage() {
-  echo "usage: bash scripts/trivy-scan.sh image" >&2
+  echo "usage: bash scripts/trivy-scan.sh image | config" >&2
   exit 2
 }
+
+# Repo-authored roots that render pod-bearing kinds, so their manifests are scanned.
+SCAN_ROOTS=(
+  k8s/overlays/prod
+  k8s/overlays/nonprod
+  k8s/overlays/architecture
+  k8s/data/postgres
+)
+
+# Roots that are deliberately not scanned. Every kustomization root under k8s/ must be in exactly
+# one of the two lists, and the drift check below fails on any that is in neither.
+#
+# Decisions:
+# - base/app, base/architecture-site, base/redpanda: rendered inside the overlays, so scanning them
+#   alone double-counts.
+# - flux-system: Flux's own unmodified export, skipped like the CustomResourceDefinition kind in
+#   verify-k8s-manifests.sh.
+# - data/postgres-bridge, monitoring/configs, monitoring/controllers, platform, platform/cert-manager
+#   and platform/edge: they render no pod-bearing kind. The workloads their HelmReleases install
+#   come from upstream charts that are rendered in the cluster.
+SKIP_ROOTS=(
+  k8s/base/app
+  k8s/base/architecture-site
+  k8s/base/redpanda
+  k8s/flux-system
+  k8s/data/postgres-bridge
+  k8s/monitoring/configs
+  k8s/monitoring/controllers
+  k8s/platform
+  k8s/platform/cert-manager
+  k8s/platform/edge
+)
 
 run_trivy() {
   docker run --rm \
@@ -116,8 +159,60 @@ scan_image() {
   log "next: python3 -I scripts/verify-trivy-report.py --kind image --report ${REPORT_DIR}/image.json --expected ${REPORT_DIR}/image-packages.txt"
 }
 
+check_roots() {
+  local discovered classified unclassified stale
+  discovered="$(cd "${REPO_ROOT}" && find k8s -type f -name kustomization.yaml -exec dirname {} \; | LC_ALL=C sort)"
+  classified="$(printf '%s\n' "${SCAN_ROOTS[@]}" "${SKIP_ROOTS[@]}" | LC_ALL=C sort)"
+  unclassified="$(LC_ALL=C comm -23 <(echo "${discovered}") <(echo "${classified}"))"
+  stale="$(LC_ALL=C comm -13 <(echo "${discovered}") <(echo "${classified}"))"
+  if [ -n "${unclassified}" ]; then
+    echo "FAIL: kustomization root(s) under k8s/ in neither SCAN_ROOTS nor SKIP_ROOTS: $(echo "${unclassified}" | tr '\n' ' ')" >&2
+  fi
+  if [ -n "${stale}" ]; then
+    echo "FAIL: SCAN_ROOTS or SKIP_ROOTS name root(s) that hold no kustomization.yaml: $(echo "${stale}" | tr '\n' ' ')" >&2
+  fi
+  if [ -n "${unclassified}${stale}" ]; then
+    fail "add each new root to SCAN_ROOTS or SKIP_ROOTS in scripts/trivy-scan.sh with a reason, and drop each stale one"
+  fi
+}
+
+scan_config() {
+  local input="${REPORT_DIR}/config-input" kubectl root name
+  check_roots
+
+  mkdir -p "${REPO_ROOT}/${REPORT_DIR}"
+  rm -rf "${REPO_ROOT:?}/${REPORT_DIR}/config-input"
+  rm -f "${REPO_ROOT}/${REPORT_DIR}/config.json" "${REPO_ROOT}/${REPORT_DIR}/config-expected.txt"
+  mkdir -p "${REPO_ROOT}/${input}"
+
+  kubectl="$(bash "${SCRIPT_DIR}/verify-k8s-manifests.sh" --tool kubectl | tail -n 1)"
+  for root in "${SCAN_ROOTS[@]}"; do
+    name="${root//\//-}.yaml"
+    log "rendering ${root} to ${name}"
+    "${kubectl}" kustomize "${REPO_ROOT}/${root}" > "${REPO_ROOT}/${input}/${name}"
+  done
+  cp "${REPO_ROOT}/Dockerfile" "${REPO_ROOT}/${input}/Dockerfile"
+  cp "${REPO_ROOT}/k8s/data/postgres/backup/Dockerfile" "${REPO_ROOT}/${input}/backup.Dockerfile"
+  ls -1 "${REPO_ROOT}/${input}" | LC_ALL=C sort > "${REPO_ROOT}/${REPORT_DIR}/config-expected.txt"
+
+  log "scanning $(wc -l < "${REPO_ROOT}/${REPORT_DIR}/config-expected.txt") staged files with ${TRIVY_IMAGE}"
+  SECONDS=0
+  run_trivy config \
+    --skip-check-update \
+    --quiet \
+    --skip-version-check \
+    --timeout "${TRIVY_TIMEOUT}" \
+    -f json -o "${REPORT_DIR}/config.json" \
+    "${input}"
+  log "scan took ${SECONDS}s"
+
+  [ -s "${REPO_ROOT}/${REPORT_DIR}/config.json" ] || fail "Trivy wrote no report to ${REPORT_DIR}/config.json"
+  log "next: python3 -I scripts/verify-trivy-report.py --kind config --report ${REPORT_DIR}/config.json --expected ${REPORT_DIR}/config-expected.txt"
+}
+
 [ "$#" -eq 1 ] || usage
 case "$1" in
   image) scan_image ;;
+  config) scan_config ;;
   *) usage ;;
 esac
