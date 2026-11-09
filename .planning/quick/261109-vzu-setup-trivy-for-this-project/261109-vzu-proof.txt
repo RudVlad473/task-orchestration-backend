@@ -1,0 +1,15 @@
+261109-vzu proof record (recorded 2026-11-09)
+
+P1 selftest red without the guard
+  command: python3 -I scripts/verify-trivy-report-selftest.py   (scripts/verify-trivy-report.py not yet created)
+  exit code: 1
+  first line of output: error: no guard at /home/andre/dev/kanban-board-backend/scripts/verify-trivy-report.py
+
+P2 mutation: floor removed
+  mutant: copy of scripts/verify-trivy-report.py with `elif expected and len(scanned) < floor:` replaced by `elif False:`
+  command: python3 -I scripts/verify-trivy-report-selftest.py --guard <mutant copy>
+  exit code: 1
+  failing cases (3): "one below the floor fails and names both counts and the floor";
+    "a tolerance of zero demands every package"; "repeated package names count once"
+  repository guard: the same selftest exits 0 with every case ok
+  the mutant copy was removed afterwards

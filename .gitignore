@@ -54,6 +54,9 @@ out/
 # .planning/quick/260816-hn1-wire-up-secret-scanning-gitleaks-truffle/260816-hn1-MEASUREMENTS.md.
 .gitleaks-reports/
 
+# Trivy scan output: scratch, never committed. It holds the saved image tar while a scan runs.
+.trivy-reports/
+
 ### Python (scripts/*.py gates and self-tests) ###
 __pycache__/
 *.pyc
