@@ -237,11 +237,12 @@ shouldn't cover:
 | Spotless / Error Prone (`ErrorProne` plugin)                | Hard, every build, including the Docker build   | Formatting and compile-time bug patterns (null derefs, ignored futures); both pinned exactly so an upstream release can't red an unchanged commit                                                                                                |
 | JaCoCo coverage ratchet                                     | Hard, `test` only                               | INSTRUCTION/LINE ≥ 90%, BRANCH ≥ 75%                                                                                                                                                                                                             |
 | OWASP `dependency-check`                                    | **Report-only**, weekly + on demand              | Its verdict drifts with newly-published NVD advisories independent of any code change, so it isn't hard-gated, findings are visible in the uploaded report, not blocking                                                                        |
+| `Trivy` (image OS packages, Dockerfile and manifest misconfiguration) | **Report-only**, weekly + on demand | Scans the OS layer of the image built from the Dockerfile, and Trivy's misconfiguration checks on both Dockerfiles and the rendered workload manifests; Java libraries stay with dependency-check and Dependabot. Findings never fail it, but a guard fails the job when the scan covered less than the image or the staged files held. The scanner is a digest-pinned container with no third-party action |
 | Dependabot                                                  | N/A, advisory PRs                               | Watches both the Gradle and GitHub Actions ecosystems, so a version bump for a digest-pinned action or a verified dependency arrives as a reviewable PR, not manual upkeep                                                                       |
 
 See [docs/ARCHITECTURE.md#build-quality-gates](docs/ARCHITECTURE.md#build-quality-gates) for the
 Spotless/ErrorProne detail and [docs/INFRA_RUNBOOK.md](docs/INFRA_RUNBOOK.md) for the diagnosed
-history behind the NVD API key preflight check.
+history behind the NVD API key preflight check and for [Trivy scan triage](docs/INFRA_RUNBOOK.md#trivy-scan-triage).
 
 ## Diagrams
 

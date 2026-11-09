@@ -82,6 +82,56 @@ pod in namespace `architecture` and the Certificate `architecture` (`k3s kubectl
 
 The dashboard check proves an enabled share resolves, not that its panels return data.
 
+## Trivy scan triage
+
+**What runs.** `.github/workflows/trivy-scan.yml` runs weekly (Mondays 07:00 UTC) and on demand, with two
+jobs: `image-scan` builds the image from `./Dockerfile` and scans its operating-system packages, and
+`config-scan` scans both Dockerfiles and the rendered `k8s/overlays/*` and `k8s/data/postgres` manifests with
+Trivy's misconfiguration checks. Each job uploads its report as an artifact (`trivy-image-report`,
+`trivy-config-report`) and writes the guard's table to the job summary. Java libraries stay with
+dependency-check and Dependabot. The same commands run locally:
+
+```
+bash scripts/trivy-scan.sh image
+python3 -I scripts/verify-trivy-report.py --kind image --report .trivy-reports/image.json --expected .trivy-reports/image-packages.txt
+bash scripts/trivy-scan.sh config
+python3 -I scripts/verify-trivy-report.py --kind config --report .trivy-reports/config.json --expected .trivy-reports/config-expected.txt
+```
+
+**Which step is red.** Findings alone never turn a run red.
+
+| Red step | Meaning |
+|---|---|
+| Selftest | The guard was edited into something that cannot fire. Fix `scripts/verify-trivy-report.py`, never the selftest's expectations. |
+| Scan | Trivy or the build could not run: network, the vulnerability database download, the Docker build, or a `k8s/` kustomization root that is in neither `SCAN_ROOTS` nor `SKIP_ROOTS` in `scripts/trivy-scan.sh` (the message names it). |
+| Guard | The scan covered less than the image or the staged files held. Diagnose the scan; do not loosen `--tolerance`. |
+
+**Acting on an image finding.** Most are cleared by a rebuild that pulls a newer base layer. An empty fixed
+version means there is nothing to apply yet. The prod pod runs the operating-system layer from its own build
+(the tag is in `k8s/overlays/prod/kustomization.yaml`) while the scan builds fresh, so a finding can be gone in
+the scan and still live in prod until the next deploy.
+
+**Suppression.** A `.trivyignore` at the repo root is loaded automatically, because the scanner's working
+directory is the repo root. None exists today. Every entry must carry a comment citing the advisory and the
+evidence for ignoring it.
+
+**Bumping the pin.**
+
+1. Read the Trivy release page and confirm the release is immutable.
+2. Read the manifest digest of `ghcr.io/aquasecurity/trivy:<version>` and of `aquasec/trivy:<version>` and
+   require them equal.
+3. List advisories with `gh api repos/aquasecurity/trivy/security-advisories` and require the new version to be
+   above every patched threshold.
+4. Edit the one `TRIVY_IMAGE` value in `scripts/trivy-scan.sh`.
+5. Rerun both local modes and compare with the baseline in the quick-task measurement file.
+
+The pin is a digest because in March 2026 the Trivy binary, the `trivy-action` tags and two Docker Hub tags
+were replaced with credential-stealing code, and images referenced by digest were not affected.
+
+**Status.** Not a gate yet. The dated baseline is in
+`.planning/quick/261109-vzu-setup-trivy-for-this-project/261109-vzu-measure.txt`. Moving a mode to a gate means
+triaging that baseline first and then choosing an `--exit-code` and `--severity` policy as a separate decision.
+
 ## Firewall — three layers
 
 **UPDATED 2026-09-06 (quick task 260906-feq)** — `DOCKER-USER` no longer carries "nothing at all";
