@@ -174,7 +174,7 @@ jobs:
       # Never the tee'd logs: see the Known holes line in the header. The tree is only module coordinates.
       - name: Upload dependency-check report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-check-report
           path: |
