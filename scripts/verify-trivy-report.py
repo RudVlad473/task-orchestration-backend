@@ -30,7 +30,8 @@ Decisions:
 Known holes:
   * Counts are compared, not identities: a scan of the right number of the wrong packages passes.
   * The report carries no database date, so a stale vulnerability database does not fail this guard.
-  * Findings suppressed through a .trivyignore are absent from the report and from the table.
+  * Findings removed by an ignore file (.trivyignore.yaml for config, .trivyignore for image) are
+    absent from the report and from the table.
   * Library packages are out of scope by the scan's own flag, so this guard never counts them.
   * An image without dpkg gives an empty expected list and fails loudly, so a non-Debian base
     needs a new denominator source.

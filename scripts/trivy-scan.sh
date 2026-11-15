@@ -37,6 +37,9 @@
 # - config passes --skip-check-update, so only the checks embedded in the pinned binary run. The
 #   verdict is then a pure function of the manifests and the pin, and the checks age with the pin.
 # - Both modes share this script and run_trivy, so the CI command and the local command are the same.
+# - config passes the YAML ignore file .trivyignore.yaml explicitly, because 0.76.x loads that form
+#   only through --ignorefile. Its entries are path-scoped where a plain ignore file is not, and a
+#   suppressed row is absent from the report and from the guard table.
 #
 # Known holes:
 # - config does not scan workloads installed by a HelmRelease: their charts render in the cluster.
@@ -53,6 +56,8 @@
 #   TruffleHog), so this scan does not repeat them.
 # - A base image without dpkg gives an empty denominator and the guard fails loudly, so a non-Debian
 #   base needs a new denominator source.
+# - The ignore feature is experimental in the pinned Trivy, so a pin bump (runbook step 5) must
+#   compare the rows, and a row that reappears is the signal.
 
 set -euo pipefail
 
@@ -199,6 +204,7 @@ scan_config() {
   SECONDS=0
   run_trivy config \
     --skip-check-update \
+    --ignorefile .trivyignore.yaml \
     --quiet \
     --skip-version-check \
     --timeout "${TRIVY_TIMEOUT}" \

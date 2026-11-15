@@ -111,9 +111,14 @@ version means there is nothing to apply yet. The prod pod runs the operating-sys
 (the tag is in `k8s/overlays/prod/kustomization.yaml`) while the scan builds fresh, so a finding can be gone in
 the scan and still live in prod until the next deploy.
 
-**Suppression.** A `.trivyignore` at the repo root is loaded automatically, because the scanner's working
-directory is the repo root. None exists today. Every entry must carry a comment citing the advisory and the
-evidence for ignoring it.
+**Suppression.** Config mode loads `.trivyignore.yaml` through `--ignorefile`, because the pinned Trivy reads
+the YAML form only through that flag and treats it as experimental; its entries are path-scoped. Image mode
+loads a plain `.trivyignore` from the repo root if one exists (none does). Every entry carries a statement or
+comment citing the rule and the evidence for ignoring it. Today there is one entry, KSV-0109 on
+`k8s-data-postgres.yaml`: the init scripts mention credential variables by name and the values come from the
+out-of-band `postgres-init` Secret. An init script that carries a literal value, a second ConfigMap rendered
+into that file, or a pin bump after which the row reappears ends the exception and the entry is re-derived.
+Suppressed rows are absent from the report and from the guard table.
 
 **Bumping the pin.**
 

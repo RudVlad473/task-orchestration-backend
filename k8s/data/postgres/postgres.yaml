@@ -50,6 +50,16 @@ spec:
         app.kubernetes.io/name: postgres
     spec:
       terminationGracePeriodSeconds: 60
+      # The pod runs under the container runtime's default seccomp profile, like the other pods.
+      #
+      # Decisions:
+      # A container securityContext clears only the container's default-context finding; the pod
+      # needs a non-empty securityContext of its own, and seccompProfile is real hardening where an
+      # empty-effect field would not be. No runAsUser, runAsGroup, runAsNonRoot or fsGroup is set:
+      # see the container securityContext below.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: postgres
           # Same tag as local dev and the Testcontainers suite.
@@ -80,12 +90,25 @@ spec:
             - max_connections=25
             - -c
             - shared_preload_libraries=pg_stat_statements
+          # The root filesystem is read-only; the data volume and the socket directory are the writable paths.
+          #
+          # Decisions:
+          # MEASURED (2026-11-15, Docker, no cluster): with the real init scripts, a first boot, a restart, a
+          # workload and a spilling sort, a writable-root container wrote only the unix socket and its lock
+          # file in /var/run/postgresql. Postgres still starts as root and the entrypoint drops to the
+          # postgres user (uid 999) with gosu, so no uid, gid or fsGroup is set and the data volume's
+          # ownership is untouched. Falsifier: a postgres image change or a new extension repeats the
+          # writable-root census before the tag moves.
+          securityContext:
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
             - name: postgres-init
               mountPath: /docker-entrypoint-initdb.d
               readOnly: true
+            - name: socket
+              mountPath: /var/run/postgresql
           # Probe over TCP (-h 127.0.0.1): during initialization the entrypoint runs a temporary server
           # with listen_addresses empty, so a socket probe can report ready while init scripts still run.
           #
@@ -118,6 +141,10 @@ spec:
           configMap:
             name: postgres-init
             defaultMode: 0555
+        # Holds the socket and lock file only, a few bytes: disk-backed, no sizeLimit (a limit would evict
+        # the pod when crossed) and no medium Memory (the memory limit above must not change).
+        - name: socket
+          emptyDir: {}
   volumeClaimTemplates:
     - metadata:
         name: data

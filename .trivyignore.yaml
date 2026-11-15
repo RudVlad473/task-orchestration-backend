@@ -1,0 +1,14 @@
+# Trivy ignore entries for config mode, each scoped to one rule on one rendered file.
+#
+# Decisions:
+# scripts/trivy-scan.sh passes this file to config mode through --ignorefile, because the pinned
+# Trivy loads the YAML form only through that flag and treats it as experimental. It is the YAML
+# form and not a plain ignore file because a plain file has no path scope and would hide the
+# check on every scanned root. Falsifier: an init script that carries a literal value, a second
+# ConfigMap rendered into the same file, or a Trivy pin bump after which the row reappears each
+# mean the entry is re-derived, never extended.
+misconfigurations:
+  - id: KSV-0109
+    paths:
+      - k8s-data-postgres.yaml
+    statement: "The rule matched variable names and psql variable references in the postgres init scripts. The ConfigMap holds 2 scripts, 112 lines, and every line that matches the rule's keywords is a comment, a ${VAR:?} guard, a -v name=\"$VAR\" argument or a psql :'name' reference. The credentials arrive through the postgres-init Secret created out of band. Decided 2026-11-15, rule page https://avd.aquasec.com/misconfig/ksv-0109."
