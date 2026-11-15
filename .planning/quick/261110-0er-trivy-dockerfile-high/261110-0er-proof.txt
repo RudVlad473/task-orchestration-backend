@@ -1,0 +1,213 @@
+261110-0er proof file
+=====================
+
+Baseline at HEAD (7d3ba3d), measured by the executor from the existing .trivy-reports/ before any rescan
+-------------------------------------------------------------------------------------------------------
+
+$ python3 -I scripts/verify-trivy-report.py --kind image --report .trivy-reports/image.json --expected .trivy-reports/image-packages.txt
+| Check | Value |
+| --- | --- |
+| OS | ubuntu 22.04 |
+| Expected OS packages (dpkg in the image) | 143 |
+| OS packages scanned | 143 |
+| Floor (95% of expected) | 136 |
+| Vulnerabilities, HIGH | 2 |
+| Vulnerabilities, MEDIUM | 22 |
+| Vulnerabilities, LOW | 16 |
+| With a fix | 9 |
+| Verdict | PASS |
+
+$ python3 -I scripts/verify-trivy-report.py --kind config --report .trivy-reports/config.json --expected .trivy-reports/config-expected.txt
+| Check | Value |
+| --- | --- |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, HIGH | 1 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, HIGH | 12 |
+| Failures, kubernetes, MEDIUM | 22 |
+| Failures, kubernetes, LOW | 46 |
+| Failures in Dockerfile | 2 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 19 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 28 |
+| Failures in k8s-overlays-prod.yaml | 28 |
+| Verdict | PASS |
+
+Grep counts on the baseline reports:
+  grep -c '"ID": "DS-0002"' .trivy-reports/config.json                       -> 1
+  grep -c '"Severity": "HIGH"' .trivy-reports/image.json                      -> 2
+  grep -c '"VulnerabilityID": "CVE-2026-109518"' .trivy-reports/image.json    -> 2
+
+Not re-measured by the executor (a rebuild of HEAD's Dockerfile was not run): Config.User empty and `id -u` 0 at HEAD.
+Those follow from the HEAD Dockerfile having no USER instruction and the base image setting none; the planner measured
+them on 2026-11-15.
+
+Base image check (plan step 2)
+------------------------------
+
+$ docker pull eclipse-temurin:21-jre-jammy
+Digest: sha256:dff6eb46527bd293a3c06bbbe9e64e8c9f91f01905b5abbdad31761c03059d2c
+Status: Downloaded newer image for eclipse-temurin:21-jre-jammy
+
+$ docker run --rm --entrypoint dpkg-query eclipse-temurin:21-jre-jammy -W -f '${Package} ${Version}\n' apt libapt-pkg6.0
+apt 2.4.15ubuntu0.1
+libapt-pkg6.0 2.4.15ubuntu0.1
+
+Result: the base has caught up. The planner's cached base (created 2026-10-29) held 2.4.14; the freshly pulled one,
+which `docker build --pull` and `scripts/trivy-scan.sh image` also pull, already holds the fixed 2.4.15ubuntu0.1. Per plan
+step 2 the apt upgrade layer is NOT added, and the apt version gate is replaced by the observed version
+(2.4.15ubuntu0.1, unchanged from the base). The HIGH finding CVE-2026-109518 in the baseline therefore came from a stale
+local base cache, not from the Dockerfile; a plain pull of the current base removes it. Only the USER line (DS-0002)
+is a Dockerfile change.
+
+The Dockerfile edit (runtime stage only; Gradle stage, base tag, WORKDIR, COPY and ENTRYPOINT untouched)
+------------------------------------------------------------------------------------------------------
+
++# Run as the numeric nobody user and group, as the backup image does. Numeric because kubelet
++# cannot check runAsNonRoot against a user name. The app writes only under /tmp, which stays
++# world-writable, and app.jar stays root-owned.
++USER 65534:65534
+ (placed between the COPY of the jar and the ENTRYPOINT)
+
+$ python3 scripts/verify-comments.py check
+OK: 344 files, 1339 comment blocks   (exit 0)
+
+Built image probes: docker build --pull -t kanban-0er-probe:local .   (exit 0)
+------------------------------------------------------------------
+
+$ docker inspect --format '{{.Config.User}}' kanban-0er-probe:local
+65534:65534
+
+$ docker run --rm --entrypoint id kanban-0er-probe:local
+uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
+
+$ docker run --rm --entrypoint id kanban-0er-probe:local -u
+65534
+
+$ docker run --rm --entrypoint dpkg-query kanban-0er-probe:local -W -f '${Package} ${Version}\n' apt libapt-pkg6.0
+apt 2.4.15ubuntu0.1
+libapt-pkg6.0 2.4.15ubuntu0.1
+
+$ docker run --rm --entrypoint sh kanban-0er-probe:local -c 'touch /tmp/probe; test -r /app/app.jar; touch /app/probe; ls -ln /app/app.jar; ls -A /var/lib/apt/lists | wc -l'
+tmp-writable
+jar-readable
+touch: cannot touch '/app/probe': Permission denied
+-rw-r--r-- 1 0 0 103442205 Nov 15 12:24 /app/app.jar
+0
+(/tmp is drwxrwxrwt root root, mode 1777, from the base image)
+
+Real process, placeholder environment (DB_HOST=127.0.0.1, DB_NAME, DB_USER and DB_PASS all the word "unused"):
+$ docker exec kanban-0er-probe awk '/^(Uid|Gid):/ {print $1, $2}' /proc/1/status
+Uid: 65534
+Gid: 65534
+Startup line (grep -o): started by nobody in /app
+Tomcat: TomcatWebServer and StandardService INFO lines appear before the failure (the web server initialised).
+First ERROR: "Application run failed", BeanCreationException for entityManagerFactory, caused by
+"Connection to 127.0.0.1:5432 refused". No "permission denied" or "read-only file system" text anywhere in the log
+(count 0). Exit code of the container: 1, as expected with no database.
+The container was still running when `docker exec` ran, so the /proc/1/status probe is on the live JVM, PID 1.
+
+initContainer command, as the manifest runs it:
+$ docker run --rm --entrypoint java kanban-0er-probe:local -Dloader.main=com.vrudenko.kanban_board.config.AvroSchemaRegistrar -cp app.jar org.springframework.boot.loader.launch.PropertiesLauncher http://127.0.0.1:1
+First error: ERROR io.confluent.kafka.schemaregistry.client.rest.RestService -- Failed to send HTTP request to endpoint:
+http://127.0.0.1:1/config/com.vrudenko.kanban_board.event.avro.AvroTaskCreatedEvent
+java.net.ConnectException: Connection refused
+A refused connection, not a permission error: the registrar starts and runs as uid 65534.
+
+$ docker history kanban-0er-probe:local (top rows)
+0B     ENTRYPOINT ["java" "-jar" ...]
+0B     USER 65534:65534
+103MB  COPY file:... (app.jar)
+8.19kB WORKDIR /app
+No apt layer exists (skipped, see the base image check). The new layer is the USER instruction, 0 B.
+
+After, image   ($ bash scripts/trivy-scan.sh image, then the guard; build plus scan 179 s scan time)
+--------------------------------------------------------------------------------------------------
+| Check | Value |
+| --- | --- |
+| OS | ubuntu 22.04 |
+| Expected OS packages (dpkg in the image) | 143 |
+| OS packages scanned | 143 |
+| Floor (95% of expected) | 136 |
+| Vulnerabilities, MEDIUM | 35 |
+| Vulnerabilities, LOW | 16 |
+| With a fix | 18 |
+| Verdict | PASS |
+grep -c '"Severity": "HIGH"' .trivy-reports/image.json                    -> 0   (was 2)
+grep -c '"VulnerabilityID": "CVE-2026-109518"' .trivy-reports/image.json  -> 0   (was 2)
+
+Differences from the plan's expected figures, with cause:
+- MEDIUM is 35 (baseline 22) and with-a-fix is 18 (baseline 9), where the plan expected 22 and 7. The same 143 packages
+  were scanned. The cause is not proven: the scan pulled a newer base (digest sha256:dff6eb46...) and Trivy's vulnerability
+  database is not pinned, so either could add MEDIUM findings. The USER instruction adds no package. Not investigated
+  further; MEDIUM is outside this item's HIGH-only scope.
+- The HIGH 2 to 0 change is NOT caused by a Dockerfile apt layer. It follows from the refreshed base (apt and
+  libapt-pkg6.0 already 2.4.15ubuntu0.1). I did not rebuild HEAD's Dockerfile against the new base to prove the HIGH
+  findings vanish without the USER change, but the dpkg versions of the base alone (shown above, taken before any
+  Dockerfile edit was built) are the fixed ones, so the image scan result does not depend on this commit.
+
+After, config   ($ bash scripts/trivy-scan.sh config, run after the image scan, then the guard)
+-----------------------------------------------------------------------------------------------
+| Check | Value |
+| --- | --- |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, HIGH | 12 |
+| Failures, kubernetes, MEDIUM | 22 |
+| Failures, kubernetes, LOW | 46 |
+| Failures in Dockerfile | 1 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 19 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 28 |
+| Failures in k8s-overlays-prod.yaml | 28 |
+| Verdict | PASS |
+grep -c '"ID": "DS-0002"' .trivy-reports/config.json   -> 0   (was 1)
+grep -c '"ID": "DS-0026"' .trivy-reports/config.json   -> 2   (Dockerfile and backup.Dockerfile, LOW, untouched)
+"Failures, dockerfile, HIGH" row is gone (was 1); "Failures in Dockerfile" 2 -> 1; kubernetes rows identical to baseline.
+
+Handoff for 261110-0es (evidence only, no manifest edited)
+-----------------------------------------------------------
+Same placeholder environment, image kanban-0er-probe:local, run to exit and read from the logs:
+- docker run --read-only (no tmpfs): startup FAILS before the database is reached. First ERROR is "Application run failed",
+  ApplicationContextException "Unable to start web server"; the cause text is "Unable to create tempDir. java.io.tmpdir is
+  set to /tmp" with "Read-only file system" (1 occurrence).
+- docker run --read-only --tmpfs /tmp: startup gets as far as without the flag: 0 "read-only file system" lines, and the first
+  ERROR is the entityManagerFactory failure from "Connection to 127.0.0.1:5432 refused".
+So a read-only root filesystem without a /tmp mount breaks startup (Tomcat temp directory). A readOnlyRootFilesystem: true
+in k8s/base/app/app.yaml needs an emptyDir at /tmp for the app container. This was measured with docker's --tmpfs, which
+is not the same as a kubelet emptyDir (ownership and mode of an emptyDir come from the kubelet, fsGroup and the runtime);
+the register-schemas initContainer was not run read-only. If 0es pins a uid, use 65534.
+
+Cleanup
+-------
+Probe containers removed after reading their logs; `docker rmi kanban-0er-probe:local` done; no container or image
+named *0er* remains; .trivy-reports/image.tar is gone; `docker ps -a --filter label=org.testcontainers` was empty
+before and after Task 2 (the Dockerfile commit hook is checked in Task 3). The gitignored report files stay in place.
+
+Not verified without a cluster
+------------------------------
+- Volume ownership and fsGroup: the manifest mounts no volume, so this is a statement about the manifest, not a run.
+- That kubelet accepts runAsNonRoot: true against the numeric 65534:65534 user:group form: not run, no cluster. The
+  numeric form is the documented reason for choosing it.
+- How any runAsUser, fsGroup or readOnlyRootFilesystem that the sibling items add interacts with uid 65534: not run.
+  Only the docker --read-only and --tmpfs probes above exist.
+- A full start against real Postgres and Redpanda: the probe reaches only the first refused database connection, so any
+  later startup write (after the database is up) was not seen.
+- The rollout under the Recreate strategy: not run. A crash on start is an outage until a rollback.
+- That the image CI builds equals this one: the probe was built locally from the same Dockerfile and the same
+  `docker build --pull`; the CI build was not run and the base digest can differ over time.
+
+Deploy note
+-----------
+A push of the Dockerfile commit rebuilds and pushes the production and nonprod image tags, because
+.github/workflows/deploy.yml does not list Dockerfile in paths-ignore. Flux then rolls both environments to an image
+whose process runs as uid 65534. Nothing was pushed by this task.
+
