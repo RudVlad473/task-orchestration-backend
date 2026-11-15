@@ -1,0 +1,186 @@
+261110-0es proof file. Only the dummy word probe is used for database name, user and password.
+All Docker objects created by this plan carry the prefix k0es-. Run date 2026-11-15 (UTC clock 12:57 at start).
+
+== Pre-flight
+git status --short k8s printed nothing (k8s clean against HEAD 0a5b86b).
+Containers present before the plan (not touched): probe-0et-a, s0es-app, s0es-rp, s0es-pg, openshell-default--claude-test-*, freehire-fork-*, firecrawl-*, datastore-postgres, changedetection, anythingllm, bizbrain-neo4j.
+Networks present before the plan (not touched): anythingllm_default, bridge, datastore_default, firecrawl_backend, freehire-fork_default, host, kanban-db, kanban-edge, kanban-metrics, none, rc527919_default, review-codex_default, scratch-0es-net.
+Volumes present before the plan: about 150 (hash-named anonymous volumes plus kanban-board-backend_postgres-data, kanban-board-backend_redpanda-data, probe-0et-live and others); none named k0es-*.
+Images present before the plan: postgres:16, curlimages/curl:8.22.0, docker.redpanda.com/redpandadata/redpanda:v26.2.1 (id sha256:9a47c1f8d673...). NOT present: rudenkovladimir/kanban-board-backend:main-165-ef59a17 (so it is pulled by this plan and removed in cleanup), and no kanban-*-probe image.
+
+== Baseline
+bash scripts/trivy-scan.sh config exited 0 (6 files staged, scan took 2s). Guard (python3 -I scripts/verify-trivy-report.py ...):
+| Check | Value |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, HIGH | 12 |
+| Failures, kubernetes, MEDIUM | 22 |
+| Failures, kubernetes, LOW | 46 |
+| Failures in Dockerfile | 1 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 19 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 28 |
+| Failures in k8s-overlays-prod.yaml | 28 |
+| Verdict | PASS |
+
+HIGH rows in the two overlay targets (jq on .trivy-reports/config.json), target, id, start, end, message:
+k8s-overlays-nonprod.yaml KSV-0014 60-105  Container 'app' of Deployment 'app' should set 'securityContext.readOnlyRootFilesystem' to true
+k8s-overlays-nonprod.yaml KSV-0014 153-207 Container 'redpanda' of StatefulSet 'redpanda' should set 'securityContext.readOnlyRootFilesystem' to true
+k8s-overlays-nonprod.yaml KSV-0014 107-129 Container 'register-schemas' of Deployment 'app' should set 'securityContext.readOnlyRootFilesystem' to true
+k8s-overlays-nonprod.yaml KSV-0118 153-207 container redpanda in kanban-nonprod namespace is using the default security context
+k8s-overlays-prod.yaml    KSV-0014 60-105  Container 'app' ...
+k8s-overlays-prod.yaml    KSV-0014 153-207 Container 'redpanda' ...
+k8s-overlays-prod.yaml    KSV-0014 107-129 Container 'register-schemas' ...
+k8s-overlays-prod.yaml    KSV-0118 153-207 container redpanda in kanban-prod namespace is using the default security context
+8 HIGH rows in the overlays, as expected.
+Line mapping read from .trivy-reports/config-input/k8s-overlays-prod.yaml: line 59 is "containers:", line 60 opens the app container ("- env:"), line 106 is "initContainers:", line 107 opens register-schemas ("- command:"), line 118 "name: register-schemas", line 152 "containers:" of the StatefulSet, line 153 opens redpanda ("- args:"), line 182 "name: redpanda". The row ranges match the three containers.
+
+== Redpanda census (writable root)
+Broker started with no --read-only: image docker.redpanda.com/redpandadata/redpanda:v26.2.1, the manifest's own args with --memory 512M and the advertise addresses from the container hostname (redpanda), data volume k0es-rp-data on /var/lib/redpanda/data, --memory 1g on the container.
+Ready after the first probe of the bounded loop (Up 5 seconds at the check): rpk cluster health Healthy true.
+Exercised: rpk topic create k0es-t (OK), produce "hello-probe" to partition 0 offset 0, consume it back (value hello-probe), rpk registry schema list (empty list, no error), the manifest's readiness command (sh -c "rpk cluster health | grep -E 'Healthy:.+true'") printed Healthy true.
+docker diff k0es-rp:
+C /etc
+C /etc/redpanda
+C /etc/redpanda/redpanda.yaml
+So the broker writes only /etc/redpanda/redpanda.yaml outside the data volume. No other path, so the only mount candidate is /etc/redpanda. redpanda.yaml was copied out (37 lines) for the comparison below.
+
+== Redpanda negative control
+docker run --read-only with only the data volume (k0es-rp-data-ro), no /etc/redpanda mount: the container exited with code 1 within 2 seconds. Last log line:
+Error: error writing to temporary file: open /etc/redpanda/redpanda-4774117529658062135: read-only file system
+rpk replaces redpanda.yaml through a temp file in the same directory, so the directory, not the file, has to be writable.
+
+== Redpanda read-only run
+docker run --read-only with -v k0es-rp-data-ro:/var/lib/redpanda/data and --tmpfs /etc/redpanda:rw,exec,mode=0777 (stand-in for an emptyDir):
+- HostConfig.ReadonlyRootfs true, state running.
+- rpk cluster health Healthy true (ready on the first probe).
+- rpk topic create k0es-t2 OK, produce "ro-probe" to partition 0 offset 0, consume printed value ro-probe.
+- docker logs: 0 lines matching "read-only file system" or "permission denied".
+- docker diff k0es-rp printed nothing (every write went to a mount).
+- diff of the redpanda.yaml in the tmpfs against the writable-root copy from the census: no output, byte-identical.
+docker restart k0es-rp: the broker came back, rpk cluster health Healthy true, rpk topic list shows k0es-t2 (1 partition, 1 replica), 0 read-only or permission-denied log lines. The topic checked after the restart is k0es-t2, not k0es-t, because the read-only run uses its own fresh data volume (k0es-rp-data-ro); k0es-t lived in the writable-run volume.
+
+== Render and validate
+bash scripts/verify-k8s-manifests.sh exited 0: "all 14 kustomization root(s) valid" (kubeconform against Kubernetes 1.36.4 schemas).
+Rendered with the pinned kubectl (/home/andre/.cache/kanban-k8s-tools/kubectl-v1.36.4/kubectl kustomize k8s/overlays/prod, then nonprod). In both renders the StatefulSet redpanda container has securityContext {readOnlyRootFilesystem: true}, volumeMounts data at /var/lib/redpanda/data and config at /etc/redpanda, pod volumes [config emptyDir {}] next to the data volumeClaimTemplate, and --memory is 2G in prod and 512M in nonprod (the overlay patches still hit args/6).
+python3 scripts/verify-comments.py check: OK, 344 files. (Two summary-first violations in the first draft of the manifest comments were fixed in the comments, not in the lint.)
+
+== After, Task 1
+bash scripts/trivy-scan.sh config exited 0. Guard:
+| Check | Value |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, HIGH | 8 |
+| Failures, kubernetes, MEDIUM | 22 |
+| Failures, kubernetes, LOW | 46 |
+| Failures in Dockerfile | 1 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 19 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 26 |
+| Failures in k8s-overlays-prod.yaml | 26 |
+| Verdict | PASS |
+HIGH rows left in the overlays: 4, all KSV-0014 on app and register-schemas (2 per overlay). No KSV-0014 or KSV-0118 row names redpanda. HIGH 12 to 8, MEDIUM 22 and LOW 46 unchanged, overlay failures 28 to 26. As expected.
+Tracer gate (workflow.auto_advance is true): the Task 1 verify chain was re-run end to end and exited 0, so the plan expanded to Task 2.
+
+== Task 2 setup
+Network k0es-net, Postgres 16 container k0es-pg (alias postgres, db/user/password all probe), pg_isready after about 8 seconds. The Redpanda broker k0es-rp keeps running in read-only form with tmpfs at /etc/redpanda; for every register-schemas run it is recreated on a fresh data volume (k0es-rp-data-ro2 to ro6) so the 14 subjects counted afterwards were registered by that run and not left by an earlier one. rpk registry subject list prints a CONTEXT/SUBJECT header, so counts below exclude it.
+
+== Image A
+rudenkovladimir/kanban-board-backend:main-165-ef59a17 pulled from Docker Hub (it was NOT local before the plan).
+repo digest sha256:66c9926fde678d5921ef3a322aa090d03168071a91f6f50a9d6b6ff78df585cd, image created 2026-11-05T17:51:24Z, .Config.User is empty (the key is absent), so the process runs as root. This is the tag prod and nonprod run today.
+
+== Census image A (writable root)
+Both runs add --cap-drop ALL --security-opt no-new-privileges to mirror the manifest.
+(a) init command exactly as the manifest runs it (java -Dloader.main=...AvroSchemaRegistrar -cp app.jar ...PropertiesLauncher http://redpanda:8081, workdir /app): exit 0, log "Registered 14 Avro schemas against http://redpanda:8081", subjects 14, docker diff k0es-init printed NOTHING (the JVM's perf-data file is created and removed during the run, so the census at exit does not see it; the read-only runs below decide).
+(b) app with DB_HOST=postgres DB_NAME=probe DB_USER=probe DB_PASS=probe KAFKA_BOOTSTRAP_SERVERS=redpanda:19092 SCHEMA_REGISTRY_URL=http://redpanda:8081: /actuator/health on 9081 returned {"status":"UP","groups":["public"]} after about 20 seconds (iteration 5 of the 5 s loop), /api/healthz returned 200. The writable run is the control and reached its success state, so the probe environment is right. docker diff k0es-app lists only paths under /tmp:
+C /tmp
+C /tmp/hsperfdata_root
+A /tmp/hsperfdata_root/1
+A /tmp/tomcat-docbase.8080.<n>
+A /tmp/tomcat-docbase.9081.<n>
+A /tmp/tomcat.8080.<n>/work/Tomcat/localhost/api   (and its parents)
+A /tmp/tomcat.9081.<n>/work/Tomcat-1/localhost/ROOT  (and its parents)
+So the app writes only under /tmp: the JVM perf-data directory and the temp and docbase directories of the two embedded Tomcat instances (8080 and 9081). Nothing else on the root filesystem.
+
+== Negative controls image A
+- init, --read-only, NO mount, fresh registry: exit 0, 14 subjects. Unlike the app it does NOT fail without /tmp (the JVM silently runs without perf data), so for image A the init census and its control both say no mount is needed.
+- app, --read-only, NO /tmp mount: the container exited 1 within about 10 seconds; the log shows "Application run failed" / "Unable to start web server" whose cause names the temp directory and the read-only file system (the same failure 0er recorded).
+
+== Read-only image A
+- init, --read-only, no mount, fresh registry k0es-rp-data-ro3: exit 0, "Registered 14 Avro schemas", rpk registry subject list shows 14 subjects, all com.vrudenko.kanban_board.event.avro.* in context default.
+- app, --read-only plus --tmpfs /tmp:rw,exec,mode=1777: /actuator/health {"status":"UP","groups":["public"]} (iteration 4), /api/healthz 200, 0 log lines matching "read-only file system" or "permission denied", docker diff k0es-app printed nothing, against real Postgres 16 and the real Redpanda broker.
+
+== Image B
+docker build -t kanban-0es-probe:local . from HEAD (Dockerfile with USER 65534:65534, commit f0ecee2) succeeded: image id sha256:bd0476e6b281b85982d10c7d890e196e387becc84686ef4536896d995fcfd3f3, .Config.User 65534:65534.
+
+== Census image B
+- init, writable root, fresh registry: exit 0, 14 Avro schemas, docker diff k0es-init lists C /tmp and A /tmp/hsperfdata_nobody (the perf-data directory, left behind this time because the JVM runs as nobody).
+- app, writable root: health UP (iteration 4), /api/healthz 200, /proc/1/status Uid and Gid 65534 for all four fields, docker diff lists only /tmp: hsperfdata_nobody/1, the two tomcat-docbase directories and the two tomcat work trees, the same shape as image A with nobody for root.
+
+== Negative controls image B
+- app, --read-only, NO /tmp: exited 1 within about 5 seconds; grep -o of the log gives "Read-only file system" and "Unable to create tempDir. java.io.tmpdir is set to /tmp".
+- init, --read-only, NO mount: exit 0, 14 subjects. It does not fail without /tmp, but its census names /tmp/hsperfdata_nobody, so the manifest mounts /tmp on register-schemas too (rule R1: the census names the path). The mount is not needed for correctness today; it keeps a JVM that wants its perf-data file from failing quietly.
+
+== Read-only image B
+- init AND app both --read-only, sharing ONE named Docker volume (k0es-tmp) at /tmp as the stand-in for the pod's shared emptyDir, fresh registry k0es-rp-data-ro6: init exit 0, 14 subjects, docker diff of the init container empty (its writes went to the volume); the app then reached /actuator/health UP (iteration 4), /api/healthz 200, 0 read-only or permission-denied log lines, docker diff of the app root empty.
+- app with --tmpfs /tmp:rw,exec,mode=1777: health UP (iteration 4).
+
+== Mount decision table (union of both images' censuses)
+| container | path | evidence image A | evidence image B |
+| redpanda | /etc/redpanda (emptyDir config) | docker diff of the writable run lists /etc/redpanda/redpanda.yaml; read-only negative control exits 1 with "read-only file system" (image v26.2.1 is the same for A and B) | same image |
+| app | /tmp (emptyDir tmp) | docker diff lists hsperfdata_root and tomcat dirs under /tmp; read-only without it exits 1 | docker diff lists hsperfdata_nobody and tomcat dirs under /tmp; read-only without it exits 1 |
+| register-schemas | /tmp (same emptyDir tmp) | docker diff empty; read-only without it exits 0 | docker diff lists hsperfdata_nobody; read-only without it exits 0 |
+Limit of the simulation: Docker named volumes and --tmpfs stand in for kubelet emptyDir; the pod-level seccomp RuntimeDefault profile was not applied.
+
+== After, Task 2
+k8s/base/app/app.yaml edited: readOnlyRootFilesystem true on app and register-schemas (between allowPrivilegeEscalation and capabilities), a tmp mount at /tmp on both, pod volume tmp emptyDir {}. The tmp mount is on register-schemas too because the image B census names /tmp/hsperfdata_nobody (see the decision table).
+yq parse OK; python3 scripts/verify-comments.py check OK (344 files); bash scripts/verify-k8s-manifests.sh exit 0 (all 14 kustomization roots valid).
+Pinned-kubectl renders of prod and nonprod: app and register-schemas both have readOnlyRootFilesystem true and the tmp mount at /tmp, the Deployment has volumes [tmp emptyDir {}], container order unchanged (containers[0] app, initContainers[0] register-schemas).
+bash scripts/trivy-scan.sh config exit 0. Guard:
+| Check | Value |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, HIGH | 4 |
+| Failures, kubernetes, MEDIUM | 22 |
+| Failures, kubernetes, LOW | 46 |
+| Failures in Dockerfile | 1 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 19 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 24 |
+| Failures in k8s-overlays-prod.yaml | 24 |
+| Verdict | PASS |
+No HIGH row in either overlay; HIGH 4 left, all in k8s-data-postgres.yaml (sibling item). HIGH 12 to 4, MEDIUM 22 and LOW 46 unchanged, overlay failures 28 to 24, postgres 19 and architecture 5 unchanged, 6 of 6 files.
+git diff --stat HEAD -- k8s: k8s/base/app/app.yaml (20 insertions) and k8s/base/redpanda/redpanda.yaml (19 insertions), nothing else.
+The Task 2 automated verify chain (jq HIGH counts, guard equalities, yq structure checks, changed-path gate) exited 0.
+
+== Gates
+python3 scripts/verify-comments.py check: OK, 344 files, 1345 comment blocks.
+python3 scripts/verify-k8s-invariants-selftest.py: exit 0 ("selftest OK -- I1-I12 each fire on an engineered violation").
+python3 scripts/verify-k8s-invariants.py --no-provisional: exit 0 (14 kustomization roots checked).
+bash scripts/verify-k8s-manifests.sh: exit 0 (all 14 kustomization roots valid).
+node docs/architecture/sync.mjs check: exit 0 (62 elements, 18 workloads).
+Docs search (rg -n -i "emptyDir|readOnlyRootFilesystem|/etc/redpanda" over docs/INFRA_ARCHITECTURE.md, docs/INFRA_RUNBOOK.md, docs/architecture/model): one hit, INFRA_RUNBOOK.md line 861, the unrelated architecture-site /tmp emptyDir. No statement became false, no doc edit.
+Docker cleanup: every k0es- container (k0es-rp, k0es-pg; the run-and-remove ones were removed after each run), the volumes k0es-rp-data, k0es-rp-data-ro to ro6 and k0es-tmp, the network k0es-net, the image kanban-0es-probe:local and the pulled app image main-165-ef59a17 were removed. s0es-app, s0es-rp, s0es-pg, probe-0et-a and scratch-0es-net were not touched and are still present.
+
+== Not verified (no cluster was available)
+- kubelet emptyDir semantics: mode 0777 and fsGroup group ownership versus Docker tmpfs and named volumes (the Redpanda run used a 0777 tmpfs and the app run a 1777 tmpfs and a copy-up volume).
+- seccomp RuntimeDefault on top of the dropped capabilities: the Docker runs mirror cap-drop ALL and no-new-privileges but not the seccomp profile.
+- The real rollout: the app Deployment under Recreate (a gap with no pod) and the single-replica redpanda StatefulSet restart, in both kanban-prod and kanban-nonprod.
+- A live PVC that the previous container (writable root) already wrote: the read-only runs used fresh data volumes, only a restart was exercised on the read-only volume.
+- A crash writing to the now read-only /var/lib/redpanda/coredump; Redpanda's crash behaviour on a read-only root was not measured.
+- Behaviour under real traffic: the app's Kafka producer path and real user sessions were not driven; only /actuator/health and /api/healthz.
+- The schema registrar when Redpanda is still starting (the runs waited for a healthy broker first).
+- The Redpanda image was the same v26.2.1 for both app images; the app image tags in the cluster (main-165-ef59a17 today) were the ones run, with the broker config of the base manifest but Docker-style advertise addresses (redpanda:19092), not the StatefulSet DNS names.
+Push consequence: a push of the manifest commit lets Flux re-apply k8s/, which replaces the app pod (Recreate, so a gap) and restarts redpanda-0 in kanban-prod and kanban-nonprod. A crash on start is an outage until a rollback.
