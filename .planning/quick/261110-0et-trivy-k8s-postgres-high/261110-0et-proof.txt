@@ -1,0 +1,200 @@
+Proof for quick task 261110-0et: postgres container read-only root, KSV-0109 decision.
+Measured on 2026-11-15 on the maintainer machine, Docker only, no cluster.
+
+== Pre-flight
+git status --short on the five target paths plus .trivyignore.yaml: printed nothing (clean).
+Other sessions' Docker containers (not touched): probe-0et-a, s0es-app, s0es-rp, s0es-pg, plus long-running
+openshell, freehire-fork-*, firecrawl-*, datastore-postgres, changedetection, anythingllm, bizbrain-neo4j,
+kanban-* networks. Networks include scratch-0es-net. Docker volumes before: 143.
+Census subject: postgres:16, id sha256:c1b3783309b6499c795eed7c20135a1a4d25cae1b575c3d52c6f536129a1b109,
+repo digest postgres@sha256:c1b3783309b6499c795eed7c20135a1a4d25cae1b575c3d52c6f536129a1b109,
+PG_VERSION 16.15-1.pgdg13+2, Debian GNU/Linux 13 (trixie), postgres uid=999 gid=999 groups=999,101(ssl-cert).
+docker info SecurityOptions: [name=seccomp,profile=builtin name=cgroupns]. No --security-opt is passed anywhere.
+
+== Baseline
+HEAD b7d1a8f. bash scripts/trivy-scan.sh config, then the guard:
+| Check | Value |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, HIGH | 4 |
+| Failures, kubernetes, MEDIUM | 22 |
+| Failures, kubernetes, LOW | 46 |
+| Failures in Dockerfile | 1 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 19 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 24 |
+| Failures in k8s-overlays-prod.yaml | 24 |
+| Verdict | PASS |
+HIGH rows (jq on .trivy-reports/config.json), all Target k8s-data-postgres.yaml:
+  KSV-0014 lines 268-308  Container 'postgres' of StatefulSet 'postgres' should set securityContext.readOnlyRootFilesystem to true
+  KSV-0118 lines 268-308  container postgres in kanban-data namespace is using the default security context
+  KSV-0118 lines 266-314  statefulset postgres ... default security context, which allows root privileges (pod template spec)
+  KSV-0109 no line        ConfigMap 'postgres-init-62tc4bg5h4' stores secrets in key(s) or value(s) (matched fragments:
+                          -v monitoring_pass, -v nonprod_pass, -v prod_pass, CREATE ROLE , CREATE ROLE monitoring WITH LOGIN PASSWORD , and an empty string)
+The rendered file lines 249-320 confirm container postgres sits inside the StatefulSet pod template spec; the container
+rows span the container entry and the second KSV-0118 row spans the template spec. Same as the planner measured.
+
+== Postgres census (writable root)
+Container k0et-pg, volume k0et-pg-data-w, --memory 256m, no --read-only, the manifest's args, the env of the manifest
+plus the seven init variables (all dummy: probe, probeprod, probenonprod), the repo's init directory mounted read-only.
+First boot with the real init scripts, readiness over TCP (pg_isready -h 127.0.0.1) passed.
+Exercise: CREATE EXTENSION pg_stat_statements OK; pg_stat_statements rows 15; roles monitoring, probe, probenonprod, probeprod;
+unix socket select 1 returned 1; spilling sort (work_mem 64, order by random() over generate_series(1,200000)) returned 200000.
+docker diff after the workload:
+  C /run
+  C /run/postgresql
+  A /run/postgresql/.s.PGSQL.5432
+  A /run/postgresql/.s.PGSQL.5432.lock
+docker restart, readiness passed again, docker diff after the restart: the same four lines. Nothing under /tmp,
+/var/lib/postgresql or /var/log. Mount candidate under rule R1: /var/run/postgresql (a symlinked /var/run to /run) only.
+Container removed, the volume kept for the populated run.
+
+== Postgres negative control
+Container k0et-pg-neg, fresh volume k0et-pg-data-neg, --read-only and no other mount.
+It stopped within seconds, exit code 1. Log lines:
+  chmod: changing permissions of '/var/run/postgresql': Read-only file system   (tolerated, twice)
+  FATAL:  could not create lock file "/var/run/postgresql/.s.PGSQL.5432.lock": Read-only file system
+  pg_ctl: could not start server
+Container removed.
+
+== Postgres read-only run, fresh volume
+Container k0et-pg-ro, fresh volume k0et-pg-data-ro, --read-only --tmpfs /var/run/postgresql:rw,mode=0777 (the Docker
+stand-in for the emptyDir), same env, args, memory and init mount as the census. First boot ran both init scripts and ended
+with "PostgreSQL Database init process complete". Readiness over TCP passed.
+Exercise: CREATE EXTENSION pg_stat_statements OK; pg_stat_statements rows 14; roles monitoring, probe, probenonprod, probeprod;
+socket select 1 returned 1; spilling sort returned 200000.
+docker diff: empty. Log lines matching read-only or permission denied: 0.
+PID 1 is `postgres` running as user postgres (the entrypoint dropped root with gosu); checkpointer and background writer also postgres.
+docker restart: readiness passed, 4 probe or monitoring roles present, docker diff empty, read-only or permission log count 0.
+Container removed.
+
+== Postgres read-only run, populated volume
+Container k0et-pg-pop, --read-only plus the tmpfs, on k0et-pg-data-w (written by the writable-root run above, the stand-in for
+the live volume written by the previous container).
+Log: "PostgreSQL Database directory appears to contain a database; Skipping initialization". Readiness passed, roles
+monitoring, probe, probenonprod, probeprod present, pg_stat_statements loaded (count query answered), docker diff empty,
+read-only or permission denied log count 0. Container removed.
+Rule R2 not triggered: both runs (b) and (c) passed with the one census mount. Seccomp: Docker's default profile applied in all runs
+(no --security-opt); the writable census run with the same profile is the control, and it passed too.
+
+== Render and validate
+postgres.yaml edited: pod securityContext holds only seccompProfile RuntimeDefault; container postgres securityContext holds only
+readOnlyRootFilesystem true; volumeMounts data, postgres-init, socket (socket at /var/run/postgresql); volumes postgres-init, socket
+(emptyDir {}, no medium, no sizeLimit). yq parses the file; scripts/verify-comments.py check: OK.
+bash scripts/verify-k8s-manifests.sh: exit 0, "all 14 kustomization root(s) valid".
+Pinned kubectl kustomize k8s/data/postgres: container and pod securityContext as above, memory request 128Mi and limit 256Mi,
+args unchanged (shared_buffers=64MB, work_mem=4MB, max_connections=25, shared_preload_libraries=pg_stat_statements),
+ConfigMap name still postgres-init-62tc4bg5h4.
+
+== After, Task 1
+| Check | Value |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, HIGH | 1 |
+| Failures, kubernetes, MEDIUM | 21 |
+| Failures, kubernetes, LOW | 45 |
+| Failures in Dockerfile | 1 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 14 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 24 |
+| Failures in k8s-overlays-prod.yaml | 24 |
+| Verdict | PASS |
+Only HIGH or CRITICAL row left: KSV-0109. No KSV-0014 or KSV-0118 row on any root. MEDIUM 22 to 21 and LOW 46 to 45 are
+KSV-0104 and KSV-0030 on the postgres StatefulSet, cleared by the pod seccomp profile. Everything else equals the baseline.
+Rule IDs left on k8s-data-postgres.yaml (14 rows): KSV-0001 0003 0004 0011 x2 0012 0015 x2 0020 0021 01010 0106 0109 0125; no
+KSV-0104 and no KSV-0030, which confirms which two disappeared.
+
+== KSV-0109 evidence
+(a) Row: Title "ConfigMap with secrets", Description "Storing secrets in configMaps is unsafe", Resolution "Remove password/secret from
+configMap data value", Message: ConfigMap 'postgres-init-62tc4bg5h4' in 'kanban-data' namespace stores secrets in key(s) or value(s)
+with six matched fragments: an empty string, `-v monitoring_pass`, `-v nonprod_pass`, `-v prod_pass`, `CREATE ROLE `,
+`CREATE ROLE monitoring WITH LOGIN PASSWORD `. The matches are keywords and variable names, not values.
+(b) Data of the rendered ConfigMap postgres-init-62tc4bg5h4 (two keys, 01-create-databases-and-roles.sh and
+02-create-monitoring-role.sh): 112 lines. Lines matching `pass` case-insensitively (the repo's own script text):
+   16  : "${PROD_DB_PASS:?PROD_DB_PASS must be set}"
+   19  : "${NONPROD_DB_PASS:?NONPROD_DB_PASS must be set}"
+   43  # password happens to be generated is load-bearing any more (closes ... review reference ...)
+   53      -v prod_pass="$PROD_DB_PASS" \
+   56      -v nonprod_pass="$NONPROD_DB_PASS" \
+   58      CREATE ROLE :"prod_user" WITH LOGIN PASSWORD :'prod_pass';
+   63      CREATE ROLE :"nonprod_user" WITH LOGIN PASSWORD :'nonprod_pass';
+   91  : "${MONITORING_DB_PASS:?MONITORING_DB_PASS must be set}"
+   98  # as received, so no assumption about how a password happens to be generated is load-bearing.
+  104      -v monitoring_pass="$MONITORING_DB_PASS" \
+  107      CREATE ROLE monitoring WITH LOGIN PASSWORD :'monitoring_pass';
+(c) Classification: 11 matching lines = 2 comments (43, 98), 3 `${NAME:?...}` guards (16, 19, 91), 3 `-v name="$NAME"` arguments
+(53, 56, 104) and 3 psql `PASSWORD :'name'` references (58, 63, 107). The filter removing those four shapes leaves residue 0 lines.
+(d) The render of the postgres root has no Secret object (yq select(.kind=="Secret") printed nothing) and
+`rg -n '^kind: Secret' k8s -g '*.yaml'` found none (exit 1). The manifest comment in postgres.yaml says of the postgres-init
+Secret: "Created on the VM from env files, never committed."
+(e) The only root with a KSV-0109 row is k8s-data-postgres.yaml (jq over every Target). k8s/data/postgres/kustomization.yaml
+holds the configMapGenerator (postgres-init from the two init scripts, postgres-backup-script from the backup script); it
+holds no secret and is unchanged.
+Decision: keyword match on variable names, a false positive. Nothing is moved to a Secret. Rule R4 not triggered.
+
+== Suppression negative control
+Scratch directory .trivy-reports/k0et-ignore-neg (gitignored, this plan's own). Input: a copy of the current rendered
+k8s-data-postgres.yaml. Pinned Trivy image ghcr.io/aquasecurity/trivy:0.76.2@sha256:8f6bb9..., run the way run_trivy does
+(config --skip-check-update --quiet --skip-version-check -f json, working directory the repo root).
+| Run | KSV-0109 rows | All rows |
+| ignore file with paths: some-other-file.yaml, --ignorefile passed | 1 | 14 |
+| ignore file with paths: k8s-data-postgres.yaml, --ignorefile passed | 0 | 13 |
+| no --ignorefile, no ignore file in the working directory | 1 | 14 |
+The wrong path leaves the row, the right path removes it: the path filter works. Rule R3 not triggered. The "YAML form is not
+auto-loaded" check is repeated below once the real .trivyignore.yaml is in the working directory.
+Repeat with the real /repo/.trivyignore.yaml present and no --ignorefile: KSV-0109 rows 1 (the row stays), so the YAML form is
+not auto-loaded in the pinned Trivy and the flag is needed.
+
+== After, Task 2
+Files written: .trivyignore.yaml (one entry, id KSV-0109, paths k8s-data-postgres.yaml, a statement), no plain .trivyignore.
+scripts/trivy-scan.sh: scan_config passes --ignorefile .trivyignore.yaml (after --skip-check-update); one Decisions bullet and one
+Known holes bullet added; run_trivy, scan_image and the root lists unchanged. bash -n and shellcheck -S warning: exit 0.
+docs/INFRA_RUNBOOK.md Suppression paragraph rewritten; scripts/verify-trivy-report.py Known holes line updated.
+bash scripts/trivy-scan.sh config, then the guard:
+| Check | Value |
+| Expected files (staged for the scan) | 6 |
+| Files scanned | 6 |
+| Files, dockerfile | 2 |
+| Files, kubernetes | 4 |
+| Failures, dockerfile, LOW | 2 |
+| Failures, kubernetes, MEDIUM | 21 |
+| Failures, kubernetes, LOW | 45 |
+| Failures in Dockerfile | 1 |
+| Failures in backup.Dockerfile | 1 |
+| Failures in k8s-data-postgres.yaml | 13 |
+| Failures in k8s-overlays-architecture.yaml | 5 |
+| Failures in k8s-overlays-nonprod.yaml | 24 |
+| Failures in k8s-overlays-prod.yaml | 24 |
+| Verdict | PASS |
+There is no `Failures, kubernetes, HIGH` row. jq finds 0 HIGH or CRITICAL rows on any root. The guard selftest exits 0.
+
+== Gates
+Before the commit hook, each exit 0: scripts/verify-comments.py check (344 files, 1348 blocks), verify-k8s-invariants-selftest.py,
+verify-k8s-invariants.py --no-provisional (14 roots), verify-k8s-manifests.sh (14 roots valid), node docs/architecture/sync.mjs check
+(OK, 18 workloads), verify-instruction-budget.py (4886 of 5100 bytes), verify-trivy-report-selftest.py, bash -n scripts/trivy-scan.sh.
+Structural yq checks on postgres.yaml: readOnlyRootFilesystem true; pod seccompProfile RuntimeDefault; securityContext key set
+exactly readOnlyRootFilesystem,seccompProfile; mounts data,postgres-init,socket; volumes postgres-init,socket; socket emptyDir {}.
+.trivyignore.yaml: 1 entry, KSV-0109, path k8s-data-postgres.yaml, one statement; no plain .trivyignore; --ignorefile appears once
+in scan_config and zero times in scan_image. Doc search for claims the change falsifies: only the Suppression paragraph (edited),
+the guard docstring (edited) and the script header hit; INFRA_ARCHITECTURE.md, the LikeC4 model and the workflows did not.
+
+== Not verified (no cluster was available)
+- kubelet emptyDir semantics (a root-owned 0777 directory the entrypoint chowns) versus Docker tmpfs.
+- containerd's RuntimeDefault seccomp profile versus Docker's default profile.
+- The node's cached postgres:16 digest (the census used id c1b3783309b6, PG 16.15, Debian 13) and a data directory written by
+  an older 16.x image.
+- The real rollout of the single-replica StatefulSet and how the two apps' connection pools recover after the restart.
+- Behaviour under load beyond the spilling sort.
+- The weekly GitHub workflow running the new --ignorefile flag on a runner; image mode (trivy-scan.sh image) was not run, its
+  invocation is unchanged (the region gate shows the flag is absent there).
+- The YAML ignore feature is experimental in the pinned Trivy.
+- A push lets Flux re-apply k8s/data/postgres and replace postgres-0. One instance serves both kanban-prod and kanban-nonprod, so
+  both databases are down for the restart, and for as long as a failed start lasts until a revert reconciles.

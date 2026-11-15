@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "batch_id": "261110-0eq",
+  "created_at": "2026-11-09T23:17:41.165Z",
+  "options": {},
+  "base_revision": "7d3ba3daf90296df191471a6fbf90995c8e82f3c",
+  "items": [
+    {
+      "quick_id": "261110-0er",
+      "client_id": null,
+      "description": "Trivy HIGH in Dockerfile and the built image: fix DS-0002 (image runs as root) in Dockerfile and the 2 HIGH OS-package findings in .trivy-reports/image.json (regenerate with bash scripts/trivy-scan.sh image if absent); touch only Dockerfile and, if the app needs it, the files that must change with the non-root user",
+      "status": "pending",
+      "depends_on": [],
+      "planned_files": [],
+      "directory": null,
+      "worktree": null,
+      "dispatched_worktree": null,
+      "dispatched_branch": null,
+      "dispatched_base": null,
+      "wave": 0,
+      "commit": null,
+      "failure_reason": null
+    },
+    {
+      "quick_id": "261110-0es",
+      "client_id": null,
+      "description": "Trivy HIGH in the k8s app and redpanda bases: fix KSV-0014 (root filesystem not read-only) and KSV-0118 (default security context) on the app container, the register-schemas init container and the redpanda container in k8s/base/app/app.yaml and k8s/base/redpanda/redpanda.yaml; findings in .trivy-reports/config.json (regenerate with bash scripts/trivy-scan.sh config)",
+      "status": "pending",
+      "depends_on": [],
+      "planned_files": [],
+      "directory": null,
+      "worktree": null,
+      "dispatched_worktree": null,
+      "dispatched_branch": null,
+      "dispatched_base": null,
+      "wave": 0,
+      "commit": null,
+      "failure_reason": null
+    },
+    {
+      "quick_id": "261110-0et",
+      "client_id": null,
+      "description": "Trivy HIGH in the k8s postgres data root: fix KSV-0014, KSV-0118 and KSV-0109 (ConfigMap with secrets) in k8s/data/postgres/postgres.yaml and any manifest in k8s/data/postgres/ that holds the flagged ConfigMap; findings in .trivy-reports/config.json",
+      "status": "pending",
+      "depends_on": [],
+      "planned_files": [],
+      "directory": null,
+      "worktree": null,
+      "dispatched_worktree": null,
+      "dispatched_branch": null,
+      "dispatched_base": null,
+      "wave": 0,
+      "commit": null,
+      "failure_reason": null
+    }
+  ]
+}
