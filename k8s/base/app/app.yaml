@@ -30,6 +30,11 @@ spec:
       securityContext:
         seccompProfile:
           type: RuntimeDefault
+      volumes:
+        # Disk-backed emptyDir, not medium Memory, so the scratch files do not count against the
+        # container memory the overlays measured. No sizeLimit, like architecture-site.
+        - name: tmp
+          emptyDir: {}
       initContainers:
         # Registers Avro schemas in-cluster before the app starts. A failing init blocks the main
         # container; a Flux dependsOn only orders reconciliation, not pod scheduling.
@@ -49,9 +54,15 @@ spec:
               value: http://redpanda:8081
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
+          # The only write seen is the JVM perf-data directory under /tmp, on the volume the app shares.
+          # Startup also works without it; the mount keeps that write from failing quietly.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           # Empty like the app container (overlays patch both identically), so an initContainer never
           # raises the pod's scheduled request.
           resources: {}
@@ -82,9 +93,18 @@ spec:
               value: http://redpanda:8081
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop:
                 - ALL
+          # The only writable path is /tmp, shared with register-schemas.
+          #
+          # A Docker run with a writable root showed the app writing only under /tmp: the JVM perf-data
+          # directory and the temp and docbase directories of the two embedded Tomcat instances. With a
+          # read-only root and no /tmp the app stops at startup with "Unable to create tempDir".
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           # Set by the overlay's patches.yaml, with a dated MEASURED comment; empty here so the base
           # carries no unmeasured guess.
           resources: {}

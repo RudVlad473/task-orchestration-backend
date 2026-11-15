@@ -46,6 +46,11 @@ spec:
       securityContext:
         # Redpanda's data directory ownership, matching the image's expected UID.
         fsGroup: 101
+      volumes:
+        # Disk-backed emptyDir with no medium and no sizeLimit, like architecture-site: the file is
+        # about 1 KB, and a sizeLimit would evict the pod when crossed.
+        - name: config
+          emptyDir: {}
       containers:
         - name: redpanda
           image: docker.redpanda.com/redpandadata/redpanda:v26.2.1
@@ -90,9 +95,23 @@ spec:
               containerPort: 9644
             - name: rpc
               containerPort: 33145
+          # Read-only root filesystem; the config volume below is the only writable mount.
+          #
+          # A Docker run with a writable root and a topic, record and schema round trip wrote only
+          # /etc/redpanda/redpanda.yaml outside the data volume. Nothing else is set: this field also
+          # ends the default security context finding.
+          securityContext:
+            readOnlyRootFilesystem: true
           volumeMounts:
             - name: data
               mountPath: /var/lib/redpanda/data
+            # The directory is mounted, not the file, because rpk replaces redpanda.yaml via a temp file.
+            #
+            # The directory starts empty and rpk writes the same file it wrote over the image's default
+            # (measured identical on v26.2.1). A Redpanda image bump repeats the writable-root census
+            # before the tag moves.
+            - name: config
+              mountPath: /etc/redpanda
           readinessProbe:
             exec:
               command:
