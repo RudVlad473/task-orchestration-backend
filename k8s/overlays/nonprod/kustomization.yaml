@@ -20,4 +20,4 @@ images:
     newName: rudenkovladimir/kanban-board-backend-nonprod
     # Flux's ImagePolicy flux-system/kanban-board-backend-nonprod rewrites this value in place on every
     # new image it selects.
-    newTag: main-167-2ecd981 # {"$imagepolicy": "flux-system:kanban-board-backend-nonprod:tag"}
+    newTag: main-168-08f314b # {"$imagepolicy": "flux-system:kanban-board-backend-nonprod:tag"}
