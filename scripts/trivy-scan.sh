@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Report-only Trivy scans of the built image and of the rendered k8s manifests, run the same locally and in CI.
 #
-# Usage: bash scripts/trivy-scan.sh image | config
+# Usage: bash scripts/trivy-scan.sh image | config | image-ref
 # image writes .trivy-reports/image.json and image-packages.txt; config writes config.json and
 # config-expected.txt. Each prints the guard command that judges whether the scan covered what it
 # was given (scripts/verify-trivy-report.py). Findings leave the exit status 0 on purpose; only a
-# scan that could not run, or a k8s root nobody classified, exits non-zero.
+# scan that could not run, or a k8s root nobody classified, exits non-zero. image-ref only prints
+# the pinned scanner image reference on stdout and scans nothing.
 #
 # Decisions:
 # - Trivy runs from one container image pinned by digest, read from ghcr.io and Docker Hub and
@@ -16,8 +17,10 @@
 # - The pin is above every patched version in the advisory list (0.72.0 and later), so the Helm
 #   tar bomb, the crafted-database path traversal and the plugin path traversal are all fixed.
 # - Operating-system packages only (--pkg-types os). Java libraries are already reported by the
-#   weekly dependency-check run and by Dependabot, and reporting them a third time here would triple
-#   the triage without a new finding.
+#   weekly dependency-check run, by osv-scanner (scripts/osv-scan.sh) and by Dependabot, and
+#   reporting them again here would multiply the triage without a new finding.
+# - The image-ref mode exists so scripts/osv-scan.sh runs the same scanner image with no second copy
+#   of the digest. A pin bump here therefore also changes the SBOM that osv-scanner reads.
 # - The image goes to the scanner as a docker save tar through --input, so no Docker socket is ever
 #   mounted into the scanner container.
 # - The scanner runs as the invoking uid and gid with TRIVY_CACHE_DIR in /tmp, so the report files
@@ -52,8 +55,8 @@
 #   which was built at its own deploy time.
 # - Anonymous Docker Hub pulls of the Gradle and Temurin base images may be rate limited on a shared
 #   runner. That was not measured.
-# - Library and secret scanning are covered by other gates (dependency-check, Dependabot, gitleaks,
-#   TruffleHog), so this scan does not repeat them.
+# - Library and secret scanning are covered by other gates (dependency-check, osv-scanner,
+#   Dependabot, gitleaks, TruffleHog), so this scan does not repeat them.
 # - A base image without dpkg gives an empty denominator and the guard fails loudly, so a non-Debian
 #   base needs a new denominator source.
 # - The ignore feature is experimental in the pinned Trivy, so a pin bump (runbook step 5) must
@@ -81,7 +84,7 @@ fail() {
 }
 
 usage() {
-  echo "usage: bash scripts/trivy-scan.sh image | config" >&2
+  echo "usage: bash scripts/trivy-scan.sh image | config | image-ref" >&2
   exit 2
 }
 
@@ -220,5 +223,6 @@ scan_config() {
 case "$1" in
   image) scan_image ;;
   config) scan_config ;;
+  image-ref) echo "${TRIVY_IMAGE}" ;;
   *) usage ;;
 esac

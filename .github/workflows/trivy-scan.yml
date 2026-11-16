@@ -24,8 +24,8 @@
 # runner. That was not measured.
 # A fresh build shows what a rebuild would ship, not the OS layer running in prod.
 # The vulnerability database is not pinned, by design.
-# Workloads installed by a HelmRelease are not scanned, and Java libraries are left to dependency-check
-# and Dependabot.
+# Workloads installed by a HelmRelease are not scanned, and Java libraries are left to dependency-check,
+# osv-scanner (osv-scan.yml) and Dependabot.
 name: Trivy Scan
 
 on:

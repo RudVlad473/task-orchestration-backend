@@ -1,0 +1,98 @@
+# Report-only osv-scanner scan of a CycloneDX SBOM of the Spring Boot jar, separate from deploy.yml.
+#
+# Decisions:
+# No push or pull_request trigger. The verdict drifts with OSV data independent of any code change, so a
+# report-only per-push run has no gating power and would only add noise.
+# osv-scanner is a release binary pinned by version and SHA-256 in scripts/osv-scan.sh, downloaded and
+# verified before it runs. No third-party action installs or runs it: in March 2026 most trivy-action tags
+# were force-pushed to credential-stealing code (GHSA-69fq-xp46-6x23), which is why this repo runs scanners
+# from pinned artifacts. The job holds no secret.
+# The SBOM comes from the Trivy image pinned by digest in scripts/trivy-scan.sh, read through its image-ref
+# mode, so the digest exists once.
+# The guard's selftest runs first, as every gate here does, so a guard that cannot fire fails loudly.
+# Findings never fail the job, so a red job means the scan or the guard failed: the guard fails when
+# osv-scanner resolved less than the SBOM held, or the SBOM matched less than the runtime modules that ship
+# a jar.
+# persist-credentials is false because the job has no use for the checkout token after cloning.
+# It complements dependency-check and does not replace it. On 2026-11-16 osv-scanner reported 3 findings
+# against dependency-check's 48 CVE ids, one of them (CVE-2026-118259) missing from dependency-check, and
+# it cannot see Spring advisories OSV holds only as git ranges or the JavaScript bundled in swagger-ui.
+# The same script and the same guard command run here and on a developer machine, so a red run can be
+# reproduced locally (docs/INFRA_RUNBOOK.md, osv-scanner scan triage).
+#
+# Known holes:
+# The workflow was not run on a GitHub runner when it was committed, because the executor never pushes.
+# The first gh workflow run after a push is the real test.
+# The Trivy Java DB (about 954 MiB) is downloaded on every run and is not cached.
+# The OSV data is not pinned, by design: a pinned database is a scanner that stops finding new advisories.
+# SLSA provenance of the osv-scanner binary is not verified.
+name: OSV Scan
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 8 * * 1' # Mondays 08:00 UTC, after dependency-check at 06:00 and Trivy at 07:00
+
+permissions:
+  contents: read
+
+jobs:
+  osv-scan:
+    runs-on: ubuntu-latest
+    # Runaway guards sized from a local measurement on a maintainer machine, not a runner measurement.
+    #
+    # The script took 356s on 2026-11-16 (SBOM step 323s, almost all of it the Java DB download); 3 times
+    # that rounds up to 20 minutes for the scan step. The job adds 10 minutes for checkout, the selftest,
+    # Java setup and the artifact upload.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Verify the report guard can fire
+        run: python3 -I scripts/verify-osv-report-selftest.py
+
+      # Ahead of the first ./gradlew call, same placement as security-scan.yml.
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      # temurin and the same action majors as security-scan.yml, kept in step deliberately.
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Build the boot jar, generate its SBOM and scan it
+        id: scan
+        run: bash scripts/osv-scan.sh
+        # No continue-on-error: a scan that could not run must stay visible.
+        timeout-minutes: 20
+
+      # Fails when osv-scanner resolved fewer packages than the SBOM holds, or the SBOM lacks runtime modules that
+      # ship a jar. Writes the counts and one row per finding to the log and to the job summary.
+      - name: Verify the scan covered the SBOM and the runtime modules
+        if: always() && steps.scan.outcome != 'skipped'
+        run: >-
+          python3 -I scripts/verify-osv-report.py
+          --report .osv-reports/osv.json
+          --sbom .osv-reports/bootjar.cdx.json
+          --libs .osv-reports/boot-inf-lib.txt
+          --tree .osv-reports/runtime-classpath-tree.txt
+          --summary "$GITHUB_STEP_SUMMARY"
+
+      # Files by name, never the directory: the staged jar lives in it while a scan runs.
+      - name: Upload osv-scanner report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-scan-report
+          path: |
+            .osv-reports/osv.json
+            .osv-reports/bootjar.cdx.json
+            .osv-reports/boot-inf-lib.txt
+            .osv-reports/runtime-classpath-tree.txt
+          if-no-files-found: warn

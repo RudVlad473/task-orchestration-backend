@@ -57,6 +57,9 @@ out/
 # Trivy scan output: scratch, never committed. It holds the saved image tar while a scan runs.
 .trivy-reports/
 
+# osv-scanner scan output: scratch, never committed. It holds the SBOM, the report and the staged jar.
+.osv-reports/
+
 ### Python (scripts/*.py gates and self-tests) ###
 __pycache__/
 *.pyc

@@ -89,7 +89,8 @@ jobs: `image-scan` builds the image from `./Dockerfile` and scans its operating-
 `config-scan` scans both Dockerfiles and the rendered `k8s/overlays/*` and `k8s/data/postgres` manifests with
 Trivy's misconfiguration checks. Each job uploads its report as an artifact (`trivy-image-report`,
 `trivy-config-report`) and writes the guard's table to the job summary. Java libraries stay with
-dependency-check and Dependabot. The same commands run locally:
+dependency-check, osv-scanner (see [osv-scanner scan triage](#osv-scanner-scan-triage)) and Dependabot. The
+same commands run locally:
 
 ```
 bash scripts/trivy-scan.sh image
@@ -128,7 +129,8 @@ Suppressed rows are absent from the report and from the guard table.
 3. List advisories with `gh api repos/aquasecurity/trivy/security-advisories` and require the new version to be
    above every patched threshold.
 4. Edit the one `TRIVY_IMAGE` value in `scripts/trivy-scan.sh`.
-5. Rerun both local modes and compare with the baseline in the quick-task measurement file.
+5. Rerun both local modes and compare with the baseline in the quick-task measurement file. Also rerun
+   `bash scripts/osv-scan.sh`, because its SBOM is made by the same pinned image (`trivy-scan.sh image-ref`).
 
 The pin is a digest because in March 2026 the Trivy binary, the `trivy-action` tags and two Docker Hub tags
 were replaced with credential-stealing code, and images referenced by digest were not affected.
@@ -136,6 +138,53 @@ were replaced with credential-stealing code, and images referenced by digest wer
 **Status.** Not a gate yet. The dated baseline is in
 `.planning/quick/261109-vzu-setup-trivy-for-this-project/261109-vzu-measure.txt`. Moving a mode to a gate means
 triaging that baseline first and then choosing an `--exit-code` and `--severity` policy as a separate decision.
+
+## osv-scanner scan triage
+
+**What runs.** `.github/workflows/osv-scan.yml` runs weekly (Mondays 08:00 UTC) and on demand, as one job,
+`osv-scan`. It runs the guard's selftest, validates the Gradle wrapper, sets up Java, then runs
+`scripts/osv-scan.sh`: download osv-scanner and check its SHA-256, `./gradlew bootJar`, print the
+`runtimeClasspath` tree, list `BOOT-INF/lib`, make a CycloneDX SBOM of the jar with the Trivy image pinned in
+`scripts/trivy-scan.sh`, and scan the SBOM with osv-scanner. The guard step then writes its table to the job
+summary, and the `osv-scan-report` artifact holds four files: `osv.json`, `bootjar.cdx.json`,
+`boot-inf-lib.txt` and `runtime-classpath-tree.txt`. The same commands run locally (about 6 minutes, almost
+all of it Trivy's 954 MiB Java DB download):
+
+```
+bash scripts/osv-scan.sh
+python3 -I scripts/verify-osv-report.py --report .osv-reports/osv.json --sbom .osv-reports/bootjar.cdx.json --libs .osv-reports/boot-inf-lib.txt --tree .osv-reports/runtime-classpath-tree.txt
+```
+
+**Which step is red.** Findings alone never turn a run red.
+
+| Red step | Meaning |
+|---|---|
+| Selftest | The guard was edited into something that cannot fire. Fix `scripts/verify-osv-report.py`, never the selftest's expectations. |
+| Scan | A digest mismatch on the osv-scanner download (the message names the computed and the expected digest), the Gradle build, Trivy's Java DB download or SBOM step, or an osv-scanner exit of 127 (general error), 128 (no packages in the SBOM) or 129 (the OSV API failed). |
+| Guard | osv-scanner resolved fewer packages than the SBOM holds, or the SBOM matched fewer of the runtime modules that ship a jar than the floor. Diagnose the scan; do not loosen `--tolerance`. |
+
+**What a finding means and what it cannot see.** osv-scanner matches exact Maven coordinates against OSV.
+On 2026-11-16 that left three blind spots: 151 Spring (CVE, artifact) pairs that OSV holds only as git ranges,
+52 pairs with no OSV record, and the 22 DOMPurify CVEs bundled in swagger-ui. A clean run therefore never
+clears dependency-check. A finding that dependency-check lacks is checked first: on 2026-11-16 that was
+CVE-2026-118259 on opentelemetry-api 1.62.0. Public Maven coordinates go to api.osv.dev on every run; no
+secret is involved.
+
+**Bumping the pin.**
+
+1. Read the osv-scanner release page. The release is mutable (`isImmutable: false` on 2026-11-16), which is
+   why the binary is pinned by SHA-256 and not only by version.
+2. Require GitHub's asset digest for `osv-scanner_linux_amd64` (`gh release view <tag> --repo google/osv-scanner
+   --json assets`) to equal the matching line of the release's `osv-scanner_SHA256SUMS`.
+3. Edit `OSV_SCANNER_VERSION` and `OSV_SCANNER_SHA256` together in `scripts/osv-scan.sh`.
+4. Rerun the script and the guard, and compare with the dated baseline below.
+
+**Status.** Report-only, not a gate. The workflow had not run on a GitHub runner when it was committed, so the
+first dispatch after a push is the real test of the binary download, a runner-side `./gradlew bootJar`, the
+Java DB download time against the job timeouts (20 and 30 minutes, sized from a local run), osv-scanner's
+reach to api.osv.dev, and the job summary and artifact. The dated baselines are
+`.planning/workstreams/default/quick/261116-005-compare-osv-scanner-against-dependency-c/261116-005-COMPARISON.md`
+and `.planning/workstreams/default/quick/261116-0pl-onboard-osv-scanner-as-a-weekly-report-o/261116-0pl-measure.txt`.
 
 ## Firewall — three layers
 

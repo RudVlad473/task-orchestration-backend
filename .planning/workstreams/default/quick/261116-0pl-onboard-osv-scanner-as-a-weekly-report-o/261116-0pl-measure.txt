@@ -1,0 +1,44 @@
+date=2026-11-16
+osv-scanner=2.7.1 sha256=fb7dab19a8bd9bbe5c3189f09d4b7ee1820c9553a23bac202648a56efd2f6ee8 pin=match
+trivy-image=ghcr.io/aquasecurity/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+script-wall-seconds=356 (bootjar=13s tree=11s sbom=323s osv=1s; the rest is the binary download and the digest check)
+sbom-maven-components=144
+osv-packages=144
+boot-inf-lib-jars=144
+runtime-modules=157
+findings=3 advisory groups on 2 packages: io.opentelemetry:opentelemetry-api 1.62.0 GHSA-ccrj-gw8r-854m (CVE-2026-118259, CVSS 5.3); org.springframework:spring-webmvc 6.2.19 GHSA-j9f9-w8pj-32f8 (CVE-2026-47890, 9.8) and GHSA-pc63-qcmh-9cmg (CVE-2026-47884, 9.8)
+comparison-diff=none: 144 SBOM components, 144 osv packages and 3 findings equal the 2026-11-16 comparison's 144, 144 and 3; 157 runtime modules equals its 157
+cold-bootjar-proof=gh run 43723457306 (deploy.yml, 2026-11-15, success), job build-and-push-docker-image, success in 105s from a cold Docker build whose Dockerfile runs ./gradlew bootJar with no flag (Dockerfile line 7)
+local-run-verification-flags=none: scripts/osv-scan.sh passes ./gradlew --no-daemon bootJar and ./gradlew --no-daemon -q dependencies --configuration runtimeClasspath, nothing else
+digest-negative exit=1 (copy with the last hex digit of OSV_SCANNER_SHA256 changed from 8 to 9; output was only "downloading osv-scanner v2.7.1" and the FAIL line naming the computed and expected digests, with no Gradle output)
+red-absent-guard exit=1
+green exit=0 (37 cases hold against scripts/verify-osv-report.py)
+control exit=0 (unmodified copy of the guard with verify-dependency-check-report.py beside it, outside scripts/)
+red-mutant-sbom-floor exit=1 (check-1 floor comparison replaced by 'if False:'; failed cases: osv resolving one fewer fails and names the count, the floor and the total; packages of another ecosystem do not raise the resolved count; duplicate osv packages do not raise the resolved count; a failing scan still prints its findings table)
+red-mutant-runtime-floor exit=1 (check-2 floor comparison replaced by 'if False:'; failed cases: one fewer match fails and names the count, the floor and an unmatched module; at most 10 unmatched modules are named)
+red-mutant-empty-inputs exit=1 (the empty_input_failures call removed; failed cases: an osv report with no results says 0 packages; an osv report with no results key says 0 packages; an osv result with no packages says 0 packages; an SBOM with no Maven component says so; an SBOM with no components says so; a listing that names no runtime module's jar fails; an empty listing fails; an empty tree fails)
+guard-real exit=0
+guard-real table (matches the comparison: 144 of 144 resolved, 143 runtime modules ship a jar, 142 matched, hibernate-core unmatched under its legacy group):
+| Check | Value |
+| --- | --- |
+| osv-scanner packages (Maven) | 144 |
+| SBOM Maven components | 144 |
+| SBOM components without a Maven purl | 0 |
+| SBOM components osv-scanner resolved | 144 |
+| Floor (95% of SBOM Maven components) | 137 |
+| Jars in BOOT-INF/lib | 144 |
+| Runtime modules (runtimeClasspath tree) | 157 |
+| Runtime modules with no jar of their own | 14 |
+| Runtime modules that ship a jar | 143 |
+| Runtime modules matched in the SBOM | 142 |
+| Floor (95% of runtime modules that ship a jar) | 136 |
+| Unmatched runtime modules | org.hibernate.orm:hibernate-core:6.6.53.Final |
+| Findings (package, advisory group) | 3 |
+| Unique advisory groups | 3 |
+| Finding, io.opentelemetry:opentelemetry-api 1.62.0 | ids GHSA-ccrj-gw8r-854m; aliases CVE-2026-118259, GHSA-ccrj-gw8r-854m; max severity 5.3 |
+| Finding, org.springframework:spring-webmvc 6.2.19 | ids GHSA-j9f9-w8pj-32f8; aliases CVE-2026-47890, GHSA-j9f9-w8pj-32f8; max severity 9.8 |
+| Finding, org.springframework:spring-webmvc 6.2.19 | ids GHSA-pc63-qcmh-9cmg; aliases CVE-2026-47884, GHSA-pc63-qcmh-9cmg; max severity 9.8 |
+| Verdict | PASS |
+step-timeout=20 (3 x 356s = 1068s, rounded up to the next 5 minutes)
+job-timeout=30 (step timeout plus 10)
+actionlint=not installed, not run
